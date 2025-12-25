@@ -1,0 +1,5 @@
+beautifulsoup4==4.14.3
+python-telegram-bot==22.5
+pyyaml==6.0.3
+pydantic==2.12.5
+requests==2.32.5

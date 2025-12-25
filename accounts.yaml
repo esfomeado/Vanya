@@ -1,0 +1,9 @@
+accounts:
+  - username: esfomeado
+    password: jony1234
+    auto_equip: true
+
+telegram:
+  token: 8510867013:AAF3PTwOggCsneFAx_ay2PMVvVMCLJ0jAk0
+  allowed_users:
+    - 7248922166
