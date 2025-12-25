@@ -5,7 +5,7 @@ import time
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 from src.vanya.service.login_service import LoginService
-from src.vanya.service.phatom_halls_service import PhantomHallsService
+from src.vanya.service.phantom_halls_service import PhantomHallsService
 from src.vanya.service.solo_hunt_service import SoloHuntService
 from src.vanya.service.stats_service import StatsService
 from src.vanya.service.training_service import TrainingService

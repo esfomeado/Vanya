@@ -50,8 +50,8 @@ class BaseHuntService(ABC):
         self.account.hunt = None
         self.account.mode = Mode.IDLE
 
-def tick(self):
-        if self.account.stats.health <= self.account.hunt.max_hit + 150:
+    def tick(self):
+        if self.account.stats.health <= self.account.hunt.max_hit + 10:
             logging.info(f"Health below max hit for account {self.account.username}, stopping hunt")
             self.stop_hunt()
             self.pub_service.go_to_pub()

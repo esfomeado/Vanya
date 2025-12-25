@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from src.vanya.core.constants import BASE_URL, LOGIN_URL, CHECK_HUNT_STATUS_URL, HUNT_URL
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
-from src.vanya.service.phatom_halls_service import PhantomHallsService
+from src.vanya.service.phantom_halls_service import PhantomHallsService
 from src.vanya.service.solo_hunt_service import SoloHuntService
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))

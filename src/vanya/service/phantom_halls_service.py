@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from src.vanya.core.constants import DUNGEON_VIEW_URL, DUNGEON_LOBBY_URL
 from src.vanya.model.account import Account
 from src.vanya.model.hunt import Hunt
+from src.vanya.model.mode import Mode
 from src.vanya.service.base_hunt_service import BaseHuntService
 
 
@@ -63,54 +64,61 @@ class PhantomHallsService(BaseHuntService):
             timeout=10,
         ).json()
 
-    def _get_latest_enabled_dungeon(self):
+    def _get_latest_enabled_dungeon(self, specific_area_id: str | None = None):
         resp = self.account.session.get(DUNGEON_VIEW_URL, timeout=10)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "html.parser")
         dungeon_areas = soup.select(".hunt-area")
 
         if not dungeon_areas:
-            return None, None, None
+            return None, None, None, None, None
 
         for area in reversed(dungeon_areas):
-            form = area.find("form", action="hunt_start")
+            form = area.find("form", action="explore?view=dungeons")
             if not form:
-                continue
-            button = form.find("button", type="submit")
-            if not button:
-                continue
-            if button.has_attr("disabled") or "disabled" in button.get("class", []):
                 continue
 
             area_id = form.find("input", {"name": "area_id"}).get("value")
+            if specific_area_id and area_id != specific_area_id:
+                continue
+
+            button = form.find("button", type="submit")
+            if not button or "QUEUE UP" not in button.text:
+                continue
+
             # extract max_hit like in solo hunt
             dmg_span = area.select_one(".stat-row.damage-row span[title*='Expected damage']")
             max_hit = None
             if dmg_span:
                 text = dmg_span.text.strip()
                 max_hit = int(text.strip("()").split("-")[1].strip())
-            return area, area_id, max_hit
 
-        return None, None, None
+            # extract lobby count from HTML
+            lobby_span = area.select_one(f"span#lobby-count-{area_id}")
+            count, required_count = 0, 0
+            if lobby_span:
+                text = lobby_span.text.strip()  # e.g., "0/2"
+                if "/" in text:
+                    count_str, req_str = text.split("/")
+                    count, required_count = int(count_str.strip()), int(req_str.strip())
+
+            return area, area_id, max_hit, count, required_count
+
+        return None, None, None, None, None
 
     def hunt(self, area_id: str | None = None):
         joined = False
 
+        if not area_id:
+            _, area_id, max_hit, count, required_count = self._get_latest_enabled_dungeon()
+        if not area_id:
+            return
+        else:
+            _, area_id, max_hit, count, required_count = self._get_latest_enabled_dungeon(
+                specific_area_id=area_id)
+
         while True:
             try:
-                if not area_id:
-                    _, area_id, max_hit = self._get_latest_enabled_dungeon()
-                    if not area_id:
-                        logging.warning("No enabled dungeon found for your level")
-                        time.sleep(5)
-                        continue
-                else:
-                    # if specific area_id, fetch max_hit from HTML
-                    _, _, max_hit = self._get_latest_enabled_dungeon()  # you could make a variant that takes area_id
-
-                if not self.account.hunt:
-                    self.account.hunt = Hunt(area_id=area_id, name="Phantom Halls", max_hit=max_hit)
-
                 if not joined:
                     self._join_dungeon_queue(area_id)
                     joined = True
@@ -118,16 +126,15 @@ class PhantomHallsService(BaseHuntService):
                     continue
 
                 dungeon_status = self._fetch_dungeon_lobby().get(area_id)
-                if not dungeon_status:
-                    logging.warning(f"Dungeon {area_id} not in lobby yet")
-                    time.sleep(5)
-                    continue
 
                 count = dungeon_status.get("count", 0)
-                required_count = dungeon_status.get("required_count", 3)
                 am_i_in = dungeon_status.get("am_i_in", False)
 
                 if joined and not am_i_in:
+                    self.account.hunt = Hunt(area_id=area_id, name="Phantom Halls", max_hit=max_hit)
+                    self.account.mode = Mode.PHANTOM_HALLS
+
+                    logging.info(f"Joined dungeon {area_id} for account {self.account.username}")
                     return
 
                 if count < required_count:
@@ -135,8 +142,11 @@ class PhantomHallsService(BaseHuntService):
                     continue
 
                 self._start_dungeon(area_id)
-                return
+                self.account.hunt = Hunt(area_id=area_id, name="Phantom Halls", max_hit=max_hit)
+                self.account.mode = Mode.PHANTOM_HALLS
+                logging.info(f"Joined dungeon {area_id} for account {self.account.username}")
 
+                return
             except Exception as e:
                 logging.error(f"Error while running dungeon hunt: {e}")
                 time.sleep(5)

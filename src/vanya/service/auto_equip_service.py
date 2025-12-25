@@ -25,6 +25,9 @@ class AutoEquipService:
         self._initialized = True
 
     def equip(self):
+        if not self.account.auto_equip:
+            return
+
         response = self.account.session.get(DASHBOARD_URL, timeout=10)
         response.raise_for_status()
 
