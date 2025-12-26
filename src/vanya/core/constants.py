@@ -1,4 +1,6 @@
 BASE_URL = "https://vanyaonline.com"
+ADVENTURE_URL = f"{BASE_URL}/adventure"
+ADVENTURE_ATTACK_URL = f"{BASE_URL}/process/adventure_attack.php"
 CHECK_HUNT_STATUS_URL = f"{BASE_URL}/check_hunt_status"
 DASHBOARD_URL = f"{BASE_URL}/dashboard"
 DUNGEON_LOBBY_URL = f"{BASE_URL}/actions/explore.php"

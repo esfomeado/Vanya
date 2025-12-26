@@ -8,21 +8,8 @@ from src.vanya.model.account import Account
 
 
 class AutoEquipService:
-    _instances: dict[str, "AutoEquipService"] = {}
-
-    def __new__(cls, account: Account):
-        if account.username not in cls._instances:
-            instance = super().__new__(cls)
-            cls._instances[account.username] = instance
-            instance._initialized = False
-        return cls._instances[account.username]
-
     def __init__(self, account: Account):
-        if self._initialized:
-            return
-
         self.account: Account = account
-        self._initialized = True
 
     def equip(self):
         if not self.account.auto_equip:

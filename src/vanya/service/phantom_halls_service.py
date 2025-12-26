@@ -11,21 +11,8 @@ from src.vanya.service.base_hunt_service import BaseHuntService
 
 
 class PhantomHallsService(BaseHuntService):
-    _instances: dict[str, "PhantomHallsService"] = {}
-
-    def __new__(cls, account: Account):
-        if account.username not in cls._instances:
-            instance = super().__new__(cls)
-            cls._instances[account.username] = instance
-            instance._initialized = False
-        return cls._instances[account.username]
-
     def __init__(self, account: Account):
-        if self._initialized:
-            return
-
         super().__init__(account)
-        self._initialized = True
 
     def _join_dungeon_queue(self, dungeon_id: str):
         self.account.session.post(
@@ -86,14 +73,12 @@ class PhantomHallsService(BaseHuntService):
             if not button or "QUEUE UP" not in button.text:
                 continue
 
-            # extract max_hit like in solo hunt
             dmg_span = area.select_one(".stat-row.damage-row span[title*='Expected damage']")
             max_hit = None
             if dmg_span:
                 text = dmg_span.text.strip()
                 max_hit = int(text.strip("()").split("-")[1].strip())
 
-            # extract lobby count from HTML
             lobby_span = area.select_one(f"span#lobby-count-{area_id}")
             count, required_count = 0, 0
             if lobby_span:

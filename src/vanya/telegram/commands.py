@@ -3,8 +3,10 @@ from telegram.ext import ContextTypes
 
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
+from src.vanya.service.boss_service import BossService
 from src.vanya.service.chat_service import ChatService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
+from src.vanya.service.service_registry import service_registry
 from src.vanya.service.solo_hunt_service import SoloHuntService
 from src.vanya.service.training_service import TrainingService
 from src.vanya.telegram.acl import allowed
@@ -121,7 +123,7 @@ async def solo_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(f"{name} is not solo hunting")
             return
 
-        SoloHuntService(account).stop_hunt()
+        service_registry.get(SoloHuntService, account).stop_hunt()
 
         await update.message.reply_text(f"{name} stopped solo hunting")
         return
@@ -143,7 +145,7 @@ async def solo_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        SoloHuntService(account).hunt(area_id=area_id)
+        service_registry.get(SoloHuntService, account).hunt(area_id=area_id)
         hunt = account.hunt
 
         await update.message.reply_text(
@@ -158,6 +160,7 @@ async def solo_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"Failed to start solo hunt for {name}:\n{e}"
         )
+
 
 async def phantom_halls_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not allowed(update):
@@ -188,7 +191,7 @@ async def phantom_halls_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(f"{name} is not on phantom halls")
             return
 
-        PhantomHallsService(account).stop_hunt()
+        service_registry.get(PhantomHallsService, account).stop_hunt()
 
         await update.message.reply_text(f"{name} stopped phantom halls")
         return
@@ -210,7 +213,7 @@ async def phantom_halls_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        PhantomHallsService(account).hunt(area_id=area_id)
+        service_registry.get(PhantomHallsService, account).hunt(area_id=area_id)
         hunt = account.hunt
 
         await update.message.reply_text(
@@ -255,7 +258,7 @@ async def say_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        ChatService(account).post_message(message)
+        service_registry.get(ChatService, account).post_message(message)
         await update.message.reply_text(
             f"💬 Message sent as {name}"
         )
@@ -293,7 +296,7 @@ async def train_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        TrainingService(account).train(skill=skill)
+        service_registry.get(TrainingService, account).train(skill=skill)
 
         await update.message.reply_text(
             f"🛡️ {name} started training {skill}"
@@ -302,4 +305,55 @@ async def train_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(
             f"Failed to start training for {name}:\n{e}"
+        )
+
+
+async def boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text(
+            "Usage: /boss <account> [full]"
+        )
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+
+    name = context.args[0]
+    mode = context.args[1] if len(context.args) > 1 else None
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    boss_service = service_registry.get(BossService, account)
+
+    try:
+        bosses = boss_service.list_available_bosses()
+        if not bosses:
+            await update.message.reply_text(f"{name}: no available bosses")
+            return
+
+        lines = []
+        for boss in bosses:
+            if mode == "full":
+                boss_service.kill_boss(boss.id)
+                lines.append(f"☠️ {boss.name} killed")
+            else:
+                result = boss_service.attack_boss_once(boss.id)
+                lines.append(
+                    f"🗡️ {boss.name}: "
+                    f"-{result['player_damage']} dmg "
+                    f"(boss {result['new_boss_life']}/{result['boss_max_life']})"
+                )
+
+        await update.message.reply_text(
+            f"👹 Boss run for {name}\n\n" + "\n".join(lines)
+        )
+
+    except Exception as e:
+        await update.message.reply_text(
+            f"Boss command failed for {name}:\n{e}"
         )

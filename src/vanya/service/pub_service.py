@@ -7,22 +7,9 @@ from src.vanya.model.account import Account
 
 
 class PubService:
-    _instances: dict[str, "PubService"] = {}
-
-    def __new__(cls, account: Account):
-        if account.username not in cls._instances:
-            instance = super().__new__(cls)
-            cls._instances[account.username] = instance
-            instance._initialized = False
-        return cls._instances[account.username]
-
     def __init__(self, account: Account):
-        if self._initialized:
-            return
-
         self.account = account
         self.csrf: Optional[str] = None
-        self._initialized = True
 
     def go_to_pub(self):
         logging.info(f"Going to pub for account {self.account.username}")

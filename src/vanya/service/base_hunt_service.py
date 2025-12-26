@@ -9,13 +9,14 @@ from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 from src.vanya.service.auto_equip_service import AutoEquipService
 from src.vanya.service.pub_service import PubService
+from src.vanya.service.service_registry import service_registry
 
 
 class BaseHuntService(ABC):
     def __init__(self, account: Account):
         self.account = account
-        self.pub_service = PubService(account)
-        self.auto_equip_service = AutoEquipService(account)
+        self.pub_service = service_registry.get(PubService, account)
+        self.auto_equip_service = service_registry.get(AutoEquipService, account)
         self.csrf: Optional[str] = None
 
     @abstractmethod

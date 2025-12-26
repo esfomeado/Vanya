@@ -16,24 +16,11 @@ os.makedirs(COOKIES_DIR, exist_ok=True)
 
 
 class LoginService:
-    _instances: dict[str, "LoginService"] = {}
-
-    def __new__(cls, account: Account):
-        if account.username not in cls._instances:
-            instance = super().__new__(cls)
-            cls._instances[account.username] = instance
-            instance._initialized = False
-        return cls._instances[account.username]
-
     def __init__(self, account: Account):
-        if self._initialized:
-            return
-
         self.account = account
         self.session = account.session
 
         self.init_session()
-        self._initialized = True
 
     def cookie_path(self) -> str:
         return os.path.join(COOKIES_DIR, f"{self.account.username}.pkl")

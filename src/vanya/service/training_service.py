@@ -8,8 +8,6 @@ from src.vanya.model.mode import Mode
 
 
 class TrainingService:
-    _instances: dict[str, "TrainingService"] = {}
-
     SKILL_TO_DUMMY_ID = {
         "defense": 5,
         "fishing": 4,
@@ -17,20 +15,10 @@ class TrainingService:
         "sword": 2,
     }
 
-    def __new__(cls, account: Account):
-        if account.username not in cls._instances:
-            instance = super().__new__(cls)
-            cls._instances[account.username] = instance
-            instance._initialized = False
-        return cls._instances[account.username]
-
     def __init__(self, account: Account):
-        if self._initialized:
-            return
-
         self.account = account
         self.skill: Optional[str] = None
-        self._initialized = True
+        self.csrf: Optional[str] = None
 
     def tick(self):
         dummy_id = self.SKILL_TO_DUMMY_ID.get(self.skill)
@@ -39,7 +27,7 @@ class TrainingService:
             return
 
         try:
-            csrf = self._fetch_csrf()
+            self.csrf = self._fetch_csrf()
             payload = {
                 "dummy_id": str(dummy_id),
                 "skill": self.skill,
@@ -53,7 +41,7 @@ class TrainingService:
                 headers={
                     "origin": "https://vanyaonline.com",
                     "referer": PUB_URL,
-                    "x-csrf-token": csrf,
+                    "x-csrf-token": self.csrf,
                     "content-type": "application/x-www-form-urlencoded",
                 },
                 timeout=10,
@@ -72,14 +60,14 @@ class TrainingService:
             logging.warning(f"Unknown skill '{self.skill}' for account {self.account.username}")
             return
 
-        csrf = self._fetch_csrf()
-
         payload = {
             "dummy_id": str(dummy_id),
             "skill": skill,
-            "start": str(1),
+            "start": str(0),
             "is_lite": str(0),
         }
+
+        self.csrf = self._fetch_csrf()
 
         self.account.session.post(
             PUB_TRAIN_CLICK_URL,
@@ -87,7 +75,7 @@ class TrainingService:
             headers={
                 "origin": "https://vanyaonline.com",
                 "referer": PUB_URL,
-                "x-csrf-token": csrf,
+                "x-csrf-token": self.csrf,
                 "content-type": "application/x-www-form-urlencoded",
             },
             timeout=10,

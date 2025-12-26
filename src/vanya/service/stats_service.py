@@ -7,21 +7,8 @@ from src.vanya.model.account import Account
 
 
 class StatsService:
-    _instances: dict[str, "StatsService"] = {}
-
-    def __new__(cls, account: Account):
-        if account.username not in cls._instances:
-            instance = super().__new__(cls)
-            cls._instances[account.username] = instance
-            instance._initialized = False
-        return cls._instances[account.username]
-
     def __init__(self, account: Account):
-        if self._initialized:
-            return
-
         self.account = account
-        self._initialized = True
 
     def refresh_account_stats(self):
         logging.info(f"Refreshing stats for account {self.account.username}")

@@ -2,7 +2,7 @@ import logging
 
 from bs4 import BeautifulSoup
 
-from src.vanya.core.constants import EXPLORE_URL, HUNT_URL
+from src.vanya.core.constants import EXPLORE_URL
 from src.vanya.model.account import Account
 from src.vanya.model.hunt import Hunt
 from src.vanya.model.mode import Mode
@@ -10,21 +10,8 @@ from src.vanya.service.base_hunt_service import BaseHuntService
 
 
 class SoloHuntService(BaseHuntService):
-    _instances: dict[str, "SoloHuntService"] = {}
-
-    def __new__(cls, account: Account):
-        if account.username not in cls._instances:
-            instance = super().__new__(cls)
-            cls._instances[account.username] = instance
-            instance._initialized = False
-        return cls._instances[account.username]
-
     def __init__(self, account: Account):
-        if self._initialized:
-            return
-
         super().__init__(account)
-        self._initialized = True
 
     def hunt(self, area_id: str | None = None):
         logging.info(f"Starting solo hunt for {self.account.username}")
@@ -90,12 +77,13 @@ class SoloHuntService(BaseHuntService):
         )
 
         self.account.hunt = hunt
+        self.account.mode = Mode.SOLO_HUNT
 
         post_url = form.get("action")
         if not post_url.startswith("http"):
             post_url = f"https://vanyaonline.com/actions/{post_url.lstrip('/')}"
 
-        self.account.session.post(
+        response = self.account.session.post(
             post_url,
             data={
                 "area_id": hunt.area_id,
@@ -103,11 +91,8 @@ class SoloHuntService(BaseHuntService):
             },
             headers={"referer": EXPLORE_URL},
             timeout=10,
-        ).raise_for_status()
+        )
 
-        self.account.mode = Mode.SOLO_HUNT
-
-        response = self.account.session.get(HUNT_URL, timeout=10)
         response.raise_for_status()
 
         self.csrf = self.get_csrf(response.text)
