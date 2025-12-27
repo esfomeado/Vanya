@@ -47,27 +47,31 @@ class Scheduler:
         last_login_check = 0.0
 
         while not self._stop_event.is_set():
-            now: float = time.time()
+            try: 
+                now: float = time.time()
 
-            if now - last_login_check > 60:
-                login_service = service_registry.get(LoginService, account)
-                login_service.ensure_logged_in()
-                login_service.reconcile_mode()
+                if now - last_login_check > 60:
+                    login_service = service_registry.get(LoginService, account)
+                    login_service.ensure_logged_in()
+                    login_service.reconcile_mode()
 
-                service_registry.get(StatsService, account).refresh_account_stats()
+                    service_registry.get(StatsService, account).refresh_account_stats()
 
-                last_login_check = now
+                    last_login_check = now
 
-            if account.mode == Mode.SOLO_HUNT:
-                service_registry.get(SoloHuntService, account).tick()
+                if account.mode == Mode.SOLO_HUNT:
+                    service_registry.get(SoloHuntService, account).tick()
 
-            if account.mode == Mode.PHANTOM_HALLS:
-                service_registry.get(PhantomHallsService, account).tick()
+                if account.mode == Mode.PHANTOM_HALLS:
+                    service_registry.get(PhantomHallsService, account).tick()
 
-            if account.mode == Mode.TRAINING:
-                service_registry.get(TrainingService, account).tick()
+                if account.mode == Mode.TRAINING:
+                    service_registry.get(TrainingService, account).tick()
 
-            if account.mode == Mode.BOSSES:
-                service_registry.get(BossService, account).tick()
+                if account.mode == Mode.BOSSES:
+                    service_registry.get(BossService, account).tick()
 
-            time.sleep(self.MODE_TICK_INTERVAL[account.mode])
+                time.sleep(self.MODE_TICK_INTERVAL[account.mode])
+            except:
+                logging.error("")
+                time.sleep(5)
