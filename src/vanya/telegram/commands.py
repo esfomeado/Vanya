@@ -232,6 +232,52 @@ async def phantom_halls_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+async def auto_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    lines: list[str] = []
+
+    for account in accounts:
+        if account.mode in {Mode.SOLO_HUNT, Mode.PHANTOM_HALLS, Mode.DEEP_DRAGON}:
+            lines.append(f"⏭️ {account.username} already hunting ({account.mode.value})")
+            continue
+
+        try:
+            level = account.stats.level
+
+            if level < 300:
+                service_registry.get(SoloHuntService, account).hunt()
+                hunt = account.hunt
+                lines.append(
+                    f"🗡️ {account.username} → Solo Hunt "
+                    f"({hunt.name}, max hit {hunt.max_hit})"
+                )
+            else:
+                service_registry.get(PhantomHallsService, account).hunt()
+                hunt = account.hunt
+                lines.append(
+                    f"🌀 {account.username} → Phantom Halls "
+                    f"({hunt.name}, max hit {hunt.max_hit})"
+                )
+
+        except Exception as e:
+            account.hunt = None
+            account.mode = Mode.IDLE
+            lines.append(
+                f"❌ {account.username} auto_hunt failed: {e}"
+            )
+
+    await update.message.reply_text(
+        "🤖 Auto Hunt Result\n\n" + "\n".join(lines)
+    )
+
+
 async def say_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Sends a message to the chat.

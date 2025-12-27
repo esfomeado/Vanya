@@ -67,6 +67,10 @@ class Scheduler:
                 if account.mode == Mode.SOLO_HUNT:
                     service_registry.get(SoloHuntService, account).tick()
 
+                    if account.stats.level >= 300:
+                        service_registry.get(SoloHuntService, account).stop_hunt()
+                        service_registry.get(PhantomHallsService, account).hunt()
+
                 if account.mode == Mode.PHANTOM_HALLS:
                     service_registry.get(PhantomHallsService, account).tick()
 
