@@ -1,6 +1,5 @@
 import logging
 import re
-import time
 from typing import Optional
 
 from bs4 import BeautifulSoup
@@ -96,7 +95,8 @@ class BossService:
 
         if data.get("new_stamina", 0) <= 5:
             self.pub_service.go_to_pub()
-            time.sleep(3600)
+            for _ in range(20):
+                self.pub_service.regenerate()
 
         if data.get("new_player_life", 0) <= 100:
             self.pub_service.go_to_pub_and_heal()

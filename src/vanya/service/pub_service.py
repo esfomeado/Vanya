@@ -29,6 +29,16 @@ class PubService:
         self._buy_health_potion()
         self._start_training()
 
+    def regenerate(self) -> None:
+        self.account.session.post(
+            PUB_REGENERATE_URL,
+            headers={
+                "referer": PUB_URL,
+            },
+            timeout=10,
+        ).raise_for_status()
+        time.sleep(121)
+
     def _start_training(self) -> None:
         logging.info(f"Starting training for account {self.account.username}")
 
@@ -69,17 +79,10 @@ class PubService:
         if self.account.stats.gold < health_potion_price:
             logging.info(
                 f"Not enough gold to buy potion for account {self.account.username}. "
-                f"Needed: {health_potion_price}, Available: {self.account.stats.gold}. Waiting 4 minutes."
+                f"Needed: {health_potion_price}, Available: {self.account.stats.gold}. Regenerating..."
             )
-            for _ in range(2):
-                self.account.session.post(
-                    PUB_REGENERATE_URL,
-                    headers={
-                        "referer": PUB_URL,
-                    },
-                    timeout=10,
-                ).raise_for_status()
-                time.sleep(121)
+            for _ in range(4):
+                self.regenerate()
 
             return
 
