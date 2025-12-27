@@ -6,6 +6,7 @@ from src.vanya.core.errors import VanyaError
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 from src.vanya.service.boss_service import BossService
+from src.vanya.service.daily_tasks_service import DailyTasksService
 from src.vanya.service.deep_dragon_service import DeepDragonService
 from src.vanya.service.login_service import LoginService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
@@ -82,6 +83,8 @@ class Scheduler:
 
                 if account.mode == Mode.BOSSES:
                     service_registry.get(BossService, account).tick()
+
+                service_registry.get(DailyTasksService, account).run_if_due()
 
                 time.sleep(self.MODE_TICK_INTERVAL[account.mode])
             except VanyaError as e:
