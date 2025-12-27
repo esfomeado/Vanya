@@ -1,8 +1,10 @@
 import logging
+from typing import Optional
 
 from bs4 import BeautifulSoup
 
-from src.vanya.core.constants import EXPLORE_URL
+from src.vanya.core.constants import EXPLORE_URL, BASE_URL
+from src.vanya.core.errors import VanyaError
 from src.vanya.model.account import Account
 from src.vanya.model.hunt import Hunt
 from src.vanya.model.mode import Mode
@@ -13,7 +15,7 @@ class SoloHuntService(BaseHuntService):
     def __init__(self, account: Account):
         super().__init__(account)
 
-    def hunt(self, area_id: str | None = None):
+    def hunt(self, area_id: Optional[str] = None) -> None:
         logging.info(f"Starting solo hunt for {self.account.username}")
 
         response = self.account.session.get(EXPLORE_URL, timeout=10)
@@ -22,7 +24,7 @@ class SoloHuntService(BaseHuntService):
         soup = BeautifulSoup(response.text, "html.parser")
         hunt_areas = soup.select(".hunt-area")
         if not hunt_areas:
-            raise RuntimeError("No solo hunt areas found")
+            raise VanyaError("No solo hunt areas found")
 
         selected_area = None
 
@@ -51,7 +53,7 @@ class SoloHuntService(BaseHuntService):
             break
 
         if not selected_area:
-            raise RuntimeError(
+            raise VanyaError(
                 f"No enabled hunt area found "
                 f"(area_id={area_id})"
             )
@@ -62,7 +64,7 @@ class SoloHuntService(BaseHuntService):
             ".stat-row.damage-row span[title*='Expected damage']"
         )
         if not dmg_span:
-            raise RuntimeError(f"Could not parse damage for {name}")
+            raise VanyaError(f"Could not parse damage for {name}")
 
         max_hit = int(dmg_span.get_text(strip=True).strip("()").split("-")[1].strip())
 
@@ -81,9 +83,9 @@ class SoloHuntService(BaseHuntService):
 
         post_url = form.get("action")
         if not post_url.startswith("http"):
-            post_url = f"https://vanyaonline.com/actions/{post_url.lstrip('/')}"
+            post_url = f"{BASE_URL}/actions/{post_url.lstrip('/')}"
 
-        response = self.account.session.post(
+        self.account.session.post(
             post_url,
             data={
                 "area_id": hunt.area_id,
@@ -91,8 +93,4 @@ class SoloHuntService(BaseHuntService):
             },
             headers={"referer": EXPLORE_URL},
             timeout=10,
-        )
-
-        response.raise_for_status()
-
-        self.csrf = self.get_csrf(response.text)
+        ).raise_for_status()

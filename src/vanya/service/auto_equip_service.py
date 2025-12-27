@@ -2,6 +2,7 @@ import logging
 import re
 
 from bs4 import BeautifulSoup, Tag
+from bs4.element import AttributeValueList
 
 from src.vanya.core.constants import DASHBOARD_URL, EQUIP_URL
 from src.vanya.model.account import Account
@@ -14,6 +15,8 @@ class AutoEquipService:
     def equip(self):
         if not self.account.auto_equip:
             return
+
+        logging.info(f"Auto-equipping items for {self.account.username}")
 
         response = self.account.session.get(DASHBOARD_URL, timeout=10)
         response.raise_for_status()
@@ -41,7 +44,7 @@ class AutoEquipService:
 
         slots = {}
         for slot in soup.select(".equipment-slot.equipped"):
-            cls = slot.get("class", [])
+            cls = slot.get("class", AttributeValueList())
             slot_type = next(c.replace("slot-", "").upper() for c in cls if c.startswith("slot-"))
             item = slot.get("title")
 
@@ -52,7 +55,7 @@ class AutoEquipService:
 
         return slots
 
-    def _extract_defense_from_equipped(self, detail_el: Tag):
+    def _extract_defense_from_equipped(self, detail_el: Tag) -> int:
         for bonus in detail_el.select(".item-bonus"):
             if "Defense" in bonus.text:
                 m = re.search(r'\+(\d+)', bonus.text)
@@ -84,7 +87,7 @@ class AutoEquipService:
 
         return inventory
 
-    def _extract_defense_from_inventory(self, text: str):
+    def _extract_defense_from_inventory(self, text: str) -> int:
         if not text:
             return 0
 
@@ -100,7 +103,7 @@ class AutoEquipService:
 
         return 0
 
-    def _equip_item(self, item_name: str, csrf: str):
+    def _equip_item(self, item_name: str, csrf: str) -> None:
         self.account.session.post(
             EQUIP_URL,
             data={

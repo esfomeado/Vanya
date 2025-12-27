@@ -1,13 +1,15 @@
 import logging
-import re
+from typing import Optional
 
 from src.vanya.core.constants import PUB_MURAL_POST_URL, BASE_URL, PUB_URL, HUNT_URL
+from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 
 
 class ChatService:
-    CSRF_SOURCE_BY_MODE: dict[Mode, str] = {
+    CSRF_SOURCE_BY_MODE: dict[Mode, Optional[str]] = {
+        Mode.BOSSES: None,
         Mode.IDLE: PUB_URL,
         Mode.TRAINING: PUB_URL,
         Mode.SOLO_HUNT: HUNT_URL,
@@ -18,7 +20,7 @@ class ChatService:
     def __init__(self, account: Account):
         self.account = account
 
-    def post_message(self, message: str, channel: str = "global"):
+    def post_message(self, message: str, channel: str = "global") -> None:
         csrf = self._fetch_csrf()
         referer_url = self.CSRF_SOURCE_BY_MODE.get(
             self.account.mode,
@@ -55,10 +57,4 @@ class ChatService:
         response = self.account.session.get(source_url, timeout=10)
         response.raise_for_status()
 
-        return self._get_csrf(response.text)
-
-    def _get_csrf(self, html: str) -> str:
-        match = re.search(r'globalCsrfToken\s*=\s*"([a-f0-9]+)"', html)
-        if not match:
-            raise RuntimeError("CSRF token not found in PUB")
-        return match.group(1)
+        return get_global_csrf(response.text)

@@ -1,8 +1,8 @@
 import logging
-import re
 from typing import Optional
 
 from src.vanya.core.constants import PUB_URL, PUB_TRAIN_CLICK_URL
+from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 
@@ -20,10 +20,10 @@ class TrainingService:
         self.skill: Optional[str] = None
         self.csrf: Optional[str] = None
 
-    def tick(self):
+    def tick(self) -> None:
         dummy_id = self.SKILL_TO_DUMMY_ID.get(self.skill)
         if dummy_id is None:
-            logging.warning(f"Unknown skill '{self.skill}' for account {self.account.username}")
+            logging.error(f"Unknown skill '{self.skill}' for account {self.account.username}")
             return
 
         try:
@@ -50,14 +50,14 @@ class TrainingService:
             logging.info(f"Training tick | account={self.account.username} | skill={self.skill}")
 
         except Exception as e:
-            logging.warning(f"Failed training tick for {self.account.username}: {e}")
+            logging.error(f"Failed training tick for {self.account.username}: {e}")
 
-    def train(self, skill: str):
+    def train(self, skill: str) -> None:
         self.skill = skill
         dummy_id = self.SKILL_TO_DUMMY_ID.get(skill.lower())
 
         if dummy_id is None:
-            logging.warning(f"Unknown skill '{self.skill}' for account {self.account.username}")
+            logging.error(f"Unknown skill '{self.skill}' for account {self.account.username}")
             return
 
         payload = {
@@ -90,10 +90,5 @@ class TrainingService:
     def _fetch_csrf(self) -> str:
         response = self.account.session.get(PUB_URL, timeout=10)
         response.raise_for_status()
-        return self._get_csrf(response.text)
 
-    def _get_csrf(self, html: str) -> str:
-        match = re.search(r'globalCsrfToken\s*=\s*"([a-f0-9]+)"', html)
-        if not match:
-            raise RuntimeError("CSRF token not found in PUB")
-        return match.group(1)
+        return get_global_csrf(response.text)

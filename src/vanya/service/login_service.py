@@ -4,7 +4,7 @@ import pickle
 
 from bs4 import BeautifulSoup
 
-from src.vanya.core.constants import BASE_URL, LOGIN_URL, CHECK_HUNT_STATUS_URL, HUNT_URL
+from src.vanya.core.constants import BASE_URL, LOGIN_URL, CHECK_HUNT_STATUS_URL, HUNT_URL, DASHBOARD_URL
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 from src.vanya.service.phantom_halls_service import PhantomHallsService
@@ -33,19 +33,19 @@ class LoginService:
             return True
         return False
 
-    def save_cookies(self):
+    def save_cookies(self) -> None:
         path = self.cookie_path()
         with open(path, "wb") as f:
             pickle.dump(self.session.cookies, f)
 
-    def init_session(self):
+    def init_session(self) -> None:
         self.session.headers.update({
             "accept": "text/html,application/xhtml+xml",
             "accept-language": "en-US,en;q=0.9",
             "user-agent": "Mozilla/5.0",
         })
 
-    def login(self):
+    def login(self) -> None:
         self.session.headers.update({
             "user-agent": "Mozilla/5.0",
             "content-type": "application/x-www-form-urlencoded",
@@ -73,20 +73,24 @@ class LoginService:
 
         logging.info(f"Login successful for {self.account.username}")
 
-    def ensure_logged_in(self):
+    def ensure_logged_in(self) -> None:
         if self.load_cookies():
-            response = self.session.get(BASE_URL, timeout=10)
-            if "/login" not in response.url.lower():
+            response = self.session.get(
+                DASHBOARD_URL,
+                timeout=10,
+                allow_redirects=False,
+            )
+            if response.status_code < 300 or response.status_code >= 400:
                 return
 
         self.login()
 
-    def reconcile_mode(self):
+    def reconcile_mode(self) -> None:
         try:
-            resp = self.account.session.get(CHECK_HUNT_STATUS_URL, timeout=10)
-            resp.raise_for_status()
-            json_resp = resp.json()
-            in_hunt = json_resp.get("in_hunt", False)
+            response = self.account.session.get(CHECK_HUNT_STATUS_URL, timeout=10)
+            response.raise_for_status()
+            json_response = response.json()
+            in_hunt = json_response.get("in_hunt", False)
 
             if self.account.mode in {Mode.IDLE, Mode.TRAINING} and in_hunt:
                 self.account.mode = self._get_current_hunt_mode()
@@ -123,10 +127,10 @@ class LoginService:
         }
 
         try:
-            resp = self.account.session.get(HUNT_URL, timeout=10)
-            resp.raise_for_status()
+            response = self.account.session.get(HUNT_URL, timeout=10)
+            response.raise_for_status()
 
-            soup = BeautifulSoup(resp.text, "html.parser")
+            soup = BeautifulSoup(response.text, "html.parser")
             h1 = soup.select_one(".hunt-container h1")
             if not h1:
                 logging.warning(f"Failed to get hunt name for {self.account.username}")

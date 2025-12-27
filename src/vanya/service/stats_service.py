@@ -10,7 +10,7 @@ class StatsService:
     def __init__(self, account: Account):
         self.account = account
 
-    def refresh_account_stats(self):
+    def refresh_account_stats(self) -> None:
         logging.info(f"Refreshing stats for account {self.account.username}")
 
         response = self.account.session.get(DASHBOARD_URL, timeout=10)

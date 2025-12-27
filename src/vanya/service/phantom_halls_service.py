@@ -1,5 +1,6 @@
 import logging
 import time
+from typing import Optional
 
 from bs4 import BeautifulSoup
 
@@ -14,7 +15,7 @@ class PhantomHallsService(BaseHuntService):
     def __init__(self, account: Account):
         super().__init__(account)
 
-    def _join_dungeon_queue(self, dungeon_id: str):
+    def _join_dungeon_queue(self, dungeon_id: str) -> None:
         self.account.session.post(
             DUNGEON_VIEW_URL,
             data={
@@ -27,7 +28,7 @@ class PhantomHallsService(BaseHuntService):
 
         logging.info(f"Joined dungeon {dungeon_id} queue for account {self.account.username}")
 
-    def _start_dungeon(self, dungeon_id: str):
+    def _start_dungeon(self, dungeon_id: str) -> None:
         self.account.session.post(
             DUNGEON_VIEW_URL,
             data={
@@ -40,7 +41,7 @@ class PhantomHallsService(BaseHuntService):
 
         logging.info(f"Started dungeon {dungeon_id} for account {self.account.username}")
 
-    def _fetch_dungeon_lobby(self):
+    def _fetch_dungeon_lobby(self) -> dict:
         return self.account.session.get(
             DUNGEON_LOBBY_URL,
             params={
@@ -51,10 +52,10 @@ class PhantomHallsService(BaseHuntService):
             timeout=10,
         ).json()
 
-    def _get_latest_enabled_dungeon(self, specific_area_id: str | None = None):
-        resp = self.account.session.get(DUNGEON_VIEW_URL, timeout=10)
-        resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, "html.parser")
+    def _get_latest_enabled_dungeon(self, specific_area_id: Optional[str] = None):
+        response = self.account.session.get(DUNGEON_VIEW_URL, timeout=10)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
         dungeon_areas = soup.select(".hunt-area")
 
         if not dungeon_areas:
@@ -91,7 +92,7 @@ class PhantomHallsService(BaseHuntService):
 
         return None, None, None, None, None
 
-    def hunt(self, area_id: str | None = None):
+    def hunt(self, area_id: Optional[str] = None) -> None:
         joined = False
 
         if not area_id:
@@ -107,7 +108,7 @@ class PhantomHallsService(BaseHuntService):
                 if not joined:
                     self._join_dungeon_queue(area_id)
                     joined = True
-                    time.sleep(5)
+                    time.sleep(3)
                     continue
 
                 dungeon_status = self._fetch_dungeon_lobby().get(area_id)

@@ -2,15 +2,18 @@ import logging
 import threading
 import time
 
+from src.vanya.core.errors import VanyaError
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 from src.vanya.service.boss_service import BossService
+from src.vanya.service.deep_dragon_service import DeepDragonService
 from src.vanya.service.login_service import LoginService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
 from src.vanya.service.service_registry import service_registry
 from src.vanya.service.solo_hunt_service import SoloHuntService
 from src.vanya.service.stats_service import StatsService
 from src.vanya.service.training_service import TrainingService
+from src.vanya.telegram.telegram_service import TelegramService
 
 
 class Scheduler:
@@ -45,25 +48,30 @@ class Scheduler:
 
     def _run(self, account: Account):
         last_login_check = 0.0
+        last_stats_refresh = 0.0
 
         while not self._stop_event.is_set():
-            try: 
+            try:
                 now: float = time.time()
 
                 if now - last_login_check > 60:
                     login_service = service_registry.get(LoginService, account)
                     login_service.ensure_logged_in()
                     login_service.reconcile_mode()
-
-                    service_registry.get(StatsService, account).refresh_account_stats()
-
                     last_login_check = now
+
+                if now - last_stats_refresh > 30:
+                    service_registry.get(StatsService, account).refresh_account_stats()
+                    last_stats_refresh = now
 
                 if account.mode == Mode.SOLO_HUNT:
                     service_registry.get(SoloHuntService, account).tick()
 
                 if account.mode == Mode.PHANTOM_HALLS:
                     service_registry.get(PhantomHallsService, account).tick()
+
+                if account.mode == Mode.DEEP_DRAGON:
+                    service_registry.get(DeepDragonService, account).tick()
 
                 if account.mode == Mode.TRAINING:
                     service_registry.get(TrainingService, account).tick()
@@ -72,6 +80,13 @@ class Scheduler:
                     service_registry.get(BossService, account).tick()
 
                 time.sleep(self.MODE_TICK_INTERVAL[account.mode])
+            except VanyaError as e:
+                TelegramService().send(
+                    f"❌ <b>Vanya error</b>\n"
+                    f"<b>Account:</b> {account.username}\n"
+                    f"<b>Error:</b> {type(e).__name__}\n"
+                    f"<pre>{e}</pre>"
+                )
             except:
-                logging.error("")
+                logging.exception("Unexpected error in scheduler thread.")
                 time.sleep(5)

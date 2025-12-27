@@ -117,7 +117,6 @@ async def solo_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Unknown account: {name}")
         return
 
-    # -------- STOP --------
     if action == "stop":
         if account.mode != Mode.SOLO_HUNT:
             await update.message.reply_text(f"{name} is not solo hunting")
@@ -128,7 +127,6 @@ async def solo_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"{name} stopped solo hunting")
         return
 
-    # -------- START --------
     if action != "start":
         await update.message.reply_text(
             "Usage:\n"
@@ -143,6 +141,9 @@ async def solo_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{name} already hunting\n{hunt.name}"
         )
         return
+
+    if account.mode == Mode.PHANTOM_HALLS:
+        service_registry.get(PhantomHallsService, account).stop_hunt()
 
     try:
         service_registry.get(SoloHuntService, account).hunt(area_id=area_id)
@@ -185,7 +186,6 @@ async def phantom_halls_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Unknown account: {name}")
         return
 
-    # -------- STOP --------
     if action == "stop":
         if account.mode != Mode.PHANTOM_HALLS:
             await update.message.reply_text(f"{name} is not on phantom halls")
@@ -196,7 +196,6 @@ async def phantom_halls_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"{name} stopped phantom halls")
         return
 
-    # -------- START --------
     if action != "start":
         await update.message.reply_text(
             "Usage:\n"
@@ -211,6 +210,9 @@ async def phantom_halls_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{name} already hunting\n{hunt.name}"
         )
         return
+
+    if account.mode == Mode.SOLO_HUNT:
+        service_registry.get(SoloHuntService, account).stop_hunt()
 
     try:
         service_registry.get(PhantomHallsService, account).hunt(area_id=area_id)
@@ -339,10 +341,10 @@ async def boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         lines = []
         for boss in bosses:
             if mode == "full":
-                boss_service.kill_boss(boss.id)
+                boss_service.kill_boss(boss.boss_id)
                 lines.append(f"☠️ {boss.name} killed")
             else:
-                result = boss_service.attack_boss_once(boss.id)
+                result = boss_service.attack_boss_once(boss.boss_id)
                 lines.append(
                     f"🗡️ {boss.name}: "
                     f"-{result['player_damage']} dmg "

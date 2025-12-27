@@ -4,8 +4,11 @@ import time
 from typing import Optional
 
 from bs4 import BeautifulSoup
+from bs4.element import AttributeValueList
 
 from src.vanya.core.constants import ADVENTURE_ATTACK_URL, ADVENTURE_URL
+from src.vanya.core.errors import VanyaError
+from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 from src.vanya.model.boss import Boss
 from src.vanya.model.mode import Mode
@@ -20,10 +23,12 @@ class BossService:
         self.boss_id: Optional[int] = None
 
     def list_available_bosses(self) -> list[Boss]:
-        resp = self.account.session.get(ADVENTURE_URL, timeout=10)
-        resp.raise_for_status()
+        logging.info(f"Listing available bosses for account {self.account.username}")
 
-        soup = BeautifulSoup(resp.text, "html.parser")
+        response = self.account.session.get(ADVENTURE_URL, timeout=10)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.text, "html.parser")
         bosses: list[Boss] = []
 
         for card in soup.select("a.boss-card.unlocked"):
@@ -47,7 +52,7 @@ class BossService:
             life, xp = self._parse_life_xp(info)
             required_level = self._parse_required_level(info)
 
-            boosted = "boosted" in card.get("class", [])
+            boosted = "boosted" in card.get("class", AttributeValueList())
 
             bosses.append(
                 Boss(
@@ -69,6 +74,11 @@ class BossService:
             return
 
         for boss in bosses:
+            current_life = self._get_boss_current_life(boss.boss_id)
+
+            if current_life / boss.life > 0.25:
+                continue
+
             try:
                 self.attack_boss_once(boss.boss_id)
             except Exception as e:
@@ -76,25 +86,25 @@ class BossService:
                     f"Boss hit failed | account={self.account.username} | boss={boss.name} | err={e}"
                 )
 
-    def kill_boss(self, boss_id: int):
+    def kill_boss(self, boss_id: int) -> None:
         self.boss_id = boss_id
 
         self.account.mode = Mode.BOSSES
 
-    def tick(self):
+    def tick(self) -> None:
         data = self.attack_boss_once(self.boss_id)
 
         if data.get("new_stamina", 0) <= 5:
             self.pub_service.go_to_pub()
-            time.sleep(60)
+            time.sleep(3600)
 
         if data.get("new_player_life", 0) <= 100:
-            self.pub_service.go_to_pub()
+            self.pub_service.go_to_pub_and_heal()
 
     def attack_boss_once(self, boss_id: int) -> dict:
         csrf = self._fetch_csrf()
 
-        resp = self.account.session.post(
+        response = self.account.session.post(
             ADVENTURE_ATTACK_URL,
             json={
                 "boss_id": boss_id,
@@ -108,11 +118,11 @@ class BossService:
             },
             timeout=10,
         )
-        resp.raise_for_status()
+        response.raise_for_status()
 
-        data = resp.json()
+        data = response.json()
         if data.get("status") != "ok":
-            raise RuntimeError(f"Boss attack failed: {data}")
+            raise VanyaError(f"Boss attack failed: {data}")
 
         logging.info(
             "Boss hit | account=%s | boss=%s | dmg=%.1f | boss_hp=%.1f/%.1f | player_hp=%d/%d | stamina=%d",
@@ -137,14 +147,24 @@ class BossService:
         m = re.search(r"Life:\s*([\d,]+)\s*\|\s*XP:\s*([\d,]+)", text)
         return int(m.group(1).replace(",", "")), int(m.group(2).replace(",", ""))
 
-    def _parse_required_level(self, info):
+    def _parse_required_level(self, info) -> int:
         m = re.search(r"Required Level:\s*(\d+)", info.get_text())
         return int(m.group(1))
 
     def _fetch_csrf(self) -> str:
-        resp = self.account.session.get(ADVENTURE_URL, timeout=10)
+        response = self.account.session.get(ADVENTURE_URL, timeout=10)
+        response.raise_for_status()
+
+        return get_global_csrf(response.text)
+
+    def _get_boss_current_life(self, boss_id: int) -> int:
+        resp = self.account.session.get(
+            f"{ADVENTURE_URL}?boss_id={boss_id}",
+            timeout=10,
+        )
         resp.raise_for_status()
-        match = re.search(r'globalCsrfToken\s*=\s*"([a-f0-9]+)"', resp.text)
-        if not match:
-            raise RuntimeError("CSRF token not found on adventure page")
-        return match.group(1)
+
+        soup = BeautifulSoup(resp.text, "html.parser")
+        text = soup.select_one("#boss-life-text").text
+        cur, _ = text.split("/")
+        return int(cur.replace(",", "").strip())
