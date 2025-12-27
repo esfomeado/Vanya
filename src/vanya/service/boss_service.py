@@ -75,7 +75,7 @@ class BossService:
         for boss in bosses:
             current_life = self._get_boss_current_life(boss.boss_id)
 
-            if current_life / boss.life > 0.25:
+            if current_life / boss.life > 0.5:
                 continue
 
             try:
