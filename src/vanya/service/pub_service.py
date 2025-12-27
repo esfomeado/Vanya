@@ -3,7 +3,7 @@ import re
 import time
 from typing import Optional
 
-from src.vanya.core.constants import TRAIN_URL, PUB_URL, PUB_NPC_BUY_URL, PUB_REGENERATE_URL
+from src.vanya.core.constants import TRAIN_URL, PUB_URL, PUB_NPC_BUY_URL, PUB_REGENERATE_URL, PUB_UPDATE_URL
 from src.vanya.core.errors import VanyaError
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
@@ -31,13 +31,28 @@ class PubService:
 
     def regenerate(self) -> None:
         self.account.session.post(
+            PUB_UPDATE_URL,
+            data={
+                "x": "100",
+                "y": "100",
+            },
+            headers={
+                "origin": "https://vanyaonline.com",
+                "referer": PUB_URL,
+                "x-csrf-token": self.csrf,
+                "content-type": "application/x-www-form-urlencoded",
+            },
+            timeout=10,
+        ).raise_for_status()
+
+        self.account.session.post(
             PUB_REGENERATE_URL,
             headers={
                 "referer": PUB_URL,
             },
             timeout=10,
         ).raise_for_status()
-        time.sleep(121)
+        time.sleep(125)
 
     def _start_training(self) -> None:
         logging.info(f"Starting training for account {self.account.username}")

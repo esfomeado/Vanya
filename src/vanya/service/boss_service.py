@@ -31,7 +31,7 @@ class BossService:
         bosses: list[Boss] = []
 
         for card in soup.select("a.boss-card.unlocked"):
-            if card.select_one("span:contains('DEAD')"):
+            if card.select_one("span:-soup-contains('DEAD')"):
                 continue
 
             status = card.get_text(strip=True)

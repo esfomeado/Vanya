@@ -52,15 +52,15 @@ class Scheduler:
 
         while not self._stop_event.is_set():
             try:
-                now: float = time.time()
+                now = time.time()
 
-                if now - last_login_check > 60:
+                if now - last_login_check > 60.0:
                     login_service = service_registry.get(LoginService, account)
                     login_service.ensure_logged_in()
                     login_service.reconcile_mode()
                     last_login_check = now
 
-                if now - last_stats_refresh > 30:
+                if now - last_stats_refresh > 30.0:
                     service_registry.get(StatsService, account).refresh_account_stats()
                     last_stats_refresh = now
 

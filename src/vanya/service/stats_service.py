@@ -28,7 +28,7 @@ class StatsService:
                 value = raw.replace(",", "").replace("\xa0", "").strip()
                 self.account.stats.gold = int(value)
 
-        life_panel = soup.select_one(".card h3:contains('Life')")
+        life_panel = soup.select_one(".card h3:-soup-contains('Life')")
         if life_panel:
             muted = life_panel.find_next("div", class_="muted").text
             health, max_health = muted.split("/")
