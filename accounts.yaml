@@ -1,6 +1,33 @@
 accounts:
-  - username: esfomeado
-    password: jony1234
+  - username: Naruto
+    password: francesinha
+    auto_equip: true
+  - username: Lakkena
+    password: 0A15VjNicRyF
+    auto_equip: true
+  - username: Nurfe
+    password: au73xXLGZeSb
+    auto_equip: true
+  - username: Inhu
+    password: hGcKZeY8xaW5
+    auto_equip: true
+  - username: Mohu
+    password: r37EMq3sZFDx
+    auto_equip: true
+  - username: Tala
+    password: GcJ8QBHB7zmC
+    auto_equip: true
+  - username: Ipex
+    password: rWSuwYLHQTSa
+    auto_equip: true
+  - username: Cuve
+    password: RRP2CdLWLMM2
+    auto_equip: true
+  - username: Arda
+    password: heKh6edQyadH
+    auto_equip: true
+  - username: Lili
+    password: f8bAhk2dLjKG
     auto_equip: true
 
 telegram:
