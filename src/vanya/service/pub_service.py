@@ -99,7 +99,7 @@ class PubService:
                 potion_button = btn
                 break
 
-        cost_span = potion_button.select_one(".cost")
+        cost_span = potion_button.select_one(".cost ")
 
         cost_text = cost_span.text.replace(",", "").strip()
         return int("".join(filter(str.isdigit, cost_text)))
