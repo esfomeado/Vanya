@@ -3,7 +3,7 @@ import re
 import time
 from typing import Optional
 
-from src.vanya.core.constants import TRAIN_URL, PUB_URL, PUB_NPC_BUY_URL
+from src.vanya.core.constants import TRAIN_URL, PUB_URL, PUB_NPC_BUY_URL, PUB_REGENERATE_URL
 from src.vanya.core.errors import VanyaError
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
@@ -71,7 +71,16 @@ class PubService:
                 f"Not enough gold to buy potion for account {self.account.username}. "
                 f"Needed: {health_potion_price}, Available: {self.account.stats.gold}. Waiting 4 minutes."
             )
-            time.sleep(240)
+            for _ in range(2):
+                self.account.session.post(
+                    PUB_REGENERATE_URL,
+                    headers={
+                        "referer": PUB_URL,
+                    },
+                    timeout=10,
+                ).raise_for_status()
+                time.sleep(121)
+
             return
 
         logging.info(f"Buying health potion for account {self.account.username}")
