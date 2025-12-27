@@ -43,6 +43,9 @@ class LoginService:
             "accept": "text/html,application/xhtml+xml",
             "accept-language": "en-US,en;q=0.9",
             "user-agent": "Mozilla/5.0",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
         })
 
     def login(self) -> None:

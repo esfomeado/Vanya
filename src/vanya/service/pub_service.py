@@ -1,5 +1,8 @@
 import logging
+import time
 from typing import Optional
+
+from bs4 import BeautifulSoup
 
 from src.vanya.core.constants import TRAIN_URL, PUB_URL, PUB_NPC_BUY_URL
 from src.vanya.core.utils import get_global_csrf
@@ -59,7 +62,17 @@ class PubService:
         ).raise_for_status()
 
     def _buy_health_potion(self) -> None:
-        logging.info(f"Buying health potion for account {self.account.username}")
+        logging.info(f"Attempting to buy health potion for account {self.account.username}")
+
+        health_potion_price = self._get_health_potion_price()
+
+        if self.account.stats.gold < health_potion_price:
+            logging.info(
+                f"Not enough gold to buy potion for account {self.account.username}. "
+                f"Needed: {health_potion_price}, Available: {self.account.stats.gold}. Waiting 4 minutes."
+            )
+            time.sleep(240)
+            return
 
         self.account.session.post(
             PUB_NPC_BUY_URL,
@@ -74,3 +87,19 @@ class PubService:
             },
             timeout=10,
         ).raise_for_status()
+
+    def _get_health_potion_price(self) -> int:
+        response = self.account.session.get(PUB_URL, timeout=10)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        potion_button = None
+        for btn in soup.select("#pub-options button"):
+            if "Full Life Potion" in btn.text:
+                potion_button = btn
+                break
+
+        cost_span = potion_button.select_one(".cost")
+
+        cost_text = cost_span.text.replace(",", "").strip()
+        return int("".join(filter(str.isdigit, cost_text)))
