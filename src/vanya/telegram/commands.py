@@ -5,6 +5,7 @@ from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 from src.vanya.service.boss_service import BossService
 from src.vanya.service.chat_service import ChatService
+from src.vanya.service.guild_service import GuildService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
 from src.vanya.service.service_registry import service_registry
 from src.vanya.service.solo_hunt_service import SoloHuntService
@@ -236,6 +237,16 @@ async def auto_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not allowed(update):
         return
 
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/auto_hunt start\n"
+            "/auto_hunt stop"
+        )
+        return
+
+    action = context.args[0]
+
     accounts: list[Account] = context.application.bot_data["accounts"]
     if not accounts:
         await update.message.reply_text("No accounts configured")
@@ -243,9 +254,37 @@ async def auto_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     lines: list[str] = []
 
+    if action == "stop":
+        for account in accounts:
+            if account.mode == Mode.SOLO_HUNT:
+                service_registry.get(SoloHuntService, account).stop_hunt()
+                lines.append(f"⏹️ {account.username} stopped Solo Hunt")
+            elif account.mode == Mode.PHANTOM_HALLS:
+                service_registry.get(PhantomHallsService, account).stop_hunt()
+                lines.append(f"⏹️ {account.username} stopped Phantom Halls")
+            elif account.mode == Mode.DEEP_DRAGON:
+                lines.append(f"⏹️ {account.username} stopped Deep Dragon")
+            else:
+                lines.append(f"⏭️ {account.username} not hunting")
+
+        await update.message.reply_text(
+            "🛑 Auto Hunt Stop\n\n" + "\n".join(lines)
+        )
+        return
+
+    if action != "start":
+        await update.message.reply_text(
+            "Usage:\n"
+            "/auto_hunt start\n"
+            "/auto_hunt stop"
+        )
+        return
+
     for account in accounts:
         if account.mode in {Mode.SOLO_HUNT, Mode.PHANTOM_HALLS, Mode.DEEP_DRAGON}:
-            lines.append(f"⏭️ {account.username} already hunting ({account.mode.value})")
+            lines.append(
+                f"⏭️ {account.username} already hunting ({account.mode.value})"
+            )
             continue
 
         try:
@@ -274,7 +313,7 @@ async def auto_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
     await update.message.reply_text(
-        "🤖 Auto Hunt Result\n\n" + "\n".join(lines)
+        "🤖 Auto Hunt Start\n\n" + "\n".join(lines)
     )
 
 
@@ -405,3 +444,56 @@ async def boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"Boss command failed for {name}:\n{e}"
         )
+
+
+async def guild_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/guild <account> join <guild_id>"
+        )
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+
+    name = context.args[0]
+    action = context.args[1]
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    if action == "join":
+        if len(context.args) < 3:
+            await update.message.reply_text(
+                "Usage:\n"
+                "/guild <account> join <guild_id>"
+            )
+            return
+
+        try:
+            guild_id = int(context.args[2])
+        except ValueError:
+            await update.message.reply_text("guild_id must be an integer")
+            return
+
+        try:
+            service_registry.get(GuildService, account).join(guild_id)
+            await update.message.reply_text(
+                f"🏰 {name} applied to guild {guild_id}"
+            )
+        except Exception as e:
+            await update.message.reply_text(
+                f"Guild join failed for {name}:\n{e}"
+            )
+        return
+
+    await update.message.reply_text(
+        f"Unknown guild action: {action}\n\n"
+        "Available actions:\n"
+        "- join"
+    )

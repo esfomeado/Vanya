@@ -4,7 +4,7 @@ from typing import Optional
 
 from bs4 import BeautifulSoup
 
-from src.vanya.core.constants import DASHBOARD_URL, DEMON_PASS_URL, HUNTIARY_URL, UPDEX_URL, SEAL_ITEM_URL
+from src.vanya.core.constants import DASHBOARD_URL, DEMON_PASS_URL, HUNTIARY_URL, UPDEX_URL, SEAL_ITEM_URL, BASE_URL
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 
@@ -33,33 +33,38 @@ class DailyTasksService:
 
         response = self.account.session.get(DASHBOARD_URL, timeout=10)
         response.raise_for_status()
+        csrf = get_global_csrf(response.text)
 
-        soup = BeautifulSoup(response.text, "html.parser")
-
-        ready_nodes = soup.select(
-            "#free-track-container .pass-node.ready"
+        status = self.account.session.get(
+            f"{BASE_URL}/actions/demon_pass",
+            headers={
+                "referer": DASHBOARD_URL,
+                "accept": "*/*",
+            },
+            timeout=10,
         )
+        status.raise_for_status()
 
-        for node in ready_nodes:
-            onclick = node.get("onclick")
-            if not onclick:
+        data = status.json()
+
+        current_day = int(data["current_day"])
+        claimed: set[int] = set(data["pass"]["claimed"])
+        max_tier = min(current_day, 5)
+
+        for tier in range(1, max_tier + 1):
+            if tier in claimed:
                 continue
 
-            tier = int(
-                onclick
-                .replace("claimReward(", "")
-                .replace(")", "")
-                .strip()
+            logging.info(
+                f"Claiming daemon pass tier {tier} for {self.account.username}"
             )
-
-            csrf_token = get_global_csrf(response.text)
 
             self.account.session.post(
                 DEMON_PASS_URL,
                 headers={
                     "referer": DASHBOARD_URL,
                     "origin": "https://vanyaonline.com",
-                    "x-csrf-token": csrf_token,
+                    "x-csrf-token": csrf,
                     "content-type": "application/x-www-form-urlencoded",
                 },
                 data={
