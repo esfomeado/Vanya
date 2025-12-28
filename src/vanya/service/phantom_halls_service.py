@@ -4,7 +4,9 @@ from typing import Optional
 
 from bs4 import BeautifulSoup
 
-from src.vanya.core.constants import DUNGEON_VIEW_URL, DUNGEON_LOBBY_URL
+from src.vanya.core.constants import DUNGEON_VIEW_URL, DUNGEON_LOBBY_URL, HUNT_URL, DASHBOARD_URL, PUB_NPC_BUY_URL, \
+    PUB_URL
+from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 from src.vanya.model.hunt import Hunt
 from src.vanya.model.mode import Mode
@@ -14,6 +16,7 @@ from src.vanya.service.base_hunt_service import BaseHuntService
 class PhantomHallsService(BaseHuntService):
     def __init__(self, account: Account):
         super().__init__(account)
+        self._hunt_started_at: Optional[float] = None
 
     def _join_dungeon_queue(self, dungeon_id: str) -> None:
         self.account.session.post(
@@ -119,6 +122,7 @@ class PhantomHallsService(BaseHuntService):
                 if joined and not am_i_in:
                     self.account.hunt = Hunt(area_id=area_id, name=area_id, max_hit=max_hit)
                     self.account.mode = Mode.PHANTOM_HALLS
+                    self._hunt_started_at = time.time()
 
                     logging.info(f"Joined dungeon {area_id} for account {self.account.username}")
                     return
@@ -130,9 +134,44 @@ class PhantomHallsService(BaseHuntService):
                 self._start_dungeon(area_id)
                 self.account.hunt = Hunt(area_id=area_id, name=area_id, max_hit=max_hit)
                 self.account.mode = Mode.PHANTOM_HALLS
+                self._hunt_started_at = time.time()
                 logging.info(f"Joined dungeon {area_id} for account {self.account.username}")
 
                 return
             except Exception as e:
                 logging.error(f"Error while running dungeon hunt: {e}")
                 time.sleep(5)
+
+    def tick(self) -> None:
+        self.account.session.get(HUNT_URL, timeout=10).raise_for_status()
+
+        if self._hunt_started_at >= 11 * 60 * 60:
+            logging.info(
+                f"Phantom Halls time limit reached for {self.account.username}, stopping hunt"
+            )
+            self.stop_hunt()
+            self.pub_service.go_to_pub_and_heal()
+            self.auto_equip_service.equip()
+            self.hunt()
+            return
+
+        if self.account.stats.health <= self.account.hunt.max_hit + 10:
+            logging.info(f"Health below max hit for account {self.account.username}, hacky healing")
+            response = self.account.session.get(DASHBOARD_URL, timeout=10)
+            response.raise_for_status()
+
+            csrf_token = get_global_csrf(response.text)
+
+            self.account.session.post(
+                PUB_NPC_BUY_URL,
+                data={
+                    "item_id": "3"
+                },
+                headers={
+                    "origin": "https://vanyaonline.com",
+                    "referer": PUB_URL,
+                    "x-csrf-token": csrf_token,
+                    "content-type": "application/x-www-form-urlencoded",
+                },
+                timeout=10,
+            ).raise_for_status()
