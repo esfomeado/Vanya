@@ -4,7 +4,8 @@ from typing import Optional
 
 from bs4 import BeautifulSoup
 
-from src.vanya.core.constants import DASHBOARD_URL, DEMON_PASS_URL, HUNTIARY_URL, UPDEX_URL, SEAL_ITEM_URL, BASE_URL
+from src.vanya.core.constants import DASHBOARD_URL, DEMON_PASS_URL, HUNTIARY_URL, UPDEX_URL, SEAL_ITEM_URL, BASE_URL, \
+    BOOKS_OF_SHADOWS_URL, QUEST_COMPLETE_URL
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 
@@ -25,6 +26,7 @@ class DailyTasksService:
         self._claim_daemon_pass_rewards()
         self._claim_huntiary_rewards()
         self._seal_updex_items()
+        self._claim_shadow_book()
 
         self._last_run = now.date()
 
@@ -115,6 +117,52 @@ class DailyTasksService:
                     "origin": "https://vanyaonline.com",
                     "x-csrf-token": self.csrf,
                     "content-type": "application/x-www-form-urlencoded",
+                },
+                timeout=10,
+            ).raise_for_status()
+
+    def _claim_shadow_book(self) -> None:
+        response = self.account.session.get(
+            BOOKS_OF_SHADOWS_URL,
+            headers={
+                "referer": BOOKS_OF_SHADOWS_URL
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        claim_links = soup.select(
+            ".quest-book:not(.locked-seq) a.complete-btn[href*='quest_complete']"
+        )
+
+        if not claim_links:
+            logging.info(
+                f"No Shadow Book rewards ready for {self.account.username}"
+            )
+            return
+
+        for link in claim_links:
+            href = link.get("href")
+
+            if not href:
+                continue
+
+            quest_id = href.split("quest_id=")[-1]
+
+            logging.info(
+                f"Claiming Shadow Book quest {quest_id} "
+                f"for {self.account.username}"
+            )
+
+            self.account.session.get(
+                QUEST_COMPLETE_URL,
+                params={
+                    "quest_id": quest_id
+                },
+                headers={
+                    "referer": BOOKS_OF_SHADOWS_URL
                 },
                 timeout=10,
             ).raise_for_status()
