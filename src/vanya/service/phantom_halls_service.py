@@ -86,7 +86,7 @@ class PhantomHallsService(BaseHuntService):
             lobby_span = area.select_one(f"span#lobby-count-{area_id}")
             count, required_count = 0, 0
             if lobby_span:
-                text = lobby_span.text.strip()  # e.g., "0/2"
+                text = lobby_span.text.strip()
                 if "/" in text:
                     count_str, req_str = text.split("/")
                     count, required_count = int(count_str.strip()), int(req_str.strip())
@@ -111,7 +111,7 @@ class PhantomHallsService(BaseHuntService):
                 if not joined:
                     self._join_dungeon_queue(area_id)
                     joined = True
-                    time.sleep(5)
+                    time.sleep(3)
                     continue
 
                 dungeon_status = self._fetch_dungeon_lobby().get(area_id)
@@ -136,10 +136,10 @@ class PhantomHallsService(BaseHuntService):
                         return
 
                     joined = False
-                    time.sleep(5)
+                    time.sleep(10)
 
                 if count < required_count:
-                    time.sleep(5)
+                    time.sleep(3)
                     continue
 
                 self._start_dungeon(area_id)
@@ -151,7 +151,7 @@ class PhantomHallsService(BaseHuntService):
                 return
             except Exception as e:
                 logging.error(f"Error while running dungeon hunt: {e}")
-                time.sleep(5)
+                time.sleep(10)
 
     def tick(self) -> None:
         self.account.session.get(HUNT_URL, timeout=10).raise_for_status()
