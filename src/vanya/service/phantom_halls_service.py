@@ -150,11 +150,11 @@ class PhantomHallsService(BaseHuntService):
                 f"Phantom Halls time limit reached for {self.account.username}, stopping hunt"
             )
             self.stop_hunt()
+            self._hunt_started_at = None
             self.pub_service.go_to_pub_and_heal()
             self.auto_equip_service.equip()
             self.hunt()
 
-            self._hunt_started_at = None
             return
 
         if self.account.stats.health <= self.account.hunt.max_hit + 10:
