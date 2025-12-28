@@ -156,7 +156,7 @@ class PhantomHallsService(BaseHuntService):
     def tick(self) -> None:
         self.account.session.get(HUNT_URL, timeout=10).raise_for_status()
 
-        if self._hunt_started_at >= 11 * 60 * 60:
+        if time.time() - self._hunt_started_at >= 11 * 60 * 60:
             logging.info(
                 f"Phantom Halls time limit reached for {self.account.username}, stopping hunt"
             )
