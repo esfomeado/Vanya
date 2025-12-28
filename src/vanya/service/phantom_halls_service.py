@@ -5,7 +5,7 @@ from typing import Optional
 from bs4 import BeautifulSoup
 
 from src.vanya.core.constants import DUNGEON_VIEW_URL, DUNGEON_LOBBY_URL, HUNT_URL, DASHBOARD_URL, PUB_NPC_BUY_URL, \
-    PUB_URL
+    PUB_URL, CHECK_HUNT_STATUS_URL
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 from src.vanya.model.hunt import Hunt
@@ -111,7 +111,7 @@ class PhantomHallsService(BaseHuntService):
                 if not joined:
                     self._join_dungeon_queue(area_id)
                     joined = True
-                    time.sleep(3)
+                    time.sleep(5)
                     continue
 
                 dungeon_status = self._fetch_dungeon_lobby().get(area_id)
@@ -120,12 +120,23 @@ class PhantomHallsService(BaseHuntService):
                 am_i_in = dungeon_status.get("am_i_in", False)
 
                 if joined and not am_i_in:
-                    self.account.hunt = Hunt(area_id=area_id, name=area_id, max_hit=max_hit)
-                    self.account.mode = Mode.PHANTOM_HALLS
-                    self._hunt_started_at = time.time()
+                    response = self.account.session.get(
+                        CHECK_HUNT_STATUS_URL,
+                        timeout=10,
+                    )
+                    response.raise_for_status()
+                    in_hunt = response.json().get("in_hunt", False)
 
-                    logging.info(f"Joined dungeon {area_id} for account {self.account.username}")
-                    return
+                    if in_hunt:
+                        self.account.hunt = Hunt(area_id=area_id, name=area_id, max_hit=max_hit)
+                        self.account.mode = Mode.PHANTOM_HALLS
+                        self._hunt_started_at = time.time()
+
+                        logging.info(f"Joined dungeon {area_id} for account {self.account.username}")
+                        return
+
+                    joined = False
+                    time.sleep(5)
 
                 if count < required_count:
                     time.sleep(5)
