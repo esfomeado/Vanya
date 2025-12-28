@@ -117,7 +117,7 @@ class PhantomHallsService(BaseHuntService):
                 am_i_in = dungeon_status.get("am_i_in", False)
 
                 if joined and not am_i_in:
-                    self.account.hunt = Hunt(area_id=area_id, name="Phantom Halls", max_hit=max_hit)
+                    self.account.hunt = Hunt(area_id=area_id, name=area_id, max_hit=max_hit)
                     self.account.mode = Mode.PHANTOM_HALLS
 
                     logging.info(f"Joined dungeon {area_id} for account {self.account.username}")
@@ -128,7 +128,7 @@ class PhantomHallsService(BaseHuntService):
                     continue
 
                 self._start_dungeon(area_id)
-                self.account.hunt = Hunt(area_id=area_id, name="Phantom Halls", max_hit=max_hit)
+                self.account.hunt = Hunt(area_id=area_id, name=area_id, max_hit=max_hit)
                 self.account.mode = Mode.PHANTOM_HALLS
                 logging.info(f"Joined dungeon {area_id} for account {self.account.username}")
 
