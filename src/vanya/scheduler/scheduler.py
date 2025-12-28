@@ -43,7 +43,7 @@ class Scheduler:
     def stop(self):
         self._stop_event.set()
         for thread in self._threads:
-            thread.join()
+            thread.join(timeout=5)
 
         logging.info("Scheduler stopped.")
 
@@ -86,7 +86,7 @@ class Scheduler:
 
                 service_registry.get(DailyTasksService, account).run_if_due()
 
-                time.sleep(self.MODE_TICK_INTERVAL[account.mode])
+                self._stop_event.wait(self.MODE_TICK_INTERVAL[account.mode])
             except VanyaError as e:
                 TelegramService().send(
                     f"❌ <b>Vanya error</b>\n"
