@@ -1,8 +1,7 @@
 import logging
 
-from src.vanya.core.constants import GUILDS_URL, GUILDS_APPLY_URL
+from src.vanya.core.constants import GUILDS_URL, GUILDS_APPLY_URL, GUILDS_LEAVE_URL
 from src.vanya.core.utils import get_global_csrf
-from vanya.core.constants import GUILDS_LEAVE_URL
 
 
 class GuildService:
