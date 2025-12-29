@@ -46,7 +46,7 @@ class BaseHuntService(ABC):
     def tick(self) -> None:
         self.account.session.get(HUNT_URL, timeout=10).raise_for_status()
 
-        if self.account.stats.health <= self.account.hunt.max_hit + 10:
+        if self.account.stats.health <= self.account.hunt.max_hit + 1:
             logging.info(f"Health below max hit for account {self.account.username}, stopping hunt")
             self.stop_hunt()
             self.pub_service.go_to_pub_and_heal()
