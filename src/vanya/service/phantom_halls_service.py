@@ -156,7 +156,7 @@ class PhantomHallsService(BaseHuntService):
     def tick(self) -> None:
         self.account.session.get(HUNT_URL, timeout=10).raise_for_status()
 
-        if time.time() - self._hunt_started_at >= 11 * 60 * 60:
+        if time.time() - self._hunt_started_at >= 11.5 * 60 * 60:
             logging.info(
                 f"Phantom Halls time limit reached for {self.account.username}, stopping hunt"
             )
@@ -168,7 +168,7 @@ class PhantomHallsService(BaseHuntService):
 
             return
 
-        if self.account.stats.health <= self.account.hunt.max_hit + 10:
+        if self.account.stats.health <= self.account.hunt.max_hit + (self.account.hunt.max_hit / 2):
             logging.info(f"Health below max hit for account {self.account.username}, hacky healing")
             response = self.account.session.get(DASHBOARD_URL, timeout=10)
             response.raise_for_status()
