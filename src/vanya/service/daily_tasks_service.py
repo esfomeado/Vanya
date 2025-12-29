@@ -5,7 +5,7 @@ from typing import Optional
 from bs4 import BeautifulSoup
 
 from src.vanya.core.constants import DASHBOARD_URL, DEMON_PASS_URL, HUNTIARY_URL, UPDEX_URL, SEAL_ITEM_URL, BASE_URL, \
-    BOOKS_OF_SHADOWS_URL, QUEST_COMPLETE_URL
+    BOOKS_OF_SHADOWS_URL, QUEST_COMPLETE_URL, GUILDS_URL, GUILD_SHRINE_SPIN_URL
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 
@@ -27,6 +27,7 @@ class DailyTasksService:
         self._claim_huntiary_rewards()
         self._seal_updex_items()
         self._claim_shadow_book()
+        self._spin_guild_shrine()
 
         self._last_run = now.date()
 
@@ -166,3 +167,29 @@ class DailyTasksService:
                 },
                 timeout=10,
             ).raise_for_status()
+
+    def _spin_guild_shrine(self) -> None:
+        if not self.account.guild:
+            logging.info(f"{self.account.username} not in guild, skipping guild shrine spin")
+            return
+
+        response = self.account.session.get(GUILDS_URL, timeout=10)
+        response.raise_for_status()
+
+        csrf = get_global_csrf(response.text)
+
+        self.account.session.post(
+            GUILD_SHRINE_SPIN_URL,
+            headers={
+                "origin": "https://vanyaonline.com",
+                "referer": GUILDS_URL,
+                "x-csrf-token": csrf,
+                "content-type": "application/x-www-form-urlencoded",
+            },
+            data={
+                "csrf_token": csrf,
+            },
+            timeout=10,
+        ).raise_for_status()
+
+        logging.info(f"Guild shrine spin executed for {self.account.username}")

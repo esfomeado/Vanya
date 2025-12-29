@@ -98,7 +98,7 @@ class BossService:
             for _ in range(20):
                 self.pub_service.regenerate()
 
-        if data.get("new_player_life", 0) <= 100:
+        if data.get("new_player_life", 0) <= 250:
             self.pub_service.go_to_pub_and_heal()
 
     def attack_boss_once(self, boss_id: int) -> dict:

@@ -18,6 +18,8 @@ class StatsService:
 
         soup = BeautifulSoup(response.text, "html.parser")
 
+        self.account.guild = None
+
         pills = soup.select(".profile .stat-pill")
         for pill in pills:
             text = pill.get_text(strip=True)
@@ -27,6 +29,16 @@ class StatsService:
                 raw = pill.find("strong").text
                 value = raw.replace(",", "").replace("\xa0", "").strip()
                 self.account.stats.gold = int(value)
+
+            strong = pill.find("strong")
+            span = pill.find("span")
+
+            if strong and span:
+                tag = strong.get_text(strip=True)
+                name = span.get_text(strip=True)
+                if tag.startswith("[") and tag.endswith("]"):
+                    self.account.guild = f"{tag} {name}"
+                    continue
 
         life_panel = soup.select_one(".card h3:-soup-contains('Life')")
         if life_panel:
@@ -55,3 +67,15 @@ class StatsService:
                 self.account.stats.defence = total
             elif name == "fishing":
                 self.account.stats.fishing = total
+
+        stamina_h3 = soup.select_one("h3:-soup-contains('Stamina')")
+        if stamina_h3:
+            panel_title = stamina_h3.parent
+            value_container = panel_title.find_next_sibling("div")
+            value_muted = value_container.select_one(".muted")
+
+            if value_muted and "/" in value_muted.text:
+                current, _ = value_muted.text.split("/", 1)
+                self.account.stats.stamina = int(
+                    current.replace(",", "").strip()
+                )

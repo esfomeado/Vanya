@@ -2,7 +2,6 @@ import logging
 import threading
 import time
 
-from src.vanya.core.errors import VanyaError
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 from src.vanya.service.boss_service import BossService
@@ -87,13 +86,14 @@ class Scheduler:
                 service_registry.get(DailyTasksService, account).run_if_due()
 
                 self._stop_event.wait(self.MODE_TICK_INTERVAL[account.mode])
-            except VanyaError as e:
+            except Exception as e:
+                logging.exception("Unexpected error in scheduler thread.")
+
                 TelegramService().send(
                     f"❌ <b>Vanya error</b>\n"
                     f"<b>Account:</b> {account.username}\n"
                     f"<b>Error:</b> {type(e).__name__}\n"
                     f"<pre>{e}</pre>"
                 )
-            except:
-                logging.exception("Unexpected error in scheduler thread.")
+
                 time.sleep(5)
