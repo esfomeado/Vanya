@@ -168,7 +168,7 @@ class PhantomHallsService(BaseHuntService):
 
             return
 
-        if self.account.stats.health <= self.account.hunt.max_hit + 1:
+        if self.account.stats.health <= self.account.hunt.max_hit + (self.account.hunt.max_hit / 2):
             logging.info(f"Health below max hit for account {self.account.username}, hacky healing")
             response = self.account.session.get(DASHBOARD_URL, timeout=10)
             response.raise_for_status()
