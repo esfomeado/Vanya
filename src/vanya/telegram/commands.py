@@ -70,11 +70,13 @@ async def stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lines = [
         f"👤 Account: {account.username}",
         f"🧭 Mode: {account.mode.value}",
+        f"🏰 Guild: {account.guild}"
         "",
         "📊 Stats",
         f"Level: {stats.level}",
         f"Gold: {stats.gold}",
         f"Health: {stats.health}/{stats.max_health}",
+        f"Stamina: {stats.stamina}",
         "",
         "⚔️ Skills",
         f"Sword: {stats.sword}",
