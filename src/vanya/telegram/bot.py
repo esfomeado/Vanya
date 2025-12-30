@@ -29,4 +29,4 @@ def start_telegram(accounts: list[Account]):
     application.add_handler(CommandHandler("stats", stats_cmd))
     application.add_handler(CommandHandler("train", train_cmd))
 
-    application.run_polling()
+    application.run_polling(bootstrap_retries=-1)
