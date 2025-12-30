@@ -499,3 +499,118 @@ async def guild_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Available actions:\n"
         "- join"
     )
+
+
+async def auto_guild_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text("Usage: /auto_guild <join|leave> [guild_id]")
+        return
+
+    action = context.args[0].lower()
+    guild_id = int(context.args[1]) if len(context.args) > 1 else None
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    results = []
+
+    for account in accounts:
+        try:
+            if action == "join":
+                if not account.guild:
+                    if guild_id is not None:
+                        service_registry.get(GuildService, account).join(guild_id)
+                        results.append(f"{account.username} joined guild {guild_id}")
+                    else:
+                        results.append(f"{account.username} not in a guild, no guild_id provided")
+                else:
+                    results.append(f"{account.username} already in guild {account.guild}")
+            elif action == "leave":
+                if account.guild:
+                    service_registry.get(GuildService, account).leave()
+                    results.append(f"{account.username} left guild {account.guild}")
+                else:
+                    results.append(f"{account.username} not in a guild")
+            else:
+                results.append(f"Invalid action {action}")
+        except Exception as e:
+            results.append(f"Error for {account.username}: {e}")
+
+    await update.message.reply_text("\n".join(results))
+
+
+async def auto_stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    lines = []
+
+    for account in accounts:
+        stats = account.stats
+        hunt = account.hunt
+        guild = account.guild or "None"
+
+        acc_lines = [
+            f"👤 {account.username} | Guild: {guild} | Mode: {account.mode.value}",
+            f"📊 Stats: Level {stats.level}, Gold {stats.gold}, Health {stats.health}/{stats.max_health}, Stamina {stats.stamina}",
+            f"⚔️ Skills: Sword {stats.sword}, Bow {stats.bow}, Magic {stats.magic}, Defence {stats.defence}, Fishing {stats.fishing}"
+        ]
+
+        if hunt:
+            acc_lines.append(f"🗡️ Hunting: {hunt.name}, Max hit {hunt.max_hit}")
+
+        lines.append("\n".join(acc_lines))
+
+    await update.message.reply_text("\n\n".join(lines))
+
+
+async def auto_boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    mode_arg = context.args[0].lower() if context.args else None
+    full_mode = mode_arg == "full"
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    results = []
+
+    for account in accounts:
+        boss_service: BossService = service_registry.get(BossService, account)
+        try:
+            bosses = boss_service.list_available_bosses()
+            if not bosses:
+                results.append(f"{account.username}: no available bosses")
+                continue
+
+            lines = []
+            for boss in bosses:
+                if full_mode:
+                    boss_service.kill_boss(boss.boss_id)
+                    lines.append(f"☠️ {boss.name} killed")
+                else:
+                    result = boss_service.attack_boss_once(boss.boss_id)
+                    lines.append(
+                        f"🗡️ {boss.name}: -{result['player_damage']} dmg "
+                        f"(boss {result['new_boss_life']}/{result['boss_max_life']})"
+                    )
+
+            results.append(f"👹 Boss run for {account.username}\n" + "\n".join(lines))
+
+        except Exception as e:
+            results.append(f"❌ Boss command failed for {account.username}: {e}")
+
+    await update.message.reply_text("\n\n".join(results))
