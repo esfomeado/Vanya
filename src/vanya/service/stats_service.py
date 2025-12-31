@@ -11,8 +11,6 @@ class StatsService:
         self.account = account
 
     def refresh_account_stats(self) -> None:
-        logging.info(f"Refreshing stats for account {self.account.username}")
-
         response = self.account.session.get(DASHBOARD_URL, timeout=10)
         response.raise_for_status()
 

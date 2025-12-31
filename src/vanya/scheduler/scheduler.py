@@ -2,6 +2,8 @@ import logging
 import threading
 import time
 
+from requests import ReadTimeout
+
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 from src.vanya.service.boss_service import BossService
@@ -21,9 +23,9 @@ class Scheduler:
         Mode.BOSSES: 5,
         Mode.IDLE: 60,
         Mode.TRAINING: 1,
-        Mode.SOLO_HUNT: 30,
-        Mode.PHANTOM_HALLS: 30,
-        Mode.DEEP_DRAGON: 30,
+        Mode.SOLO_HUNT: 20,
+        Mode.PHANTOM_HALLS: 20,
+        Mode.DEEP_DRAGON: 20,
     }
 
     def __init__(self, accounts: list[Account]):
@@ -60,7 +62,7 @@ class Scheduler:
                     login_service.reconcile_mode()
                     last_login_check = now
 
-                if now - last_stats_refresh > 30.0:
+                if now - last_stats_refresh > 20.0:
                     service_registry.get(StatsService, account).refresh_account_stats()
                     last_stats_refresh = now
 
@@ -86,14 +88,15 @@ class Scheduler:
                 service_registry.get(DailyTasksService, account).run_if_due()
 
                 self._stop_event.wait(self.MODE_TICK_INTERVAL[account.mode])
+            except ReadTimeout:
+                pass
             except Exception as e:
                 logging.exception("Unexpected error in scheduler thread.")
 
                 TelegramService().send(
-                    f"❌ <b>Vanya error</b>\n"
-                    f"<b>Account:</b> {account.username}\n"
-                    f"<b>Error:</b> {type(e).__name__}\n"
-                    f"<pre>{e}</pre>"
+                    f"Account: {account.username}\n"
+                    f"Error: {type(e).__name__}\n"
+                    f"{e}"
                 )
 
-                time.sleep(5)
+                time.sleep(3)
