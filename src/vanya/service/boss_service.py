@@ -93,7 +93,7 @@ class BossService:
     def tick(self) -> None:
         data = self.attack_boss_once(self.boss_id)
 
-        if data.get("new_stamina", 0) <= 5:
+        if data.get("new_stamina", 0) <= 10:
             self.pub_service.go_to_pub()
             for _ in range(20):
                 self.pub_service.regenerate()
