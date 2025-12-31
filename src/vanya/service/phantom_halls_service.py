@@ -4,9 +4,7 @@ from typing import Optional
 
 from bs4 import BeautifulSoup
 
-from src.vanya.core.constants import DUNGEON_VIEW_URL, DUNGEON_LOBBY_URL, HUNT_URL, DASHBOARD_URL, PUB_NPC_BUY_URL, \
-    PUB_URL, CHECK_HUNT_STATUS_URL
-from src.vanya.core.utils import get_global_csrf
+from src.vanya.core.constants import DUNGEON_VIEW_URL, DUNGEON_LOBBY_URL, HUNT_URL, CHECK_HUNT_STATUS_URL
 from src.vanya.model.account import Account
 from src.vanya.model.hunt import Hunt
 from src.vanya.model.mode import Mode
@@ -156,10 +154,8 @@ class PhantomHallsService(BaseHuntService):
     def tick(self) -> None:
         self.account.session.get(HUNT_URL, timeout=10).raise_for_status()
 
-        if time.time() - self._hunt_started_at >= 11.5 * 60 * 60:
-            logging.info(
-                f"Phantom Halls time limit reached for {self.account.username}, stopping hunt"
-            )
+        if self.account.stats.health <= (self.account.hunt.max_hit / 2):
+            logging.info(f"Health below max hit for account {self.account.username}, stopping hunt")
             self.stop_hunt()
             self._hunt_started_at = None
             self.pub_service.go_to_pub_and_heal()
@@ -167,24 +163,3 @@ class PhantomHallsService(BaseHuntService):
             self.hunt()
 
             return
-
-        if self.account.stats.health <= (self.account.hunt.max_hit * 2):
-            logging.info(f"Health below max hit for account {self.account.username}, hacky healing")
-            response = self.account.session.get(DASHBOARD_URL, timeout=10)
-            response.raise_for_status()
-
-            csrf_token = get_global_csrf(response.text)
-
-            self.account.session.post(
-                PUB_NPC_BUY_URL,
-                data={
-                    "item_id": "3"
-                },
-                headers={
-                    "origin": "https://vanyaonline.com",
-                    "referer": PUB_URL,
-                    "x-csrf-token": csrf_token,
-                    "content-type": "application/x-www-form-urlencoded",
-                },
-                timeout=10,
-            ).raise_for_status()
