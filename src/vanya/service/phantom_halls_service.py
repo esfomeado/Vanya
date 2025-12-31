@@ -65,7 +65,7 @@ class PhantomHallsService(BaseHuntService):
             return None, None, None, None, None
 
         for area in reversed(dungeon_areas):
-            form = area.find("form", action="explore?view=dungeons")
+            form = area.find("form")
             if not form:
                 continue
 
