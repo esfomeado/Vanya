@@ -74,7 +74,7 @@ class PhantomHallsService(BaseHuntService):
                 continue
 
             button = form.find("button", type="submit")
-            if not button or ("QUEUE UP" not in button.text and "Waiting... (Leave)" not in button.text):
+            if not button or ("QUEUE UP" not in button.text and "Leave" not in button.text):
                 continue
 
             dmg_span = area.select_one(".stat-row.damage-row span[title*='Expected damage']")
