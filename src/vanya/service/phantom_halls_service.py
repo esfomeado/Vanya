@@ -154,7 +154,7 @@ class PhantomHallsService(BaseHuntService):
     def tick(self) -> None:
         self.account.session.get(HUNT_URL, timeout=10).raise_for_status()
 
-        if self.account.stats.health <= (self.account.hunt.max_hit / 2):
+        if self.account.stats.health <= self.account.hunt.max_hit + (self.account.hunt.max_hit / 2):
             logging.info(f"Health below max hit for account {self.account.username}, stopping hunt")
             self.stop_hunt()
             self._hunt_started_at = None
