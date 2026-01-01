@@ -4,7 +4,7 @@ from typing import Optional
 
 from bs4 import BeautifulSoup
 
-from src.vanya.core.constants import DUNGEON_VIEW_URL, DUNGEON_LOBBY_URL, HUNT_URL, CHECK_HUNT_STATUS_URL
+from src.vanya.core.constants import DUNGEON_VIEW_URL, DUNGEON_LOBBY_URL, CHECK_HUNT_STATUS_URL
 from src.vanya.model.account import Account
 from src.vanya.model.hunt import Hunt
 from src.vanya.model.mode import Mode
@@ -14,7 +14,6 @@ from src.vanya.service.base_hunt_service import BaseHuntService
 class PhantomHallsService(BaseHuntService):
     def __init__(self, account: Account):
         super().__init__(account)
-        self._hunt_started_at: Optional[float] = None
 
     def _join_dungeon_queue(self, dungeon_id: str) -> None:
         self.account.session.post(
@@ -128,7 +127,6 @@ class PhantomHallsService(BaseHuntService):
                     if in_hunt:
                         self.account.hunt = Hunt(area_id=area_id, name=area_id, max_hit=max_hit)
                         self.account.mode = Mode.PHANTOM_HALLS
-                        self._hunt_started_at = time.time()
 
                         logging.info(f"Joined dungeon {area_id} for account {self.account.username}")
                         return
@@ -143,23 +141,9 @@ class PhantomHallsService(BaseHuntService):
                 self._start_dungeon(area_id)
                 self.account.hunt = Hunt(area_id=area_id, name=area_id, max_hit=max_hit)
                 self.account.mode = Mode.PHANTOM_HALLS
-                self._hunt_started_at = time.time()
                 logging.info(f"Joined dungeon {area_id} for account {self.account.username}")
 
                 return
             except Exception as e:
                 logging.error(f"Error while running dungeon hunt: {e}")
                 time.sleep(10)
-
-    def tick(self) -> None:
-        self.account.session.get(HUNT_URL, timeout=10).raise_for_status()
-
-        if self.account.stats.health <= self.account.hunt.max_hit + (self.account.hunt.max_hit / 2):
-            logging.info(f"Health below max hit for account {self.account.username}, stopping hunt")
-            self.stop_hunt()
-            self._hunt_started_at = None
-            self.pub_service.go_to_pub_and_heal()
-            self.auto_equip_service.equip()
-            self.hunt()
-
-            return
