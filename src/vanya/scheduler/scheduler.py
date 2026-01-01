@@ -10,6 +10,7 @@ from src.vanya.service.boss_service import BossService
 from src.vanya.service.daily_tasks_service import DailyTasksService
 from src.vanya.service.deep_dragon_service import DeepDragonService
 from src.vanya.service.login_service import LoginService
+from src.vanya.service.nexus_service import NexusService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
 from src.vanya.service.service_registry import service_registry
 from src.vanya.service.solo_hunt_service import SoloHuntService
@@ -64,6 +65,7 @@ class Scheduler:
 
                 if now - last_stats_refresh > 20.0:
                     service_registry.get(StatsService, account).refresh_account_stats()
+                    service_registry.get(NexusService, account).refresh()
                     last_stats_refresh = now
 
                 if account.mode == Mode.SOLO_HUNT:

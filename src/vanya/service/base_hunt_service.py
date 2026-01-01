@@ -9,6 +9,7 @@ from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 from src.vanya.service.auto_equip_service import AutoEquipService
 from src.vanya.service.boss_service import BossService
+from src.vanya.service.nexus_service import NexusService
 from src.vanya.service.pub_service import PubService
 from src.vanya.service.service_registry import service_registry
 
@@ -19,6 +20,7 @@ class BaseHuntService(ABC):
         self.auto_equip_service = service_registry.get(AutoEquipService, account)
         self.boss_service = service_registry.get(BossService, account)
         self.pub_service = service_registry.get(PubService, account)
+        self.nexus_service = service_registry.get(NexusService, account)
 
     @abstractmethod
     def hunt(self, area_id: Optional[str] = None) -> None:
@@ -51,6 +53,8 @@ class BaseHuntService(ABC):
             self.stop_hunt()
             self.pub_service.go_to_pub_and_heal()
             self.auto_equip_service.equip()
+            self.nexus_service.tick()
+            self.pub_service.regenerate()
             self.hunt()
 
     def _get_csrf(self, html: str) -> Optional[str]:
