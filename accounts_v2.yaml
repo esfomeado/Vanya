@@ -1,0 +1,42 @@
+accounts:
+  - username: Rytheue
+    password: 8vY46Q361Cn52lgh
+    auto_equip: true
+  - username: Mery
+    password: x5utFGHfx132KIhQ
+    auto_equip: true
+  - username: Arurh
+    password: ZpHR5unobI4Asazs
+    auto_equip: true
+  - username: Burga
+    password: wn9Rq20KfikW2hsF
+    auto_equip: true
+  - username: Esed
+    password: 2JGBqqxaUUanxikq
+    auto_equip: true
+  - username: Aelmed
+    password: 3kGvEAYkm8o6M0tq
+    auto_equip: true
+  - username: Eanflet
+    password: OgPqie3QKLHB5cps
+    auto_equip: true
+  - username: Hone
+    password: N85LwoduGYA7LUpF
+    auto_equip: true
+  - username: Heroua
+    password: 9KPTBCHUdsBezQ3E
+    auto_equip: true
+  - username: Runa
+    password: 2zkfDxBBKuOT8W7t
+    auto_equip: true
+  - username: Ahgyth
+    password: CgcG6ysEcEUzrVxJ
+    auto_equip: true
+  - username: Ecil
+    password: JvAHHfw0w07YXaFm
+    auto_equip: true
+
+telegram:
+  token: 7992509695:AAHMLiZNWyr827brQjb1vK031jo17IXtqac
+  allowed_users:
+    - 7248922166
