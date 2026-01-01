@@ -54,7 +54,7 @@ class BaseHuntService(ABC):
             self.pub_service.go_to_pub_and_heal()
             self.auto_equip_service.equip()
             self.nexus_service.tick()
-            self.pub_service.regenerate()
+            self.pub_service.regenerate(sleep=False)
             self.hunt()
 
     def _get_csrf(self, html: str) -> Optional[str]:

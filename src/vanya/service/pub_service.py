@@ -29,7 +29,7 @@ class PubService:
         self._buy_health_potion()
         self._start_training()
 
-    def regenerate(self) -> None:
+    def regenerate(self, sleep: bool = True) -> None:
         self.account.session.post(
             PUB_UPDATE_URL,
             data={
@@ -52,7 +52,9 @@ class PubService:
             },
             timeout=10,
         ).raise_for_status()
-        time.sleep(125)
+
+        if sleep:
+            time.sleep(125)
 
     def _start_training(self) -> None:
         logging.info(f"Starting training for account {self.account.username}")
