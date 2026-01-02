@@ -1,3 +1,6 @@
+from html import escape
+from io import BytesIO
+
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -623,36 +626,74 @@ async def auto_items_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     accounts: list[Account] = context.application.bot_data.get("accounts", [])
 
-    lines: list[str] = []
+    sections: list[str] = []
 
     for account in accounts:
         service = service_registry.get(InventoryService, account)
         try:
             items = service.list_items()
         except Exception as e:
-            lines.append(f"❌ {account.username}: inventory fetch failed ({e})")
+            sections.append(
+                f"<details open>"
+                f"<summary>❌ {escape(account.username)} – inventory fetch failed</summary>"
+                f"<pre>{escape(str(e))}</pre>"
+                f"</details>"
+            )
             continue
 
         if not items:
-            lines.append(f"📦 {account.username}: empty inventory")
+            sections.append(
+                f"<details>"
+                f"<summary>📦 {escape(account.username)} – empty inventory</summary>"
+                f"</details>"
+            )
             continue
 
-        lines.append(f"📦 {account.username}")
+        body_lines = []
         for item in items:
             line = f"- {item.name}"
-
             if item.quantity > 1:
                 line += f" x{item.quantity}"
-
             if item.equipped:
                 line += " [E]"
+            body_lines.append(escape(line))
 
-            lines.append(line)
+        body = "\n".join(body_lines)
 
-        lines.append("")  # spacer
+        sections.append(
+            f"<details>"
+            f"<summary>📦 {escape(account.username)} ({len(items)} items)</summary>"
+            f"<pre>{body}</pre>"
+            f"</details>"
+        )
 
-    if not lines:
+    if not sections:
         await update.message.reply_text("No accounts found")
         return
 
-    await update.message.reply_text("\n".join(lines))
+    html = (
+        "<!DOCTYPE html>"
+        "<html>"
+        "<head>"
+        "<meta charset='utf-8'>"
+        "<title>Inventory</title>"
+        "<style>"
+        "body{font-family:monospace;background:#fff;color:#000}"
+        "details{margin-bottom:12px}"
+        "summary{cursor:pointer;font-weight:bold}"
+        "pre{margin:6px 0 0 0;white-space:pre-wrap}"
+        "</style>"
+        "</head>"
+        "<body>"
+        + "".join(sections) +
+        "</body>"
+        "</html>"
+    )
+
+    buf = BytesIO(html.encode("utf-8"))
+    buf.name = "inventory.html"
+
+    await update.message.reply_document(
+        document=buf,
+        caption="Inventory items"
+    )
