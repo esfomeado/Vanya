@@ -1,4 +1,4 @@
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 from src.vanya.core.config_loader import CONFIG
 from src.vanya.model.account import Account
@@ -8,6 +8,10 @@ from src.vanya.telegram.commands import stats_cmd, accounts_cmd, solo_hunt_cmd, 
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
     pass
+
+
+async def unknown_cmd(update: object, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Unknown command")
 
 
 def start_telegram(accounts: list[Account]):
@@ -29,5 +33,7 @@ def start_telegram(accounts: list[Account]):
     application.add_handler(CommandHandler("solo_hunt", solo_hunt_cmd))
     application.add_handler(CommandHandler("stats", stats_cmd))
     application.add_handler(CommandHandler("train", train_cmd))
+
+    application.add_handler(MessageHandler(filters.COMMAND, unknown_cmd))
 
     application.run_polling(bootstrap_retries=-1)
