@@ -16,15 +16,6 @@ class NexusService:
         6: 250,
     }
 
-    _boss_attack_threshold = {
-        1: 100,
-        2: 90,
-        3: 50,
-        4: 30,
-        5: 25,
-        6: 20,
-    }
-
     def __init__(self, account):
         self.account = account
         self.bosses: dict[int, NexusBoss] = {}
@@ -123,9 +114,7 @@ class NexusService:
         if self.account.stats.level < self._boss_min_level.get(boss_id, 99999):
             return False
 
-        threshold = self._boss_attack_threshold.get(boss_id, 0)
-
-        return boss.life_percent <= threshold
+        return True
 
     def _record_attack(self, boss_id: int) -> None:
         self._hits[boss_id] = time.monotonic()
