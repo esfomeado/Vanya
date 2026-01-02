@@ -621,7 +621,7 @@ async def auto_items_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not allowed(update):
         return
 
-    accounts = context.application.bot_data["accounts"]
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
 
     lines: list[str] = []
 
@@ -630,14 +630,14 @@ async def auto_items_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             items = service.list_items()
         except Exception as e:
-            lines.append(f"❌ {account.name}: inventory fetch failed ({e})")
+            lines.append(f"❌ {account.username}: inventory fetch failed ({e})")
             continue
 
         if not items:
-            lines.append(f"📦 {account.name}: empty inventory")
+            lines.append(f"📦 {account.username}: empty inventory")
             continue
 
-        lines.append(f"📦 {account.name}")
+        lines.append(f"📦 {account.username}")
         for item in items:
             line = f"- {item.name}"
 
