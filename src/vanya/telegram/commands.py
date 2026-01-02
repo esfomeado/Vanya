@@ -647,9 +647,6 @@ async def auto_items_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if item.equipped:
                 line += " [E]"
 
-            if item.stats:
-                line += f" ({item.stats})"
-
             lines.append(line)
 
         lines.append("")  # spacer
