@@ -93,6 +93,7 @@ class PhantomHallsService(BaseHuntService):
         return None, None, None, None, None
 
     def hunt(self, area_id: Optional[str] = None) -> None:
+        self.area_id = area_id
         joined = False
 
         if not area_id:

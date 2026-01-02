@@ -17,6 +17,7 @@ from src.vanya.service.service_registry import service_registry
 class BaseHuntService(ABC):
     def __init__(self, account: Account):
         self.account = account
+        self.area_id: Optional[str] = None
         self.auto_equip_service = service_registry.get(AutoEquipService, account)
         self.boss_service = service_registry.get(BossService, account)
         self.pub_service = service_registry.get(PubService, account)
@@ -55,7 +56,7 @@ class BaseHuntService(ABC):
             self.auto_equip_service.equip()
             self.nexus_service.tick()
             self.pub_service.regenerate(sleep=False)
-            self.hunt()
+            self.hunt(area_id=self.area_id)
 
     def _get_csrf(self, html: str) -> Optional[str]:
         soup = BeautifulSoup(html, "html.parser")

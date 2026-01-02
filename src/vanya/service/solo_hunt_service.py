@@ -18,6 +18,8 @@ class SoloHuntService(BaseHuntService):
     def hunt(self, area_id: Optional[str] = None) -> None:
         logging.info(f"Starting solo hunt for {self.account.username}")
 
+        self.area_id = area_id
+
         response = self.account.session.get(EXPLORE_URL, timeout=10)
         response.raise_for_status()
 
