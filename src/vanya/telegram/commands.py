@@ -6,6 +6,7 @@ from src.vanya.model.mode import Mode
 from src.vanya.service.boss_service import BossService
 from src.vanya.service.chat_service import ChatService
 from src.vanya.service.guild_service import GuildService
+from src.vanya.service.inventory_service import InventoryService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
 from src.vanya.service.service_registry import service_registry
 from src.vanya.service.solo_hunt_service import SoloHuntService
@@ -614,3 +615,47 @@ async def auto_boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             results.append(f"❌ Boss command failed for {account.username}: {e}")
 
     await update.message.reply_text("\n\n".join(results))
+
+
+async def auto_items_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    accounts = context.application.bot_data["accounts"]
+
+    lines: list[str] = []
+
+    for account in accounts:
+        service = service_registry.get(InventoryService, account)
+        try:
+            items = service.list_items()
+        except Exception as e:
+            lines.append(f"❌ {account.name}: inventory fetch failed ({e})")
+            continue
+
+        if not items:
+            lines.append(f"📦 {account.name}: empty inventory")
+            continue
+
+        lines.append(f"📦 {account.name}")
+        for item in items:
+            line = f"- {item.name}"
+
+            if item.quantity > 1:
+                line += f" x{item.quantity}"
+
+            if item.equipped:
+                line += " [E]"
+
+            if item.stats:
+                line += f" ({item.stats})"
+
+            lines.append(line)
+
+        lines.append("")  # spacer
+
+    if not lines:
+        await update.message.reply_text("No accounts found")
+        return
+
+    await update.message.reply_text("\n".join(lines))
