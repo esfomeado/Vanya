@@ -2,7 +2,7 @@ import logging
 import threading
 import time
 
-from requests import ConnectionError
+from requests import ConnectionError, HTTPError
 from requests import ReadTimeout
 
 from src.vanya.model.account import Account
@@ -91,7 +91,7 @@ class Scheduler:
                 service_registry.get(DailyTasksService, account).run_if_due()
 
                 self._stop_event.wait(self.MODE_TICK_INTERVAL[account.mode])
-            except (ReadTimeout, ConnectionError):
+            except (ConnectionError, HTTPError, ReadTimeout):
                 pass
             except Exception as e:
                 logging.exception("Unexpected error in scheduler thread.")
