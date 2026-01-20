@@ -91,7 +91,11 @@ class Scheduler:
                 service_registry.get(DailyTasksService, account).run_if_due()
 
                 self._stop_event.wait(self.MODE_TICK_INTERVAL[account.mode])
-            except (ConnectionError, HTTPError, ReadTimeout):
+            except (ConnectionError, ReadTimeout):
+                pass
+            except HTTPError as e:
+                if e.response.status_code == 401:
+                    service_registry.get(LoginService, account).ensure_logged_in()
                 pass
             except Exception as e:
                 logging.exception("Unexpected error in scheduler thread.")
