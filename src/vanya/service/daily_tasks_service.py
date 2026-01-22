@@ -8,6 +8,7 @@ from src.vanya.core.constants import DASHBOARD_URL, DEMON_PASS_URL, HUNTIARY_URL
     BOOKS_OF_SHADOWS_URL, QUEST_COMPLETE_URL, GUILDS_URL, GUILD_SHRINE_SPIN_URL
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
+from vanya.core.constants import CLAIM_REWARD_URL
 
 
 class DailyTasksService:
@@ -28,6 +29,7 @@ class DailyTasksService:
         self._seal_updex_items()
         self._claim_shadow_book()
         self._spin_guild_shrine()
+        self._claim_eventide()
 
         self._last_run = now.date()
 
@@ -193,3 +195,15 @@ class DailyTasksService:
         ).raise_for_status()
 
         logging.info(f"Guild shrine spin executed for {self.account.username}")
+
+    def _claim_eventide(self) -> None:
+        logging.info("Claiming eventide")
+
+        self.account.session.post(
+            CLAIM_REWARD_URL,
+            headers={
+                "origin": "https://vanyaonline.com",
+                "referer": "https://vanyaonline.com/account_settings",
+            },
+            timeout=10,
+        ).raise_for_status()

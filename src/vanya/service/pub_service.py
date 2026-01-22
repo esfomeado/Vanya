@@ -3,7 +3,8 @@ import re
 import time
 from typing import Optional
 
-from src.vanya.core.constants import TRAIN_URL, PUB_URL, PUB_NPC_BUY_URL, PUB_REGENERATE_URL, PUB_UPDATE_URL
+from src.vanya.core.constants import PUB_URL, PUB_NPC_BUY_URL, PUB_REGENERATE_URL, PUB_UPDATE_URL, \
+    PUB_OFFLINE_TRAIN_URL
 from src.vanya.core.errors import VanyaError
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
@@ -60,7 +61,7 @@ class PubService:
         logging.info(f"Starting training for account {self.account.username}")
 
         self.account.session.post(
-            TRAIN_URL,
+            PUB_OFFLINE_TRAIN_URL,
             data={"action": "start"},
             headers={
                 "origin": "https://vanyaonline.com",
@@ -75,7 +76,7 @@ class PubService:
         logging.info(f"Stopping training for account {self.account.username}")
 
         self.account.session.post(
-            TRAIN_URL,
+            PUB_OFFLINE_TRAIN_URL,
             data={
                 "action": "stop"
             },

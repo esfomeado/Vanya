@@ -127,6 +127,7 @@ class LoginService:
             "Astral Nexus": Mode.PHANTOM_HALLS,
             "Demona Edge": Mode.PHANTOM_HALLS,
             "The Penumbula": Mode.PHANTOM_HALLS,
+            "The Ossuary Lord": Mode.PHANTOM_HALLS,
         }
 
         try:

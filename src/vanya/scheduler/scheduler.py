@@ -18,11 +18,13 @@ from src.vanya.service.solo_hunt_service import SoloHuntService
 from src.vanya.service.stats_service import StatsService
 from src.vanya.service.training_service import TrainingService
 from src.vanya.telegram.telegram_service import TelegramService
+from vanya.service.house_training_service import HouseTrainingService
 
 
 class Scheduler:
     MODE_TICK_INTERVAL = {
         Mode.BOSSES: 5,
+        Mode.HOUSE_TRAINING: 1,
         Mode.IDLE: 60,
         Mode.TRAINING: 1,
         Mode.SOLO_HUNT: 20,
@@ -87,6 +89,9 @@ class Scheduler:
 
                 if account.mode == Mode.BOSSES:
                     service_registry.get(BossService, account).tick()
+
+                if account.mode == Mode.HOUSE_TRAINING:
+                    service_registry.get(HouseTrainingService, account).tick()
 
                 service_registry.get(DailyTasksService, account).run_if_due()
 
