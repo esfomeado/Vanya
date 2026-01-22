@@ -1,5 +1,5 @@
-from vanya.core.constants import PUB_URL, PUB_OFFLINE_TRAIN_URL, HOUSE_TRAIN_URL, HOUSE_URL
-from vanya.core.utils import get_global_csrf
+from src.vanya.core.constants import PUB_URL, PUB_OFFLINE_TRAIN_URL, HOUSE_TRAIN_URL, HOUSE_URL
+from src.vanya.core.utils import get_global_csrf
 
 
 class HouseTrainingService:

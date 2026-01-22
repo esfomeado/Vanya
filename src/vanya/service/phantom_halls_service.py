@@ -9,8 +9,8 @@ from src.vanya.model.account import Account
 from src.vanya.model.hunt import Hunt
 from src.vanya.model.mode import Mode
 from src.vanya.service.base_hunt_service import BaseHuntService
-from vanya.service.login_service import LoginService
-from vanya.service.service_registry import service_registry
+from src.vanya.service.login_service import LoginService
+from src.vanya.service.service_registry import service_registry
 
 
 class PhantomHallsService(BaseHuntService):

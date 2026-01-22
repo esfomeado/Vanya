@@ -8,7 +8,7 @@ from src.vanya.core.constants import DASHBOARD_URL, DEMON_PASS_URL, HUNTIARY_URL
     BOOKS_OF_SHADOWS_URL, QUEST_COMPLETE_URL, GUILDS_URL, GUILD_SHRINE_SPIN_URL
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
-from vanya.core.constants import CLAIM_REWARD_URL
+from src.vanya.core.constants import CLAIM_REWARD_URL
 
 
 class DailyTasksService:

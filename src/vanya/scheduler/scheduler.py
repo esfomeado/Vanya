@@ -18,7 +18,7 @@ from src.vanya.service.solo_hunt_service import SoloHuntService
 from src.vanya.service.stats_service import StatsService
 from src.vanya.service.training_service import TrainingService
 from src.vanya.telegram.telegram_service import TelegramService
-from vanya.service.house_training_service import HouseTrainingService
+from src.vanya.service.house_training_service import HouseTrainingService
 
 
 class Scheduler:
