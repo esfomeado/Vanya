@@ -43,6 +43,10 @@ class Scheduler:
             t.start()
             self._threads.append(t)
 
+            login_thread = threading.Thread(target=self._login_loop, args=(account,), daemon=True)
+            login_thread.start()
+            self._threads.append(login_thread)
+
         logging.info("Scheduler started for all accounts.")
 
     def stop(self):
@@ -52,19 +56,20 @@ class Scheduler:
 
         logging.info("Scheduler stopped.")
 
+    def _login_loop(self, account: Account):
+        while not self._stop_event.is_set():
+            login_service = service_registry.get(LoginService, account)
+            login_service.ensure_logged_in()
+            login_service.reconcile_mode()
+
+            self._stop_event.wait(60)
+
     def _run(self, account: Account):
-        last_login_check = 0.0
         last_stats_refresh = 0.0
 
         while not self._stop_event.is_set():
             try:
                 now = time.time()
-
-                if now - last_login_check > 60.0:
-                    login_service = service_registry.get(LoginService, account)
-                    login_service.ensure_logged_in()
-                    login_service.reconcile_mode()
-                    last_login_check = now
 
                 if now - last_stats_refresh > 20.0:
                     service_registry.get(StatsService, account).refresh_account_stats()
