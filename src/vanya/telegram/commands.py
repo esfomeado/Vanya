@@ -874,9 +874,9 @@ async def market_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text("Usage: /market <account> sell <item_name> <amount> <price>")
                 return
 
-            item_name = context.args[2]
-            amount = int(context.args[3])
-            price = int(context.args[4])
+            item_name = " ".join(context.args[2:-2])
+            amount = int(context.args[-2])
+            price = int(context.args[-1])
             market.sell_item(item_name, amount, price)
             await update.message.reply_text(f"✅ Listed {amount}x {item_name} for {price} GOLD each")
 
