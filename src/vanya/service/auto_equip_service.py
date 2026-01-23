@@ -111,6 +111,8 @@ class AutoEquipService:
                 "item_name": item_name,
                 "csrf_token": csrf,
             },
-            headers={"referer": DASHBOARD_URL},
+            headers={
+                "referer": DASHBOARD_URL
+            },
             timeout=10,
         ).raise_for_status()

@@ -16,7 +16,6 @@ class HouseTrainingService:
                 "action": "stop"
             },
             headers={
-                "origin": "https://vanyaonline.com",
                 "referer": PUB_URL,
                 "x-csrf-token": csrf,
                 "content-type": "application/x-www-form-urlencoded",
@@ -31,7 +30,6 @@ class HouseTrainingService:
         self.account.session.post(
             HOUSE_TRAIN_URL,
             headers={
-                "origin": "https://vanyaonline.com",
                 "x-csrf-token": csrf,
             },
             data={

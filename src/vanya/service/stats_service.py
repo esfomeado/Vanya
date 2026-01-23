@@ -1,5 +1,3 @@
-import logging
-
 from bs4 import BeautifulSoup
 
 from src.vanya.core.constants import DASHBOARD_URL

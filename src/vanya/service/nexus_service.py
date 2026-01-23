@@ -14,7 +14,7 @@ class NexusService:
         4: 130,
         5: 180,
         6: 250,
-        999: 1,
+        999: 10,
     }
 
     def __init__(self, account):
@@ -90,7 +90,6 @@ class NexusService:
                 "recaptcha_token": "",
             },
             headers={
-                "origin": "https://vanyaonline.com",
                 "referer": f"{ADVENTURE_URL}?boss_id={boss_id}",
                 "x-csrf-token": csrf,
                 "content-type": "application/json",

@@ -38,7 +38,6 @@ class PubService:
                 "y": "100",
             },
             headers={
-                "origin": "https://vanyaonline.com",
                 "referer": PUB_URL,
                 "x-csrf-token": self.csrf,
                 "content-type": "application/x-www-form-urlencoded",
@@ -62,9 +61,10 @@ class PubService:
 
         self.account.session.post(
             PUB_OFFLINE_TRAIN_URL,
-            data={"action": "start"},
+            data={
+                "action": "start"
+            },
             headers={
-                "origin": "https://vanyaonline.com",
                 "referer": PUB_URL,
                 "x-csrf-token": self.csrf,
                 "content-type": "application/x-www-form-urlencoded",
@@ -81,7 +81,6 @@ class PubService:
                 "action": "stop"
             },
             headers={
-                "origin": "https://vanyaonline.com",
                 "referer": PUB_URL,
                 "x-csrf-token": self.csrf,
                 "content-type": "application/x-www-form-urlencoded",
@@ -111,7 +110,6 @@ class PubService:
                 "item_id": "3"
             },
             headers={
-                "origin": "https://vanyaonline.com",
                 "referer": PUB_URL,
                 "x-csrf-token": self.csrf,
                 "content-type": "application/x-www-form-urlencoded",

@@ -43,6 +43,8 @@ class Scheduler:
             login_thread.start()
             self._threads.append(login_thread)
 
+            time.sleep(10)
+
             main_thread = threading.Thread(target=self._run, args=(account,), daemon=True)
             main_thread.start()
             self._threads.append(main_thread)
@@ -62,13 +64,9 @@ class Scheduler:
             login_service.ensure_logged_in()
             login_service.reconcile_mode()
 
-            self._stop_event.wait(30)
+            self._stop_event.wait(60)
 
     def _run(self, account: Account):
-        login_service = service_registry.get(LoginService, account)
-        login_service.ensure_logged_in()
-        login_service.reconcile_mode()
-
         last_stats_refresh = 0.0
 
         while not self._stop_event.is_set():

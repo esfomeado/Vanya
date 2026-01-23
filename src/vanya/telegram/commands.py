@@ -1,3 +1,4 @@
+import asyncio
 from html import escape
 from io import BytesIO
 
@@ -261,7 +262,7 @@ async def auto_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lines: list[str] = []
 
     if action == "stop":
-        for account in accounts:
+        def stop_one(account: Account):
             if account.mode == Mode.SOLO_HUNT:
                 service_registry.get(SoloHuntService, account).stop_hunt()
                 lines.append(f"⏹️ {account.username} stopped Solo Hunt")
@@ -272,6 +273,10 @@ async def auto_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 lines.append(f"⏹️ {account.username} stopped Deep Dragon")
             else:
                 lines.append(f"⏭️ {account.username} not hunting")
+
+        await asyncio.gather(
+            *(asyncio.to_thread(stop_one, account) for account in accounts)
+        )
 
         await update.message.reply_text(
             "🛑 Auto Hunt Stop\n\n" + "\n".join(lines)
@@ -286,12 +291,12 @@ async def auto_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    for account in accounts:
+    def start_one(account: Account):
         if account.mode in {Mode.SOLO_HUNT, Mode.PHANTOM_HALLS, Mode.DEEP_DRAGON}:
             lines.append(
                 f"⏭️ {account.username} already hunting ({account.mode.value})"
             )
-            continue
+            return
 
         try:
             level = account.stats.level
@@ -317,6 +322,10 @@ async def auto_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             lines.append(
                 f"❌ {account.username} auto_hunt failed: {e}"
             )
+
+    await asyncio.gather(
+        *(asyncio.to_thread(start_one, account) for account in accounts)
+    )
 
     await update.message.reply_text(
         "🤖 Auto Hunt Start\n\n" + "\n".join(lines)
@@ -635,11 +644,6 @@ async def auto_stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def auto_boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Attacks or kills a specific boss for all configured accounts.
-
-    Usage:
-    /auto_boss attack <boss_id>  - Attack the specified boss once for all accounts
-    /auto_boss kill <boss_id>    - Kill the specified boss for all accounts (continuous mode)
-    /auto_boss list              - List available bosses for all accounts
     """
     if not allowed(update):
         return

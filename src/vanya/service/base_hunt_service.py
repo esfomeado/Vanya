@@ -39,7 +39,9 @@ class BaseHuntService(ABC):
                 "action": "stop_hunt",
                 "csrf_token": csrf
             },
-            headers={"referer": BASE_URL},
+            headers={
+                "referer": BASE_URL
+            },
             timeout=10,
         ).raise_for_status()
 
@@ -54,8 +56,6 @@ class BaseHuntService(ABC):
             self.stop_hunt()
             self.pub_service.go_to_pub_and_heal()
             self.auto_equip_service.equip()
-            #self.nexus_service.tick()
-            #self.pub_service.regenerate(sleep=False)
             self.hunt(area_id=self.area_id)
 
     def _get_csrf(self, html: str) -> Optional[str]:

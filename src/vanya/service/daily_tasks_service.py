@@ -4,11 +4,11 @@ from typing import Optional
 
 from bs4 import BeautifulSoup
 
+from src.vanya.core.constants import CLAIM_REWARD_URL
 from src.vanya.core.constants import DASHBOARD_URL, DEMON_PASS_URL, HUNTIARY_URL, UPDEX_URL, SEAL_ITEM_URL, BASE_URL, \
     BOOKS_OF_SHADOWS_URL, QUEST_COMPLETE_URL, GUILDS_URL, GUILD_SHRINE_SPIN_URL
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
-from src.vanya.core.constants import CLAIM_REWARD_URL
 
 
 class DailyTasksService:
@@ -68,7 +68,6 @@ class DailyTasksService:
                 DEMON_PASS_URL,
                 headers={
                     "referer": DASHBOARD_URL,
-                    "origin": "https://vanyaonline.com",
                     "x-csrf-token": csrf,
                     "content-type": "application/x-www-form-urlencoded",
                 },
@@ -84,9 +83,10 @@ class DailyTasksService:
 
         response = self.account.session.post(
             HUNTIARY_URL,
-            data={"action_type": "claim_daily"},
+            data={
+                "action_type": "claim_daily"
+            },
             headers={
-                "origin": "https://vanyaonline.com",
                 "referer": HUNTIARY_URL,
                 "content-type": "application/x-www-form-urlencoded",
             },
@@ -114,10 +114,11 @@ class DailyTasksService:
 
             self.account.session.post(
                 SEAL_ITEM_URL,
-                data={"item_name": item_name},
+                data={
+                    "item_name": item_name
+                },
                 headers={
                     "referer": UPDEX_URL,
-                    "origin": "https://vanyaonline.com",
                     "x-csrf-token": self.csrf,
                     "content-type": "application/x-www-form-urlencoded",
                 },
@@ -183,7 +184,6 @@ class DailyTasksService:
         self.account.session.post(
             GUILD_SHRINE_SPIN_URL,
             headers={
-                "origin": "https://vanyaonline.com",
                 "referer": GUILDS_URL,
                 "x-csrf-token": csrf,
                 "content-type": "application/x-www-form-urlencoded",
@@ -202,8 +202,7 @@ class DailyTasksService:
         self.account.session.post(
             CLAIM_REWARD_URL,
             headers={
-                "origin": "https://vanyaonline.com",
-                "referer": "https://vanyaonline.com/account_settings",
+                "referer": f"{BASE_URL}/account_settings",
             },
             timeout=10,
         ).raise_for_status()

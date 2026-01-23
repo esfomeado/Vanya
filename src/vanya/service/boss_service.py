@@ -119,7 +119,6 @@ class BossService:
                 "recaptcha_token": "",
             },
             headers={
-                "origin": "https://vanyaonline.com",
                 "referer": f"{ADVENTURE_URL}?boss_id={boss_id}",
                 "x-csrf-token": csrf,
                 "accept": "*/*",

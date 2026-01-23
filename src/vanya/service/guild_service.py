@@ -21,7 +21,6 @@ class GuildService:
         self.account.session.post(
             GUILDS_APPLY_URL,
             headers={
-                "origin": "https://vanyaonline.com",
                 "referer": GUILDS_URL,
                 "x-csrf-token": csrf,
                 "content-type": "application/x-www-form-urlencoded",
@@ -43,7 +42,6 @@ class GuildService:
         self.account.session.post(
             GUILDS_LEAVE_URL,
             headers={
-                "origin": "https://vanyaonline.com",
                 "referer": GUILDS_URL,
                 "x-csrf-token": csrf,
                 "content-type": "application/x-www-form-urlencoded",

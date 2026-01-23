@@ -22,7 +22,9 @@ class PhantomHallsService(BaseHuntService):
                 "area_id": dungeon_id,
                 "dungeon_action": "join",
             },
-            headers={"referer": DUNGEON_VIEW_URL},
+            headers={
+                "referer": DUNGEON_VIEW_URL
+            },
             timeout=10,
         ).raise_for_status()
 
@@ -35,7 +37,9 @@ class PhantomHallsService(BaseHuntService):
                 "area_id": dungeon_id,
                 "dungeon_action": "start",
             },
-            headers={"referer": DUNGEON_VIEW_URL},
+            headers={
+                "referer": DUNGEON_VIEW_URL
+            },
             timeout=10,
         ).raise_for_status()
 
@@ -48,7 +52,9 @@ class PhantomHallsService(BaseHuntService):
                 "ajax_lobby_status": "1",
                 "_": int(time.time() * 1000),
             },
-            headers={"referer": DUNGEON_VIEW_URL},
+            headers={
+                "referer": DUNGEON_VIEW_URL
+            },
             timeout=10,
         ).json()
 
@@ -136,7 +142,7 @@ class PhantomHallsService(BaseHuntService):
                     time.sleep(5)
 
                 if count < required_count:
-                    time.sleep(3)
+                    time.sleep(5)
                     continue
 
                 self._start_dungeon(area_id)

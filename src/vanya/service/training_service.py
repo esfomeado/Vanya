@@ -39,7 +39,6 @@ class TrainingService:
                 PUB_TRAIN_CLICK_URL,
                 data=payload,
                 headers={
-                    "origin": "https://vanyaonline.com",
                     "referer": PUB_URL,
                     "x-csrf-token": self.csrf,
                     "content-type": "application/x-www-form-urlencoded",
@@ -73,7 +72,6 @@ class TrainingService:
             PUB_TRAIN_CLICK_URL,
             data=payload,
             headers={
-                "origin": "https://vanyaonline.com",
                 "referer": PUB_URL,
                 "x-csrf-token": self.csrf,
                 "content-type": "application/x-www-form-urlencoded",

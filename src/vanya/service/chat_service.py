@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from src.vanya.core.constants import PUB_MURAL_POST_URL, BASE_URL, PUB_URL, HUNT_URL
+from src.vanya.core.constants import PUB_MURAL_POST_URL, PUB_URL, HUNT_URL
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
@@ -34,7 +34,6 @@ class ChatService:
                 "channel": channel,
             },
             headers={
-                "origin": BASE_URL,
                 "referer": referer_url,
                 "x-csrf-token": csrf,
                 "content-type": "application/x-www-form-urlencoded",
