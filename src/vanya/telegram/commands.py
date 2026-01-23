@@ -9,6 +9,7 @@ from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 from src.vanya.service.boss_service import BossService
 from src.vanya.service.chat_service import ChatService
+from src.vanya.service.dark_market_service import DarkMarketService
 from src.vanya.service.guild_service import GuildService
 from src.vanya.service.inventory_service import InventoryService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
@@ -16,7 +17,6 @@ from src.vanya.service.service_registry import service_registry
 from src.vanya.service.solo_hunt_service import SoloHuntService
 from src.vanya.service.training_service import TrainingService
 from src.vanya.telegram.acl import allowed
-from vanya.service.dark_market_service import DarkMarketService
 
 
 def _find_account(accounts: list[Account], username: str) -> Account | None:

@@ -2,8 +2,8 @@ import logging
 
 from bs4 import BeautifulSoup
 
-from vanya.core.constants import MARKET_URL
-from vanya.model.market import MarketListing
+from src.vanya.core.constants import MARKET_URL
+from src.vanya.model.market import MarketListing
 
 
 class DarkMarketService:
