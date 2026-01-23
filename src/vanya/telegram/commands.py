@@ -846,14 +846,13 @@ async def market_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) < 3:
         await update.message.reply_text(
             "Usage:\n"
-            "/market buy <account> <item_name>\n"
-            "/market sell <account> <item_name> <amount> <price>"
+            "/market <account> buy <item_id>\n"
+            "/market <account> sell <item_name> <amount> <price>"
         )
         return
 
-    action = context.args[0].lower()
-    account_name = context.args[1]
-    item_name = context.args[2]
+    account_name = context.args[0]
+    action = context.args[1].lower()
 
     accounts: list[Account] = context.application.bot_data["accounts"]
     account = _find_account(accounts, account_name)
@@ -865,21 +864,17 @@ async def market_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         if action == "buy":
-            # fetch listings to find item
-            listings = market.list()
-            match = next((l for l in listings if l.name.lower() == item_name.lower()), None)
-            if not match:
-                await update.message.reply_text(f"Item not found in market: {item_name}")
-                return
+            item_id = int(context.args[2])
 
-            market.buy_item(match.listing_id)
-            await update.message.reply_text(f"✅ Bought {match.name} for {match.price} GOLD")
+            market.buy_item(item_id)
+            await update.message.reply_text(f"✅ Bought {item_id}")
 
         elif action == "sell":
             if len(context.args) < 5:
-                await update.message.reply_text("Usage: /market sell <account> <item_name> <amount> <price>")
+                await update.message.reply_text("Usage: /market <account> sell <item_name> <amount> <price>")
                 return
 
+            item_name = context.args[2]
             amount = int(context.args[3])
             price = int(context.args[4])
             market.sell_item(item_name, amount, price)

@@ -53,16 +53,17 @@ class DarkMarketService:
         return listings
 
     def buy_item(self, item_id: int) -> None:
-        listings = self.list()
-
-        listing = next(
-            (l for l in listings if l.listing_id == item_id),
-            None,
+        response = self.account.session.get(
+            MARKET_URL,
+            headers={
+                "accept": "text/html",
+                "referer": MARKET_URL,
+            },
+            timeout=10,
         )
+        response.raise_for_status()
 
-        if not listing:
-            logging.error(f"Item {item_id} not found in market")
-            return
+        csrf = self._extract_list_csrf(response.text)
 
         self.account.session.post(
             MARKET_URL,
@@ -72,8 +73,8 @@ class DarkMarketService:
             },
             data={
                 "action": "buy_item",
-                "listing_id": listing.listing_id,
-                "csrf_token": listing.csrf_token,
+                "listing_id": item_id,
+                "csrf_token": csrf,
             },
             allow_redirects=True,
             timeout=10,
