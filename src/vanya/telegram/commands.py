@@ -16,6 +16,7 @@ from src.vanya.service.service_registry import service_registry
 from src.vanya.service.solo_hunt_service import SoloHuntService
 from src.vanya.service.training_service import TrainingService
 from src.vanya.telegram.acl import allowed
+from vanya.service.dark_market_service import DarkMarketService
 
 
 def _find_account(accounts: list[Account], username: str) -> Account | None:
@@ -829,3 +830,63 @@ async def auto_items_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         document=buf,
         caption="Inventory items"
     )
+
+
+async def market_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Buy or sell items on the market.
+
+    Usage:
+    /market buy <account> <item_name>
+    /market sell <account> <item_name> <amount> <price>
+    """
+    if not allowed(update):
+        return
+
+    if len(context.args) < 3:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/market buy <account> <item_name>\n"
+            "/market sell <account> <item_name> <amount> <price>"
+        )
+        return
+
+    action = context.args[0].lower()
+    account_name = context.args[1]
+    item_name = context.args[2]
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+    account = _find_account(accounts, account_name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {account_name}")
+        return
+
+    market = service_registry.get(DarkMarketService, account)
+
+    try:
+        if action == "buy":
+            # fetch listings to find item
+            listings = market.list()
+            match = next((l for l in listings if l.name.lower() == item_name.lower()), None)
+            if not match:
+                await update.message.reply_text(f"Item not found in market: {item_name}")
+                return
+
+            market.buy_item(match.listing_id)
+            await update.message.reply_text(f"✅ Bought {match.name} for {match.price} GOLD")
+
+        elif action == "sell":
+            if len(context.args) < 5:
+                await update.message.reply_text("Usage: /market sell <account> <item_name> <amount> <price>")
+                return
+
+            amount = int(context.args[3])
+            price = int(context.args[4])
+            market.sell_item(item_name, amount, price)
+            await update.message.reply_text(f"✅ Listed {amount}x {item_name} for {price} GOLD each")
+
+        else:
+            await update.message.reply_text("Invalid action. Use buy or sell.")
+
+    except Exception as e:
+        await update.message.reply_text(f"❌ Market action failed: {str(e)}")
