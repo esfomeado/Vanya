@@ -106,7 +106,7 @@ class BossService:
 
         response = self.account.session.post(
             ADVENTURE_ATTACK_URL,
-            json={
+            data={
                 "boss_id": boss_id,
                 "recaptcha_token": "",
             },

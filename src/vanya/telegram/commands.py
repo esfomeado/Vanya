@@ -417,8 +417,6 @@ async def boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     mode = context.args[1]
     boss_id = context.args[2]
 
-    print(boss_id)
-
     account = _find_account(accounts, name)
     if not account:
         await update.message.reply_text(f"Unknown account: {name}")
