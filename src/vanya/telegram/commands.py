@@ -407,14 +407,15 @@ async def boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not context.args:
         await update.message.reply_text(
-            "Usage: /boss <account> [full]"
+            "Usage: /boss <account> [mode] [boss_id]"
         )
         return
 
     accounts: list[Account] = context.application.bot_data["accounts"]
 
     name = context.args[0]
-    mode = context.args[1] if len(context.args) > 1 else None
+    mode = context.args[1]
+    boss_id = context.args[2]
 
     account = _find_account(accounts, name)
     if not account:
@@ -424,26 +425,13 @@ async def boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     boss_service = service_registry.get(BossService, account)
 
     try:
-        bosses = boss_service.list_available_bosses()
-        if not bosses:
-            await update.message.reply_text(f"{name}: no available bosses")
-            return
-
-        lines = []
-        for boss in bosses:
-            if mode == "full":
-                boss_service.kill_boss(boss.boss_id)
-                lines.append(f"☠️ {boss.name} killed")
-            else:
-                result = boss_service.attack_boss_once(boss.boss_id)
-                lines.append(
-                    f"🗡️ {boss.name}: "
-                    f"-{result['player_damage']} dmg "
-                    f"(boss {result['new_boss_life']}/{result['boss_max_life']})"
-                )
+        if mode == "kill":
+            boss_service.kill_boss(boss_id)
+        else:
+            boss_service.attack_boss_once(boss_id)
 
         await update.message.reply_text(
-            f"👹 Boss run for {name}\n\n" + "\n".join(lines)
+            f"👹 Boss run for {name}\n"
         )
 
     except Exception as e:
