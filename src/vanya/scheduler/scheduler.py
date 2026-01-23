@@ -10,6 +10,7 @@ from src.vanya.model.mode import Mode
 from src.vanya.service.boss_service import BossService
 from src.vanya.service.daily_tasks_service import DailyTasksService
 from src.vanya.service.deep_dragon_service import DeepDragonService
+from src.vanya.service.house_training_service import HouseTrainingService
 from src.vanya.service.login_service import LoginService
 from src.vanya.service.nexus_service import NexusService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
@@ -18,7 +19,6 @@ from src.vanya.service.solo_hunt_service import SoloHuntService
 from src.vanya.service.stats_service import StatsService
 from src.vanya.service.training_service import TrainingService
 from src.vanya.telegram.telegram_service import TelegramService
-from src.vanya.service.house_training_service import HouseTrainingService
 
 
 class Scheduler:
@@ -39,13 +39,13 @@ class Scheduler:
 
     def start(self):
         for account in self.accounts:
-            t = threading.Thread(target=self._run, args=(account,), daemon=True)
-            t.start()
-            self._threads.append(t)
-
             login_thread = threading.Thread(target=self._login_loop, args=(account,), daemon=True)
             login_thread.start()
             self._threads.append(login_thread)
+
+            main_thread = threading.Thread(target=self._run, args=(account,), daemon=True)
+            main_thread.start()
+            self._threads.append(main_thread)
 
         logging.info("Scheduler started for all accounts.")
 
@@ -62,9 +62,13 @@ class Scheduler:
             login_service.ensure_logged_in()
             login_service.reconcile_mode()
 
-            self._stop_event.wait(60)
+            self._stop_event.wait(30)
 
     def _run(self, account: Account):
+        login_service = service_registry.get(LoginService, account)
+        login_service.ensure_logged_in()
+        login_service.reconcile_mode()
+
         last_stats_refresh = 0.0
 
         while not self._stop_event.is_set():
@@ -101,11 +105,7 @@ class Scheduler:
                 service_registry.get(DailyTasksService, account).run_if_due()
 
                 self._stop_event.wait(self.MODE_TICK_INTERVAL[account.mode])
-            except (ConnectionError, ReadTimeout):
-                pass
-            except HTTPError as e:
-                if e.response.status_code == 401:
-                    service_registry.get(LoginService, account).ensure_logged_in()
+            except (ConnectionError, ReadTimeout, HTTPError):
                 pass
             except Exception as e:
                 logging.exception("Unexpected error in scheduler thread.")

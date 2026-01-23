@@ -402,20 +402,26 @@ async def train_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Attacks or kills a boss with a specific account.
+    """
+
     if not allowed(update):
         return
 
-    if not context.args:
+    if not context.args or len(context.args) < 2:
         await update.message.reply_text(
-            "Usage: /boss <account> [mode] [boss_id]"
+            "Usage:\n"
+            "/boss <account> attack <boss_id>\n"
+            "/boss <account> kill <boss_id>\n"
+            "/boss <account> list"
         )
         return
 
     accounts: list[Account] = context.application.bot_data["accounts"]
 
     name = context.args[0]
-    mode = context.args[1]
-    boss_id = context.args[2]
+    action = context.args[1].lower()
 
     account = _find_account(accounts, name)
     if not account:
@@ -425,14 +431,74 @@ async def boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     boss_service = service_registry.get(BossService, account)
 
     try:
-        if mode == "kill":
-            boss_service.kill_boss(boss_id)
-        else:
-            boss_service.attack_boss_once(boss_id)
+        # List available bosses
+        if action == "list":
+            bosses = boss_service.list_available_bosses()
 
-        await update.message.reply_text(
-            f"👹 Boss run for {name}\n"
-        )
+            if not bosses:
+                await update.message.reply_text(
+                    f"👹 No available bosses for {name}"
+                )
+                return
+
+            lines = [f"👹 Available bosses for {name}:"]
+            for boss in bosses:
+                boost_icon = "⚡" if boss.boosted else ""
+                lines.append(
+                    f"{boost_icon}Stage {boss.stage}: {boss.name}\n"
+                    f"  ID: {boss.boss_id}\n"
+                    f"  Life: {boss.life:,} | XP: {boss.xp:,}\n"
+                    f"  Required Level: {boss.required_level}"
+                )
+
+            await update.message.reply_text("\n\n".join(lines))
+            return
+
+        # Attack or kill boss
+        if action not in {"attack", "kill"}:
+            await update.message.reply_text(
+                f"Unknown action: {action}\n\n"
+                "Available actions:\n"
+                "- attack\n"
+                "- kill\n"
+                "- list"
+            )
+            return
+
+        if len(context.args) < 3:
+            await update.message.reply_text(
+                f"Usage: /boss <account> {action} <boss_id>"
+            )
+            return
+
+        try:
+            boss_id = int(context.args[2])
+        except ValueError:
+            await update.message.reply_text("boss_id must be an integer")
+            return
+
+        if action == "kill":
+            boss_service.kill_boss(boss_id)
+            await update.message.reply_text(
+                f"👹 {name} started killing boss {boss_id}"
+            )
+        else:  # attack
+            result = boss_service.attack_boss_once(boss_id)
+
+            if not result:
+                await update.message.reply_text(
+                    f"👹 Boss {boss_id} is already dead"
+                )
+                return
+
+            await update.message.reply_text(
+                f"👹 Boss attack for {name}\n\n"
+                f"Boss: {result.get('boss_name', 'Unknown')}\n"
+                f"Damage dealt: {result.get('player_damage', 0):.1f}\n"
+                f"Boss HP: {result.get('new_boss_life', 0):.0f}/{result.get('boss_max_life', 0):.0f}\n"
+                f"Your HP: {result.get('new_player_life', 0)}/{result.get('player_max_life', 0)}\n"
+                f"Stamina: {result.get('new_stamina', 0)}"
+            )
 
     except Exception as e:
         await update.message.reply_text(
@@ -567,15 +633,85 @@ async def auto_stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def auto_boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Attacks or kills a specific boss for all configured accounts.
+
+    Usage:
+    /auto_boss attack <boss_id>  - Attack the specified boss once for all accounts
+    /auto_boss kill <boss_id>    - Kill the specified boss for all accounts (continuous mode)
+    /auto_boss list              - List available bosses for all accounts
+    """
     if not allowed(update):
         return
 
-    mode_arg = context.args[0].lower() if context.args else None
-    full_mode = mode_arg == "full"
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/auto_boss attack <boss_id>\n"
+            "/auto_boss kill <boss_id>\n"
+            "/auto_boss list"
+        )
+        return
+
+    action = context.args[0].lower()
+
+    if action not in {"attack", "kill", "list"}:
+        await update.message.reply_text(
+            f"Unknown action: {action}\n\n"
+            "Available actions:\n"
+            "- attack <boss_id>\n"
+            "- kill <boss_id>\n"
+            "- list"
+        )
+        return
 
     accounts: list[Account] = context.application.bot_data.get("accounts", [])
     if not accounts:
         await update.message.reply_text("No accounts configured")
+        return
+
+    # List mode doesn't need boss_id
+    if action == "list":
+        results = []
+        for account in accounts:
+            boss_service: BossService = service_registry.get(BossService, account)
+            try:
+                bosses = boss_service.list_available_bosses()
+
+                if not bosses:
+                    results.append(f"⏭️ {account.username}: no available bosses")
+                    continue
+
+                lines = [f"👹 {account.username}:"]
+                for boss in bosses:
+                    boost_icon = "⚡" if boss.boosted else ""
+                    lines.append(
+                        f"  {boost_icon}Stage {boss.stage}: {boss.name} "
+                        f"(ID: {boss.boss_id}, HP: {boss.life:,}, XP: {boss.xp:,})"
+                    )
+                results.append("\n".join(lines))
+
+            except Exception as e:
+                results.append(f"❌ {account.username}: {e}")
+
+        if not results:
+            await update.message.reply_text("No results to display")
+            return
+
+        await update.message.reply_text("\n\n".join(results))
+        return
+
+    # Attack and kill modes require boss_id
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            f"Usage: /auto_boss {action} <boss_id>"
+        )
+        return
+
+    try:
+        boss_id = int(context.args[1])
+    except ValueError:
+        await update.message.reply_text("boss_id must be an integer")
         return
 
     results = []
@@ -583,27 +719,31 @@ async def auto_boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for account in accounts:
         boss_service: BossService = service_registry.get(BossService, account)
         try:
-            bosses = boss_service.list_available_bosses()
-            if not bosses:
-                results.append(f"{account.username}: no available bosses")
-                continue
+            if action == "kill":
+                boss_service.kill_boss(boss_id)
+                results.append(f"☠️ {account.username} started killing boss {boss_id}")
+            else:  # attack
+                result = boss_service.attack_boss_once(boss_id)
 
-            lines = []
-            for boss in bosses:
-                if full_mode:
-                    boss_service.kill_boss(boss.boss_id)
-                    lines.append(f"☠️ {boss.name} killed")
-                else:
-                    result = boss_service.attack_boss_once(boss.boss_id)
-                    lines.append(
-                        f"🗡️ {boss.name}: -{result['player_damage']} dmg "
-                        f"(boss {result['new_boss_life']}/{result['boss_max_life']})"
-                    )
+                if not result:
+                    results.append(f"💀 {account.username}: boss {boss_id} is already dead")
+                    continue
 
-            results.append(f"👹 Boss run for {account.username}\n" + "\n".join(lines))
+                hp_percent = (result.get('new_boss_life', 0) / result.get('boss_max_life', 1)) * 100
+                results.append(
+                    f"🗡️ {account.username}: {result.get('boss_name', 'Unknown')}\n"
+                    f"   Damage: -{result.get('player_damage', 0):.0f} | "
+                    f"Boss HP: {result.get('new_boss_life', 0):,.0f}/{result.get('boss_max_life', 0):,.0f} ({hp_percent:.0f}%)\n"
+                    f"   Your HP: {result.get('new_player_life', 0)}/{result.get('player_max_life', 0)} | "
+                    f"Stamina: {result.get('new_stamina', 0)}"
+                )
 
         except Exception as e:
-            results.append(f"❌ Boss command failed for {account.username}: {e}")
+            results.append(f"❌ {account.username}: {e}")
+
+    if not results:
+        await update.message.reply_text("No results to display")
+        return
 
     await update.message.reply_text("\n\n".join(results))
 

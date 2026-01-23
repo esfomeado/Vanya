@@ -93,6 +93,9 @@ class BossService:
     def tick(self) -> None:
         data = self.attack_boss_once(self.boss_id)
 
+        if not data:
+            return
+
         if data.get("new_stamina", 0) <= 10:
             self.pub_service.go_to_pub()
             for _ in range(20):
@@ -101,10 +104,13 @@ class BossService:
         if data.get("new_player_life", 0) <= 250:
             self.pub_service.go_to_pub_and_heal()
 
-    def attack_boss_once(self, boss_id: int) -> dict:
-        csrf = self._fetch_csrf()
+    def attack_boss_once(self, boss_id: int) -> Optional[dict]:
+        csrf = self._fetch_csrf(boss_id)
 
-        print(boss_id)
+        current_life = self._get_boss_current_life(boss_id)
+        if current_life == 0:
+            self.account.mode = Mode.IDLE
+            return None
 
         response = self.account.session.post(
             ADVENTURE_ATTACK_URL,
@@ -124,6 +130,7 @@ class BossService:
 
         data = response.json()
         if data.get("status") != "ok":
+            self.account.mode = Mode.IDLE
             raise VanyaError(f"Boss attack failed: {data}")
 
         logging.info(
@@ -153,8 +160,8 @@ class BossService:
         m = re.search(r"Required Level:\s*(\d+)", info.get_text())
         return int(m.group(1))
 
-    def _fetch_csrf(self) -> str:
-        response = self.account.session.get(ADVENTURE_URL, timeout=10)
+    def _fetch_csrf(self, boss_id: int) -> str:
+        response = self.account.session.get(f"{ADVENTURE_URL}?boss_id={boss_id}", timeout=10)
         response.raise_for_status()
 
         return get_global_csrf(response.text)
