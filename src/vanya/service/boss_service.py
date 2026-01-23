@@ -104,9 +104,11 @@ class BossService:
     def attack_boss_once(self, boss_id: int) -> dict:
         csrf = self._fetch_csrf()
 
+        print(boss_id)
+
         response = self.account.session.post(
             ADVENTURE_ATTACK_URL,
-            data={
+            json={
                 "boss_id": boss_id,
                 "recaptcha_token": "",
             },
@@ -114,7 +116,7 @@ class BossService:
                 "origin": "https://vanyaonline.com",
                 "referer": f"{ADVENTURE_URL}?boss_id={boss_id}",
                 "x-csrf-token": csrf,
-                "content-type": "application/json",
+                "accept": "*/*",
             },
             timeout=10,
         )
