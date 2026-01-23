@@ -146,5 +146,5 @@ class PhantomHallsService(BaseHuntService):
 
                 return
             except Exception as e:
-                logging.error(f"Error while running dungeon hunt: {e}")
+                logging.exception(f"Error while running dungeon hunt: {e}")
                 time.sleep(10)
