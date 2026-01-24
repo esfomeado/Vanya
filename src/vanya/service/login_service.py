@@ -78,13 +78,16 @@ class LoginService:
 
     def ensure_logged_in(self) -> None:
         if self.load_cookies():
-            response = self.session.get(
-                DASHBOARD_URL,
-                timeout=10,
-                allow_redirects=False,
-            )
-            if response.status_code < 300 or response.status_code >= 400:
-                return
+            try:
+                response = self.session.get(
+                    DASHBOARD_URL,
+                    timeout=10,
+                    allow_redirects=False,
+                )
+                if 200 <= response.status_code < 300:
+                    return
+            except Exception as e:
+                logging.info(f"Cookie validation failed for {self.account.username}: {e}")
 
         self.login()
 

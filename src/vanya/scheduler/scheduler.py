@@ -60,6 +60,7 @@ class Scheduler:
 
     def _login_loop(self, account: Account):
         while not self._stop_event.is_set():
+            logging.info(f"Logging in for {account.username}")
             login_service = service_registry.get(LoginService, account)
             login_service.ensure_logged_in()
             login_service.reconcile_mode()
