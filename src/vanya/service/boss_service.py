@@ -98,7 +98,7 @@ class BossService:
 
         if data.get("new_stamina", 0) <= 10:
             self.pub_service.go_to_pub()
-            for _ in range(20):
+            for _ in range(1):
                 self.pub_service.regenerate()
 
         if data.get("new_player_life", 0) <= 250:

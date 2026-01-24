@@ -43,7 +43,7 @@ class Scheduler:
             login_thread.start()
             self._threads.append(login_thread)
 
-            time.sleep(10)
+            time.sleep(5)
 
             main_thread = threading.Thread(target=self._run, args=(account,), daemon=True)
             main_thread.start()

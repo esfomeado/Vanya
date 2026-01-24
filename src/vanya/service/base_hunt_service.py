@@ -55,6 +55,7 @@ class BaseHuntService(ABC):
             logging.info(f"Health below max hit for account {self.account.username}, stopping hunt")
             self.stop_hunt()
             self.pub_service.go_to_pub_and_heal()
+            self.pub_service.regenerate(sleep=False)
             self.auto_equip_service.equip()
             self.hunt(area_id=self.area_id)
 
