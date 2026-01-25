@@ -25,6 +25,10 @@ class StatsService:
                 raw = pill.find("strong").text
                 value = raw.replace(",", "").replace("\xa0", "").strip()
                 self.account.stats.gold = int(value)
+            elif (img := pill.find("img")) and "assets/img/items/drako.png" in img.get("src", ""):
+                raw = pill.find("strong").text
+                value = raw.replace(",", "").replace("\xa0", "").strip()
+                self.account.stats.drako = int(value)
 
             strong = pill.find("strong")
             span = pill.find("span")

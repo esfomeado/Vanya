@@ -146,11 +146,11 @@ class BossService:
 
         return data
 
-    def _parse_title(self, text: str):
+    def _parse_title(self, text: str) -> tuple[int, str]:
         m = re.match(r"Stage\s+(\d+):\s+(.+)", text)
         return int(m.group(1)), m.group(2)
 
-    def _parse_life_xp(self, info):
+    def _parse_life_xp(self, info) -> tuple[int, int]:
         text = info.get_text(" ", strip=True)
         m = re.search(r"Life:\s*([\d,]+)\s*\|\s*XP:\s*([\d,]+)", text)
         return int(m.group(1).replace(",", "")), int(m.group(2).replace(",", ""))

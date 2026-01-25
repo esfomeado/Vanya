@@ -14,6 +14,7 @@ class Stats:
         self.defence: int = 0
         self.fishing: int = 0
         self.gold: int = 0
+        self.drako: int = 0
         self.health: int = 0
         self.level: int = 0
         self.magic: int = 0

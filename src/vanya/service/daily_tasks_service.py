@@ -197,7 +197,7 @@ class DailyTasksService:
         logging.info(f"Guild shrine spin executed for {self.account.username}")
 
     def _claim_eventide(self) -> None:
-        logging.info("Claiming eventide")
+        logging.info(f"Claiming eventide for {self.account.username}")
 
         self.account.session.post(
             CLAIM_REWARD_URL,

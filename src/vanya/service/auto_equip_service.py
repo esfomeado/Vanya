@@ -12,7 +12,7 @@ class AutoEquipService:
     def __init__(self, account: Account):
         self.account: Account = account
 
-    def equip(self):
+    def equip(self) -> None:
         if not self.account.auto_equip:
             return
 

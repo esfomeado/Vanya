@@ -9,7 +9,7 @@ class TelegramService:
         self._users = CONFIG.telegram.allowed_users
         self._client = httpx.Client(timeout=10)
 
-    def close(self):
+    def close(self) -> None:
         self._client.close()
 
     def __enter__(self):

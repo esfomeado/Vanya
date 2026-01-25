@@ -10,6 +10,7 @@ from src.vanya.model.mode import Mode
 from src.vanya.service.boss_service import BossService
 from src.vanya.service.chat_service import ChatService
 from src.vanya.service.dark_market_service import DarkMarketService
+from src.vanya.service.deep_dragon_service import DeepDragonService
 from src.vanya.service.guild_service import GuildService
 from src.vanya.service.inventory_service import InventoryService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
@@ -17,7 +18,6 @@ from src.vanya.service.service_registry import service_registry
 from src.vanya.service.solo_hunt_service import SoloHuntService
 from src.vanya.service.training_service import TrainingService
 from src.vanya.telegram.acl import allowed
-from vanya.service.deep_dragon_service import DeepDragonService
 
 
 def _find_account(accounts: list[Account], username: str) -> Account | None:
@@ -82,6 +82,7 @@ async def stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "📊 Stats",
         f"Level: {stats.level}",
         f"Gold: {stats.gold}",
+        f"Drako: {stats.drako}",
         f"Health: {stats.health}/{stats.max_health}",
         f"Stamina: {stats.stamina}",
         "",
@@ -631,9 +632,23 @@ async def auto_stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         guild = account.guild or "None"
 
         acc_lines = [
-            f"👤 {account.username} | Guild: {guild} | Mode: {account.mode.value}",
-            f"📊 Stats: Level {stats.level}, Gold {stats.gold}, Health {stats.health}/{stats.max_health}, Stamina {stats.stamina}",
-            f"⚔️ Skills: Sword {stats.sword}, Bow {stats.bow}, Magic {stats.magic}, Defence {stats.defence}, Fishing {stats.fishing}"
+            f"👤 Account: {account.username}",
+            f"🧭 Mode: {account.mode.value}",
+            f"🏰 Guild: {guild}"
+            "",
+            "📊 Stats",
+            f"Level: {stats.level}",
+            f"Gold: {stats.gold}",
+            f"Drako: {stats.drako}",
+            f"Health: {stats.health}/{stats.max_health}",
+            f"Stamina: {stats.stamina}",
+            "",
+            "⚔️ Skills",
+            f"Sword: {stats.sword}",
+            f"Bow: {stats.bow}",
+            f"Magic: {stats.magic}",
+            f"Defence: {stats.defence}",
+            f"Fishing: {stats.fishing}",
         ]
 
         if hunt:
@@ -641,7 +656,7 @@ async def auto_stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         lines.append("\n".join(acc_lines))
 
-    batch_size = 20
+    batch_size = 10
     for i in range(0, len(lines), batch_size):
         batch = lines[i:i + batch_size]
         await update.message.reply_text("\n\n".join(batch))
@@ -727,6 +742,13 @@ async def auto_boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     results = []
 
     for account in accounts:
+        if account.mode == Mode.SOLO_HUNT:
+            service_registry.get(SoloHuntService, account).stop_hunt()
+        elif account.mode == Mode.PHANTOM_HALLS:
+            service_registry.get(PhantomHallsService, account).stop_hunt()
+        elif account.mode == Mode.DEEP_DRAGON:
+            service_registry.get(DeepDragonService, account).stop_hunt()
+
         boss_service: BossService = service_registry.get(BossService, account)
         try:
             if action == "kill":

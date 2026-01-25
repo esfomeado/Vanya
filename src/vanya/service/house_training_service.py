@@ -6,7 +6,7 @@ class HouseTrainingService:
     def __init__(self, account):
         self.account = account
 
-    def train(self):
+    def train(self) -> None:
         response = self.account.session.get(PUB_URL, timeout=10)
         csrf = get_global_csrf(response.text)
 
@@ -23,7 +23,7 @@ class HouseTrainingService:
             timeout=10,
         ).raise_for_status()
 
-    def tick(self):
+    def tick(self) -> None:
         response = self.account.session.get(HOUSE_URL, timeout=10)
         csrf = get_global_csrf(response.text)
 
