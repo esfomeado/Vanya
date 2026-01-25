@@ -33,11 +33,11 @@ class Scheduler:
     }
 
     def __init__(self, accounts: list[Account]):
-        self.accounts = accounts
-        self._threads = []
-        self._stop_event = threading.Event()
+        self.accounts: list[Account] = accounts
+        self._threads: list[threading.Thread] = []
+        self._stop_event: threading.Event = threading.Event()
 
-    def start(self):
+    def start(self) -> None:
         for account in self.accounts:
             login_thread = threading.Thread(target=self._login_loop, args=(account,), daemon=True)
             login_thread.start()
@@ -51,23 +51,23 @@ class Scheduler:
 
         logging.info("Scheduler started for all accounts.")
 
-    def stop(self):
+    def stop(self) -> None:
         self._stop_event.set()
         for thread in self._threads:
             thread.join(timeout=5)
 
         logging.info("Scheduler stopped.")
 
-    def _login_loop(self, account: Account):
+    def _login_loop(self, account: Account) -> None:
+        login_service: LoginService = service_registry.get(LoginService, account)
+
         while not self._stop_event.is_set():
-            logging.info(f"Logging in for {account.username}")
-            login_service = service_registry.get(LoginService, account)
             login_service.ensure_logged_in()
             login_service.reconcile_mode()
 
             self._stop_event.wait(60)
 
-    def _run(self, account: Account):
+    def _run(self, account: Account) -> None:
         last_stats_refresh = 0.0
 
         while not self._stop_event.is_set():

@@ -17,6 +17,7 @@ from src.vanya.service.service_registry import service_registry
 from src.vanya.service.solo_hunt_service import SoloHuntService
 from src.vanya.service.training_service import TrainingService
 from src.vanya.telegram.acl import allowed
+from vanya.service.deep_dragon_service import DeepDragonService
 
 
 def _find_account(accounts: list[Account], username: str) -> Account | None:
@@ -271,6 +272,7 @@ async def auto_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 service_registry.get(PhantomHallsService, account).stop_hunt()
                 lines.append(f"⏹️ {account.username} stopped Phantom Halls")
             elif account.mode == Mode.DEEP_DRAGON:
+                service_registry.get(DeepDragonService, account).stop_hunt()
                 lines.append(f"⏹️ {account.username} stopped Deep Dragon")
             else:
                 lines.append(f"⏭️ {account.username} not hunting")

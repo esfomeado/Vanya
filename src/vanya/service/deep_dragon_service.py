@@ -4,3 +4,6 @@ class DeepDragonService:
 
     def tick(self):
         pass
+
+    def stop_hunt(self):
+        pass
