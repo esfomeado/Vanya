@@ -632,23 +632,9 @@ async def auto_stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         guild = account.guild or "None"
 
         acc_lines = [
-            f"👤 Account: {account.username}",
-            f"🧭 Mode: {account.mode.value}",
-            f"🏰 Guild: {guild}"
-            "",
-            "📊 Stats",
-            f"Level: {stats.level}",
-            f"Gold: {stats.gold}",
-            f"Drako: {stats.drako}",
-            f"Health: {stats.health}/{stats.max_health}",
-            f"Stamina: {stats.stamina}",
-            "",
-            "⚔️ Skills",
-            f"Sword: {stats.sword}",
-            f"Bow: {stats.bow}",
-            f"Magic: {stats.magic}",
-            f"Defence: {stats.defence}",
-            f"Fishing: {stats.fishing}",
+            f"👤 {account.username} | Guild: {guild} | Mode: {account.mode.value}",
+            f"📊 Stats: Level {stats.level}, Gold {stats.gold}, Drako {stats.drako} Health {stats.health}/{stats.max_health}, Stamina {stats.stamina}",
+            f"⚔️ Skills: Sword {stats.sword}, Bow {stats.bow}, Magic {stats.magic}, Defence {stats.defence}, Fishing {stats.fishing}"
         ]
 
         if hunt:
