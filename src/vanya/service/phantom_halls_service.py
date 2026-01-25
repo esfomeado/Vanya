@@ -125,6 +125,8 @@ class PhantomHallsService(BaseHuntService):
                     continue
 
                 dungeon_status = self._fetch_dungeon_lobby().get(area_id)
+                if dungeon_status is None:
+                    break
 
                 count = dungeon_status.get("count", 0)
                 am_i_in = dungeon_status.get("am_i_in", False)
