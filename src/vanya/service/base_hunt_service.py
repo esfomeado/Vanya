@@ -1,4 +1,5 @@
 import logging
+import time
 from abc import ABC, abstractmethod
 from typing import Optional
 
@@ -18,6 +19,7 @@ class BaseHuntService(ABC):
     def __init__(self, account: Account):
         self.account = account
         self.area_id: Optional[str] = None
+        self.last_chest_claim_time: float = 0
         self.auto_equip_service = service_registry.get(AutoEquipService, account)
         self.boss_service = service_registry.get(BossService, account)
         self.pub_service = service_registry.get(PubService, account)
@@ -48,8 +50,42 @@ class BaseHuntService(ABC):
         self.account.hunt = None
         self.account.mode = Mode.IDLE
 
+    def claim_chest(self) -> None:
+        try:
+            logging.info(f"Attempting to claim hunt chest for {self.account.username}")
+
+            response_get = self.account.session.get(HUNT_URL, timeout=10)
+            response_get.raise_for_status()
+            csrf = self._get_csrf(response_get.text)
+
+            if not csrf:
+                logging.warning("Could not find CSRF token for chest claim.")
+                return
+
+            response_post = self.account.session.post(
+                HUNT_URL,
+                data={
+                    "action": "claim_hunt_chest",
+                    "csrf_token": csrf
+                },
+                headers={
+                    "referer": HUNT_URL,
+                },
+                timeout=10
+            )
+            response_post.raise_for_status()
+
+            self.last_chest_claim_time = time.time()
+            logging.info(f"Successfully sent chest claim request for {self.account.username}")
+
+        except Exception as e:
+            logging.error(f"Failed to claim chest: {e}")
+
     def tick(self) -> None:
         self.account.session.get(HUNT_URL, timeout=10).raise_for_status()
+
+        if time.time() - self.last_chest_claim_time > 1800:
+            self.claim_chest()
 
         if self.account.stats.health <= self.account.hunt.max_hit + 1:
             logging.info(f"Health below max hit for account {self.account.username}, stopping hunt")
