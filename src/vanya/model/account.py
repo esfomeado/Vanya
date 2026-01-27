@@ -1,7 +1,7 @@
 from typing import Optional
 
-import requests
-from requests import Session
+import httpx
+from httpx import Client
 
 from src.vanya.model.config import AccountConfig
 from src.vanya.model.hunt import Hunt
@@ -34,8 +34,16 @@ class Account:
         self.stats: Stats = Stats()
         self.mode: Mode = Mode.IDLE
         self.guild: Optional[str] = None
-        self.session: Session = requests.Session()
         self.hunt: Optional[Hunt] = None
+        self.session: Client = httpx.Client(
+            http2=True,
+            timeout=httpx.Timeout(connect=3.0, read=10.0, write=10.0, pool=5.0),
+            limits=httpx.Limits(
+                max_connections=20,
+                max_keepalive_connections=10,
+                keepalive_expiry=30.0,
+            ),
+        )
 
     def __repr__(self):
         return f"Account(username='{self.username}', mode={self.mode}, guild={self.guild}, hunt={self.hunt})"

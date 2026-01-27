@@ -59,7 +59,6 @@ class DarkMarketService:
                 "accept": "text/html",
                 "referer": MARKET_URL,
             },
-            timeout=10,
         )
         response.raise_for_status()
 
@@ -76,8 +75,7 @@ class DarkMarketService:
                 "listing_id": item_id,
                 "csrf_token": csrf,
             },
-            allow_redirects=True,
-            timeout=10,
+            follow_redirects=True,
         ).raise_for_status()
 
     def sell_item(self, item_name: str, amount: int, price: int) -> None:
@@ -88,7 +86,6 @@ class DarkMarketService:
                 "accept": "text/html",
                 "referer": MARKET_URL,
             },
-            timeout=10,
         )
         response.raise_for_status()
 
@@ -108,8 +105,7 @@ class DarkMarketService:
                 "price": price,
                 "unbind_currency": "gold",
             },
-            allow_redirects=True,
-            timeout=10,
+            follow_redirects=True,
         ).raise_for_status()
 
     def _extract_list_csrf(self, html: str) -> str:

@@ -1,6 +1,6 @@
 beautifulsoup4==4.14.3
 httpx==0.28.1
 pydantic==2.12.5
-python-telegram-bot==22.5
+python-telegram-bot==22.6
 pyyaml==6.0.3
 requests==2.32.5

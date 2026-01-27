@@ -25,7 +25,6 @@ class PhantomHallsService(BaseHuntService):
             headers={
                 "referer": DUNGEON_VIEW_URL
             },
-            timeout=10,
         ).raise_for_status()
 
         logging.info(f"Joined dungeon {dungeon_id} queue for account {self.account.username}")
@@ -40,7 +39,6 @@ class PhantomHallsService(BaseHuntService):
             headers={
                 "referer": DUNGEON_VIEW_URL
             },
-            timeout=10,
         ).raise_for_status()
 
         logging.info(f"Started dungeon {dungeon_id} for account {self.account.username}")
@@ -55,11 +53,10 @@ class PhantomHallsService(BaseHuntService):
             headers={
                 "referer": DUNGEON_VIEW_URL
             },
-            timeout=10,
         ).json()
 
     def _get_latest_enabled_dungeon(self, specific_area_id: Optional[str] = None):
-        response = self.account.session.get(DUNGEON_VIEW_URL, timeout=10)
+        response = self.account.session.get(DUNGEON_VIEW_URL)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
         dungeon_areas = soup.select(".hunt-area")
@@ -134,7 +131,6 @@ class PhantomHallsService(BaseHuntService):
                 if joined and not am_i_in:
                     response = self.account.session.get(
                         CHECK_HUNT_STATUS_URL,
-                        timeout=10,
                     )
                     response.raise_for_status()
                     in_hunt = response.json().get("in_hunt", False)

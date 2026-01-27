@@ -642,7 +642,7 @@ async def auto_stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         lines.append("\n".join(acc_lines))
 
-    batch_size = 10
+    batch_size = 15
     for i in range(0, len(lines), batch_size):
         batch = lines[i:i + batch_size]
         await update.message.reply_text("\n\n".join(batch))

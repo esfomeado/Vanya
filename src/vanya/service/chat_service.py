@@ -38,7 +38,6 @@ class ChatService:
                 "x-csrf-token": csrf,
                 "content-type": "application/x-www-form-urlencoded",
             },
-            timeout=10,
         ).raise_for_status()
 
         logging.info(
@@ -53,7 +52,7 @@ class ChatService:
             PUB_URL,
         )
 
-        response = self.account.session.get(source_url, timeout=10)
+        response = self.account.session.get(source_url)
         response.raise_for_status()
 
         return get_global_csrf(response.text)

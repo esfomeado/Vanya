@@ -36,7 +36,7 @@ class DailyTasksService:
     def _claim_daemon_pass_rewards(self) -> None:
         logging.info(f"Claiming daemon pass rewards for {self.account.username}")
 
-        response = self.account.session.get(DASHBOARD_URL, timeout=10)
+        response = self.account.session.get(DASHBOARD_URL)
         response.raise_for_status()
         csrf = get_global_csrf(response.text)
 
@@ -44,9 +44,7 @@ class DailyTasksService:
             f"{BASE_URL}/actions/demon_pass",
             headers={
                 "referer": DASHBOARD_URL,
-                "accept": "*/*",
             },
-            timeout=10,
         )
         status.raise_for_status()
 
@@ -75,7 +73,6 @@ class DailyTasksService:
                     "action": "claim",
                     "tier": tier,
                 },
-                timeout=10,
             ).raise_for_status()
 
     def _claim_huntiary_rewards(self) -> None:
@@ -90,14 +87,13 @@ class DailyTasksService:
                 "referer": HUNTIARY_URL,
                 "content-type": "application/x-www-form-urlencoded",
             },
-            timeout=10,
         )
         response.raise_for_status()
 
     def _seal_updex_items(self) -> None:
         logging.info(f"Sealing updex items for {self.account.username}")
 
-        response = self.account.session.get(UPDEX_URL, timeout=10)
+        response = self.account.session.get(UPDEX_URL)
         response.raise_for_status()
 
         self.csrf = get_global_csrf(response.text)
@@ -122,7 +118,6 @@ class DailyTasksService:
                     "x-csrf-token": self.csrf,
                     "content-type": "application/x-www-form-urlencoded",
                 },
-                timeout=10,
             ).raise_for_status()
 
     def _claim_shadow_book(self) -> None:
@@ -131,7 +126,6 @@ class DailyTasksService:
             headers={
                 "referer": BOOKS_OF_SHADOWS_URL
             },
-            timeout=10,
         )
         response.raise_for_status()
 
@@ -168,7 +162,6 @@ class DailyTasksService:
                 headers={
                     "referer": BOOKS_OF_SHADOWS_URL
                 },
-                timeout=10,
             ).raise_for_status()
 
     def _spin_guild_shrine(self) -> None:
@@ -176,7 +169,7 @@ class DailyTasksService:
             logging.info(f"{self.account.username} not in guild, skipping guild shrine spin")
             return
 
-        response = self.account.session.get(GUILDS_URL, timeout=10)
+        response = self.account.session.get(GUILDS_URL)
         response.raise_for_status()
 
         csrf = get_global_csrf(response.text)
@@ -191,7 +184,6 @@ class DailyTasksService:
             data={
                 "csrf_token": csrf,
             },
-            timeout=10,
         ).raise_for_status()
 
         logging.info(f"Guild shrine spin executed for {self.account.username}")
@@ -204,5 +196,4 @@ class DailyTasksService:
             headers={
                 "referer": f"{BASE_URL}/account_settings",
             },
-            timeout=10,
         ).raise_for_status()

@@ -43,7 +43,6 @@ class TrainingService:
                     "x-csrf-token": self.csrf,
                     "content-type": "application/x-www-form-urlencoded",
                 },
-                timeout=10,
             ).raise_for_status()
 
             logging.info(f"Training tick | account={self.account.username} | skill={self.skill}")
@@ -76,7 +75,6 @@ class TrainingService:
                 "x-csrf-token": self.csrf,
                 "content-type": "application/x-www-form-urlencoded",
             },
-            timeout=10,
         ).raise_for_status()
 
         self.account.mode = Mode.TRAINING
@@ -86,7 +84,7 @@ class TrainingService:
         )
 
     def _fetch_csrf(self) -> str:
-        response = self.account.session.get(PUB_URL, timeout=10)
+        response = self.account.session.get(PUB_URL)
         response.raise_for_status()
 
         return get_global_csrf(response.text)

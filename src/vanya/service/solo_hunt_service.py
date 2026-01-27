@@ -20,7 +20,7 @@ class SoloHuntService(BaseHuntService):
 
         self.area_id = area_id
 
-        response = self.account.session.get(EXPLORE_URL, timeout=10)
+        response = self.account.session.get(EXPLORE_URL)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, "html.parser")
@@ -93,6 +93,7 @@ class SoloHuntService(BaseHuntService):
                 "area_id": hunt.area_id,
                 "csrf_token": csrf_value,
             },
-            headers={"referer": EXPLORE_URL},
-            timeout=10,
+            headers={
+                "referer": EXPLORE_URL
+            },
         ).raise_for_status()

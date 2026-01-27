@@ -7,7 +7,7 @@ class HouseTrainingService:
         self.account = account
 
     def train(self) -> None:
-        response = self.account.session.get(PUB_URL, timeout=10)
+        response = self.account.session.get(PUB_URL)
         csrf = get_global_csrf(response.text)
 
         self.account.session.post(
@@ -20,11 +20,10 @@ class HouseTrainingService:
                 "x-csrf-token": csrf,
                 "content-type": "application/x-www-form-urlencoded",
             },
-            timeout=10,
         ).raise_for_status()
 
     def tick(self) -> None:
-        response = self.account.session.get(HOUSE_URL, timeout=10)
+        response = self.account.session.get(HOUSE_URL)
         csrf = get_global_csrf(response.text)
 
         self.account.session.post(

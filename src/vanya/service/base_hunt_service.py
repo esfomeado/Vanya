@@ -32,7 +32,7 @@ class BaseHuntService(ABC):
     def stop_hunt(self) -> None:
         logging.info(f"Stopping hunt for account {self.account.username}")
 
-        response = self.account.session.get(HUNT_URL, timeout=10)
+        response = self.account.session.get(HUNT_URL)
         csrf = self._get_csrf(response.text)
 
         self.account.session.post(
@@ -44,7 +44,6 @@ class BaseHuntService(ABC):
             headers={
                 "referer": BASE_URL
             },
-            timeout=10,
         ).raise_for_status()
 
         self.account.hunt = None
@@ -54,7 +53,7 @@ class BaseHuntService(ABC):
         try:
             logging.info(f"Attempting to claim hunt chest for {self.account.username}")
 
-            response_get = self.account.session.get(HUNT_URL, timeout=10)
+            response_get = self.account.session.get(HUNT_URL)
             response_get.raise_for_status()
             csrf = self._get_csrf(response_get.text)
 
@@ -71,7 +70,6 @@ class BaseHuntService(ABC):
                 headers={
                     "referer": HUNT_URL,
                 },
-                timeout=10
             )
             response_post.raise_for_status()
 
@@ -82,7 +80,7 @@ class BaseHuntService(ABC):
             logging.error(f"Failed to claim chest: {e}")
 
     def tick(self) -> None:
-        self.account.session.get(HUNT_URL, timeout=10).raise_for_status()
+        self.account.session.get(HUNT_URL).raise_for_status()
 
         if time.time() - self.last_chest_claim_time > 1800:
             self.claim_chest()

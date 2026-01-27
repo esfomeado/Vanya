@@ -11,7 +11,7 @@ class InventoryService:
         self.account = account
 
     def list_items(self) -> list[InventoryItem]:
-        response = self.account.session.get(DASHBOARD_URL, timeout=10)
+        response = self.account.session.get(DASHBOARD_URL)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, "html.parser")

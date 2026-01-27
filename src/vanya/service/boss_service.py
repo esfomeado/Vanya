@@ -24,7 +24,7 @@ class BossService:
     def list_available_bosses(self) -> list[Boss]:
         logging.info(f"Listing available bosses for account {self.account.username}")
 
-        response = self.account.session.get(ADVENTURE_URL, timeout=10)
+        response = self.account.session.get(ADVENTURE_URL)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, "html.parser")
@@ -121,9 +121,7 @@ class BossService:
             headers={
                 "referer": f"{ADVENTURE_URL}?boss_id={boss_id}",
                 "x-csrf-token": csrf,
-                "accept": "*/*",
             },
-            timeout=10,
         )
         response.raise_for_status()
 
@@ -160,7 +158,7 @@ class BossService:
         return int(m.group(1))
 
     def _fetch_csrf(self, boss_id: int) -> str:
-        response = self.account.session.get(f"{ADVENTURE_URL}?boss_id={boss_id}", timeout=10)
+        response = self.account.session.get(f"{ADVENTURE_URL}?boss_id={boss_id}")
         response.raise_for_status()
 
         return get_global_csrf(response.text)
@@ -168,7 +166,6 @@ class BossService:
     def _get_boss_current_life(self, boss_id: int) -> int:
         resp = self.account.session.get(
             f"{ADVENTURE_URL}?boss_id={boss_id}",
-            timeout=10,
         )
         resp.raise_for_status()
 

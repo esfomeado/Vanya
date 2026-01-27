@@ -18,7 +18,7 @@ class PubService:
     def go_to_pub(self) -> None:
         logging.info(f"Going to pub for account {self.account.username}")
 
-        response = self.account.session.get(PUB_URL, timeout=10)
+        response = self.account.session.get(PUB_URL)
         self.csrf = get_global_csrf(response.text)
 
     def go_to_pub_and_heal(self) -> None:
@@ -42,7 +42,6 @@ class PubService:
                 "x-csrf-token": self.csrf,
                 "content-type": "application/x-www-form-urlencoded",
             },
-            timeout=10,
         ).raise_for_status()
 
         self.account.session.post(
@@ -50,7 +49,6 @@ class PubService:
             headers={
                 "referer": PUB_URL,
             },
-            timeout=10,
         ).raise_for_status()
 
         if sleep:
@@ -69,7 +67,6 @@ class PubService:
                 "x-csrf-token": self.csrf,
                 "content-type": "application/x-www-form-urlencoded",
             },
-            timeout=10,
         ).raise_for_status()
 
     def _stop_training(self) -> None:
@@ -85,7 +82,6 @@ class PubService:
                 "x-csrf-token": self.csrf,
                 "content-type": "application/x-www-form-urlencoded",
             },
-            timeout=10,
         ).raise_for_status()
 
     def _buy_health_potion(self) -> None:
@@ -114,11 +110,10 @@ class PubService:
                 "x-csrf-token": self.csrf,
                 "content-type": "application/x-www-form-urlencoded",
             },
-            timeout=10,
         ).raise_for_status()
 
     def _get_health_potion_price(self) -> int:
-        response = self.account.session.get(PUB_URL, timeout=10)
+        response = self.account.session.get(PUB_URL)
         response.raise_for_status()
         html = response.text
 

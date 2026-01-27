@@ -9,7 +9,7 @@ class StatsService:
         self.account = account
 
     def refresh_account_stats(self) -> None:
-        response = self.account.session.get(DASHBOARD_URL, timeout=10)
+        response = self.account.session.get(DASHBOARD_URL)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, "html.parser")

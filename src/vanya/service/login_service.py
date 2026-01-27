@@ -56,7 +56,7 @@ class LoginService:
             "referer": f"{BASE_URL}/index",
         })
 
-        self.session.get(LOGIN_URL, timeout=10)
+        self.session.get(LOGIN_URL)
 
         response = self.session.post(
             LOGIN_URL,
@@ -64,12 +64,11 @@ class LoginService:
                 "username": self.account.username,
                 "password": self.account.password
             },
-            allow_redirects=True,
-            timeout=10,
+            follow_redirects=True,
         )
         response.raise_for_status()
 
-        if "/login" in response.url.lower():
+        if "/login" in response.url.path.lower():
             raise RuntimeError(f"Login failed for {self.account.username}")
 
         self.save_cookies()
@@ -81,9 +80,10 @@ class LoginService:
             try:
                 response = self.session.get(
                     DASHBOARD_URL,
-                    timeout=10,
-                    allow_redirects=False,
+                    follow_redirects=False,
                 )
+                response.raise_for_status()
+
                 if response.status_code == 200:
                     return
             except Exception as e:
@@ -95,7 +95,7 @@ class LoginService:
 
     def reconcile_mode(self) -> None:
         try:
-            response = self.account.session.get(CHECK_HUNT_STATUS_URL, timeout=10)
+            response = self.account.session.get(CHECK_HUNT_STATUS_URL)
             response.raise_for_status()
             json_response = response.json()
             in_hunt = json_response.get("in_hunt", False)
@@ -136,7 +136,7 @@ class LoginService:
         }
 
         try:
-            response = self.account.session.get(HUNT_URL, timeout=10)
+            response = self.account.session.get(HUNT_URL)
             response.raise_for_status()
 
             soup = BeautifulSoup(response.text, "html.parser")
