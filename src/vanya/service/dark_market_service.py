@@ -75,7 +75,7 @@ class DarkMarketService:
                 "listing_id": item_id,
                 "csrf_token": csrf,
             },
-            follow_redirects=True,
+            allow_redirects=True,
         ).raise_for_status()
 
     def sell_item(self, item_name: str, amount: int, price: int) -> None:
@@ -105,7 +105,7 @@ class DarkMarketService:
                 "price": price,
                 "unbind_currency": "gold",
             },
-            follow_redirects=True,
+            allow_redirects=True,
         ).raise_for_status()
 
     def _extract_list_csrf(self, html: str) -> str:

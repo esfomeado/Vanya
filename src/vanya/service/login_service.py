@@ -64,11 +64,11 @@ class LoginService:
                 "username": self.account.username,
                 "password": self.account.password
             },
-            follow_redirects=True,
+            allow_redirects=True,
         )
         response.raise_for_status()
 
-        if "/login" in response.url.path.lower():
+        if "/login" in response.url.lower():
             raise RuntimeError(f"Login failed for {self.account.username}")
 
         self.save_cookies()
@@ -80,7 +80,7 @@ class LoginService:
             try:
                 response = self.session.get(
                     DASHBOARD_URL,
-                    follow_redirects=False,
+                    allow_redirects=False,
                 )
                 response.raise_for_status()
 
