@@ -9,11 +9,13 @@ from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 from src.vanya.service.boss_service import BossService
 from src.vanya.service.chat_service import ChatService
+from src.vanya.service.coupon_service import CouponService
 from src.vanya.service.dark_market_service import DarkMarketService
 from src.vanya.service.deep_dragon_service import DeepDragonService
 from src.vanya.service.guild_service import GuildService
 from src.vanya.service.inventory_service import InventoryService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
+from src.vanya.service.pub_service import PubService
 from src.vanya.service.service_registry import service_registry
 from src.vanya.service.solo_hunt_service import SoloHuntService
 from src.vanya.service.training_service import TrainingService
@@ -898,3 +900,48 @@ async def market_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         await update.message.reply_text(f"❌ Market action failed: {str(e)}")
+
+
+async def auto_coupon_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+
+    results = []
+
+    for account in accounts:
+        service = service_registry.get(CouponService, account)
+        try:
+            coupon_code = context.args[0]
+            service.redeem(coupon_code)
+            results.append(f"✅ {account.username}: Coupon redeemed successfully")
+        except Exception as e:
+            results.append(f"❌ {account.username}: {str(e)}")
+
+    if results:
+        await update.message.reply_text("\n".join(results))
+
+async def auto_regenerate_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+
+    results = []
+
+    for account in accounts:
+        if account.mode in {Mode.SOLO_HUNT, Mode.PHANTOM_HALLS, Mode.DEEP_DRAGON}:
+            results.append(f"⏭️ {account.username}: currently hunting, skipped")
+            continue
+
+        service = service_registry.get(PubService, account)
+        try:
+            service.go_to_pub()
+            service.regenerate(sleep=False)
+            results.append(f"✅ {account.username}: regenerated successfully")
+        except Exception as e:
+            results.append(f"❌ {account.username}: {str(e)}")
+
+    if results:
+        await update.message.reply_text("\n".join(results))
