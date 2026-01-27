@@ -36,12 +36,12 @@ class Account:
         self.guild: Optional[str] = None
         self.hunt: Optional[Hunt] = None
         self.session: Client = httpx.Client(
-            http2=True,
+            http2=False,
             timeout=httpx.Timeout(connect=3.0, read=10.0, write=10.0, pool=5.0),
             limits=httpx.Limits(
-                max_connections=20,
-                max_keepalive_connections=10,
-                keepalive_expiry=30.0,
+                max_connections=5,
+                max_keepalive_connections=2,
+                keepalive_expiry=15.0,
             ),
         )
 
