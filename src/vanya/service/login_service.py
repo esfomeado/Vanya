@@ -84,10 +84,12 @@ class LoginService:
                     timeout=10,
                     allow_redirects=False,
                 )
-                if 200 <= response.status_code < 300:
+                if response.status_code == 200:
                     return
             except Exception as e:
                 logging.info(f"Cookie validation failed for {self.account.username}: {e}")
+
+        logging.info(f"Session expired for {self.account.username}")
 
         self.login()
 
