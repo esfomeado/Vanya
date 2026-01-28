@@ -14,17 +14,11 @@ accounts:
   - username: Ahnasakhtab
     password: RBtAPNpwsFPy
     auto_equip: true
-  - username: Nehileila
-    password: 95QhHQtWzh7J
-    auto_equip: true
   - username: Nazari
     password: NGYngv4AWYLp
     auto_equip: true
   - username: Shirimana
     password: wrgNsJPJpXCJ
-    auto_equip: true
-  - username: Irizheghan
-    password: mky2wPvSsTr8
     auto_equip: true
   - username: Baharata
     password: MdhTVdU94eUT
@@ -38,9 +32,6 @@ accounts:
   - username: Samonehoo
     password: Wg9fG7DwUnxp
     auto_equip: true
-  - username: Nazarakoo
-    password: ug67A4584ccw
-    auto_equip: true
   - username: Bariheha
     password: ff2yh5vU9ABE
     auto_equip: true
@@ -50,17 +41,11 @@ accounts:
   - username: Ganehana
     password: c2hrjESmEfd7
     auto_equip: true
-  - username: Shervashara
-    password: NGsAUbaEzfTt
-    auto_equip: true
   - username: Sayehokoo
     password: 2KgPZaYg5wLE
     auto_equip: true
   - username: Nazillida
     password: twdQdXURPhHk
-    auto_equip: true
-  - username: Gandehengiz
-    password: SQeQP34kqUzD
     auto_equip: true
   - username: Fozhamsa
     password: MrqVuXGwkgRe
@@ -73,9 +58,6 @@ accounts:
     auto_equip: true
   - username: Dehanikou
     password: cBZz5xuGCqRp
-    auto_equip: true
-  - username: Mehaneha
-    password: nKTbwVbUEjvg
     auto_equip: true
   - username: Ategitash
     password: b7eKYAqmtZsQ
@@ -92,14 +74,8 @@ accounts:
   - username: Abilanin
     password: RyzjF5tYZHQ3
     auto_equip: true
-  - username: Gahedagha
-    password: 9gCfwdqeaQ2h
-    auto_equip: true
   - username: Golehala
     password: CStqKvFsx6SC
-    auto_equip: true
-  - username: Alebeh
-    password: Chtre62RMVYv
     auto_equip: true
   - username: Kharamala
     password: mjVxpP4G9yQQ

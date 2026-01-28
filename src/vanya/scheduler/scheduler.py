@@ -80,9 +80,6 @@ class Scheduler:
                     service_registry.get(NexusService, account).refresh()
                     last_stats_refresh = now
 
-                if account.stats.health <= 1:
-                    service_registry.get(PubService, account).go_to_pub_and_heal()
-
                 if account.mode == Mode.SOLO_HUNT:
                     service_registry.get(SoloHuntService, account).tick()
 
@@ -104,6 +101,9 @@ class Scheduler:
 
                 if account.mode == Mode.HOUSE_TRAINING:
                     service_registry.get(HouseTrainingService, account).tick()
+
+                if account.stats.health <= 1:
+                    service_registry.get(PubService, account).go_to_pub_and_heal()
 
                 service_registry.get(DailyTasksService, account).run_if_due()
 
