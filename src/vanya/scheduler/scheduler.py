@@ -80,7 +80,7 @@ class Scheduler:
                     service_registry.get(NexusService, account).refresh()
                     last_stats_refresh = now
 
-                if account.stats.health <= 0:
+                if account.stats.health <= 1:
                     service_registry.get(PubService, account).go_to_pub_and_heal()
 
                 if account.mode == Mode.SOLO_HUNT:
