@@ -85,7 +85,7 @@ class BaseHuntService(ABC):
         if time.time() - self.last_chest_claim_time > 1800:
             self.claim_chest()
 
-        if self.account.stats.health <= self.account.hunt.max_hit + 1:
+        if self.account.stats.health <= self.account.hunt.max_hit + (self.account.hunt.max_hit * 0.1):
             logging.info(f"Health below max hit for account {self.account.username}, stopping hunt")
             self.stop_hunt()
             self.pub_service.go_to_pub_and_heal()

@@ -14,6 +14,7 @@ from src.vanya.service.house_training_service import HouseTrainingService
 from src.vanya.service.login_service import LoginService
 from src.vanya.service.nexus_service import NexusService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
+from src.vanya.service.pub_service import PubService
 from src.vanya.service.service_registry import service_registry
 from src.vanya.service.solo_hunt_service import SoloHuntService
 from src.vanya.service.stats_service import StatsService
@@ -78,6 +79,9 @@ class Scheduler:
                     service_registry.get(StatsService, account).refresh_account_stats()
                     service_registry.get(NexusService, account).refresh()
                     last_stats_refresh = now
+
+                if account.stats.health <= 0:
+                    service_registry.get(PubService, account).go_to_pub_and_heal()
 
                 if account.mode == Mode.SOLO_HUNT:
                     service_registry.get(SoloHuntService, account).tick()
