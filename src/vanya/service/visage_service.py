@@ -2,6 +2,7 @@ import logging
 
 from bs4 import BeautifulSoup
 
+from src.vanya.core.constants import BASE_URL
 from src.vanya.core.constants import DASHBOARD_URL
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.visage import Visage
@@ -72,7 +73,7 @@ class VisageService:
             },
             headers={
                 "referer": DASHBOARD_URL,
-                "origin": "https://vanyaonline.com",
+                "origin": BASE_URL,
                 "content-type": "application/x-www-form-urlencoded",
                 "x-csrf-token": csrf,
             }
@@ -96,7 +97,7 @@ class VisageService:
             },
             headers={
                 "referer": DASHBOARD_URL,
-                "origin": "https://vanyaonline.com",
+                "origin": BASE_URL,
                 "content-type": "application/x-www-form-urlencoded",
                 "x-csrf-token": csrf,
             }
