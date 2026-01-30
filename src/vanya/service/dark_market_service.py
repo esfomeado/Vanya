@@ -11,6 +11,8 @@ class DarkMarketService:
         self.account = account
 
     def list(self) -> list[MarketListing]:
+        logging.info(f"Listing items for account {self.account.username}")
+
         response = self.account.session.get(
             MARKET_URL,
             headers={
@@ -53,6 +55,8 @@ class DarkMarketService:
         return listings
 
     def buy_item(self, item_id: int) -> None:
+        logging.info(f"Buying item {item_id}, for account {self.account.username}")
+
         response = self.account.session.get(
             MARKET_URL,
             headers={

@@ -1018,3 +1018,63 @@ async def visage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         await update.message.reply_text(f"❌ Visage command failed for {name}: {str(e)}")
+
+
+async def deep_dragon_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Starts or stops the Deep Dragon hunt for a specific account.
+    Usage: /deep_dragon <account> <start|stop>
+    """
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/deep_dragon <account> start\n"
+            "/deep_dragon <account> stop"
+        )
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+    name = context.args[0]
+    action = context.args[1].lower()
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    service = service_registry.get(DeepDragonService, account)
+
+    try:
+        if action == "start":
+            if account.mode == Mode.DEEP_DRAGON:
+                await update.message.reply_text(f"🐉 {name} is already hunting Deep Dragon.")
+                return
+
+            if account.mode == Mode.SOLO_HUNT:
+                service_registry.get(SoloHuntService, account).stop_hunt()
+            elif account.mode == Mode.PHANTOM_HALLS:
+                service_registry.get(PhantomHallsService, account).stop_hunt()
+
+            service.hunt()
+            hunt = account.hunt
+            await update.message.reply_text(
+                f"🐉 {name} started Deep Dragon hunt.\n"
+                f"Max Hit: {hunt.max_hit}"
+            )
+
+        elif action == "stop":
+            if account.mode != Mode.DEEP_DRAGON:
+                await update.message.reply_text(f"{name} is not in Deep Dragon mode.")
+                return
+
+            service.stop_hunt()
+            await update.message.reply_text(f"🛑 {name} stopped Deep Dragon hunt.")
+
+        else:
+            await update.message.reply_text("Invalid action. Use 'start' or 'stop'.")
+
+    except Exception as e:
+        await update.message.reply_text(f"❌ Deep Dragon command failed for {name}:\n{e}")
