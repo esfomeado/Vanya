@@ -19,6 +19,7 @@ from src.vanya.service.pub_service import PubService
 from src.vanya.service.service_registry import service_registry
 from src.vanya.service.solo_hunt_service import SoloHuntService
 from src.vanya.service.training_service import TrainingService
+from src.vanya.service.visage_service import VisageService
 from src.vanya.telegram.acl import allowed
 
 
@@ -922,6 +923,7 @@ async def auto_coupon_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if results:
         await update.message.reply_text("\n".join(results))
 
+
 async def auto_regenerate_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not allowed(update):
         return
@@ -945,3 +947,74 @@ async def auto_regenerate_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     if results:
         await update.message.reply_text("\n".join(results))
+
+
+async def visage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if not context.args or len(context.args) < 2:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/visage <account> list\n"
+            "/visage <account> equip <filename>\n"
+            "/visage <account> spin"
+        )
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+    name = context.args[0]
+    action = context.args[1].lower()
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    visage_service = service_registry.get(VisageService, account)
+
+    try:
+        if action == "list":
+            visages = visage_service.list()
+            if not visages:
+                await update.message.reply_text(f"🖼️ {name} owns no visages.")
+                return
+
+            lines = [f"🖼️ Owned Visages for {name}:"]
+            for v in visages:
+                status = "✅" if v.is_equipped else "❌"
+                lines.append(f"{status} {v.name}\n   Bonus: {v.bonus}\n   File: {v.filename}")
+
+            await update.message.reply_text("\n\n".join(lines))
+
+        elif action == "equip":
+            if len(context.args) < 3:
+                await update.message.reply_text(f"Usage: /visage <account> equip <filename>")
+                return
+
+            filename = context.args[2]
+            visage_service.equip(filename)
+            await update.message.reply_text(f"✅ {name} equipped visage: {filename}")
+
+        elif action == "spin":
+            result = visage_service.spin()
+            if result.get("status") == "ok":
+                won = result.get("won")
+                rarity = result.get("rarity", "common").upper()
+                dup = " (DUPLICATE)" if result.get("duplicate") else " (NEW!)"
+
+                msg = (
+                    f"🎰 Spin Result for {name}:\n\n"
+                    f"Portrait: {won}{dup}\n"
+                    f"Rarity: {rarity}\n"
+                    f"Gold remaining: {result.get('gold', 0):,}"
+                )
+                await update.message.reply_text(msg)
+            else:
+                await update.message.reply_text(f"❌ Spin failed: {result.get('message', 'Unknown error')}")
+
+        else:
+            await update.message.reply_text("Invalid action. Use list, equip, or spin.")
+
+    except Exception as e:
+        await update.message.reply_text(f"❌ Visage command failed for {name}: {str(e)}")
