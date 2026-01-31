@@ -106,3 +106,24 @@ class VisageService:
         response.raise_for_status()
 
         return response.json()
+
+    def free_spin(self) -> None:
+        logging.info(f"Free spinning visage for {self.account.username}")
+
+        response = self.account.session.get(DASHBOARD_URL)
+        response.raise_for_status()
+        csrf = get_global_csrf(response.text)
+
+        self.account.session.post(
+            DASHBOARD_URL,
+            data={
+                "portrait_action": "spin_free",
+                "csrf_token": csrf,
+            },
+            headers={
+                "referer": DASHBOARD_URL,
+                "origin": BASE_URL,
+                "content-type": "application/x-www-form-urlencoded",
+                "x-csrf-token": csrf,
+            }
+        ).raise_for_status()
