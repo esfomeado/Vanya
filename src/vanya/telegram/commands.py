@@ -1021,6 +1021,92 @@ async def visage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"❌ Visage command failed for {name}: {str(e)}")
 
 
+async def auto_visage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/auto_visage list\n"
+            "/auto_visage free_spin"
+        )
+        return
+
+    action = context.args[0].lower()
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    if action == "list":
+        sections = []
+        for account in accounts:
+            try:
+                service = service_registry.get(VisageService, account)
+                visages = service.list()
+
+                if not visages:
+                    sections.append(
+                        f"<details><summary>🖼️ {escape(account.username)} (0)</summary>"
+                        f"<p style='margin-left:1em'>No visages owned.</p></details>"
+                    )
+                    continue
+
+                rows = []
+                for v in visages:
+                    status = "<b>[EQUIPPED]</b> " if v.is_equipped else ""
+                    rows.append(
+                        f"<div>"
+                        f"{status}{escape(v.name)} <span style='color:#666'>({escape(v.bonus)})</span>"
+                        f"<br><small>{escape(v.filename)}</small>"
+                        f"</div>"
+                    )
+
+                body = "<div style='margin-left:1em; display:grid; gap:8px;'>" + "".join(rows) + "</div>"
+
+                sections.append(
+                    f"<details><summary>🖼️ {escape(account.username)} ({len(visages)})</summary>"
+                    f"{body}</details>"
+                )
+            except Exception as e:
+                sections.append(
+                    f"<details><summary>❌ {escape(account.username)} - Error</summary>"
+                    f"<pre>{escape(str(e))}</pre></details>"
+                )
+
+        html = (
+            "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+            "<style>body{font-family:sans-serif; background:#fff; color:#000}"
+            "details{margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:8px}"
+            "summary{cursor:pointer; font-weight:bold; margin-bottom:6px}"
+            "</style></head><body>"
+            + "".join(sections) +
+            "</body></html>"
+        )
+
+        buf = BytesIO(html.encode("utf-8"))
+        buf.name = "visages.html"
+        await update.message.reply_document(document=buf, caption="All Accounts Visages")
+
+    elif action == "free_spin":
+        results = []
+        for account in accounts:
+            try:
+                service = service_registry.get(VisageService, account)
+                service.free_spin()
+
+                results.append(f"✅ {account.username}: spun successfully")
+            except Exception as e:
+                results.append(f"❌ {account.username}: {str(e)}")
+
+        await update.message.reply_text("\n".join(results))
+
+    else:
+        await update.message.reply_text("Invalid action. Use list or free_spin.")
+
+
 async def deep_dragon_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Starts or stops the Deep Dragon hunt for a specific account.
