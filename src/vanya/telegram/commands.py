@@ -253,12 +253,13 @@ async def auto_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text(
             "Usage:\n"
-            "/auto_hunt start\n"
+            "/auto_hunt start [area_id]\n"
             "/auto_hunt stop"
         )
         return
 
     action = context.args[0]
+    area_id = context.args[1] if len(context.args) > 1 else None
 
     accounts: list[Account] = context.application.bot_data["accounts"]
     if not accounts:
@@ -293,7 +294,7 @@ async def auto_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if action != "start":
         await update.message.reply_text(
             "Usage:\n"
-            "/auto_hunt start\n"
+            "/auto_hunt start [area_id]\n"
             "/auto_hunt stop"
         )
         return
@@ -309,14 +310,14 @@ async def auto_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             level = account.stats.level
 
             if level < 300:
-                service_registry.get(SoloHuntService, account).hunt()
+                service_registry.get(SoloHuntService, account).hunt(area_id)
                 hunt = account.hunt
                 lines.append(
                     f"🗡️ {account.username} → Solo Hunt "
                     f"({hunt.name}, max hit {hunt.max_hit})"
                 )
             else:
-                service_registry.get(PhantomHallsService, account).hunt()
+                service_registry.get(PhantomHallsService, account).hunt(area_id)
                 hunt = account.hunt
                 lines.append(
                     f"🌀 {account.username} → Phantom Halls "
