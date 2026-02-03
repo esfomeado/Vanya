@@ -207,7 +207,7 @@ class DeepDragonService:
                 }
             ).raise_for_status()
 
-            logging.info(f"Successfully bought a potion for {self.account.username}")
+            logging.info(f"Successfully bought potions for {self.account.username}")
         except Exception as e:
             logging.error(f"Failed to buy potion for {self.account.username}: {e}")
 
@@ -268,6 +268,7 @@ class DeepDragonService:
     def _manage_training_service(self, action: str) -> None:
         try:
             subprocess.run(["sudo", "systemctl", action, "vanya-training.service"], check=True)
+            time.sleep(5)
             logging.info(f"Successfully {action}ed vanya-training.service")
         except subprocess.CalledProcessError as e:
             logging.error(f"Failed to {action} vanya-training.service: {e}")
