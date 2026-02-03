@@ -88,13 +88,11 @@ class DeepDragonService:
 
     def _parse_difficulty(self, html: str) -> Optional[str]:
         soup = BeautifulSoup(html, "html.parser")
-        mini_div = soup.find("div", class_="mini")
-        if mini_div:
-            text = mini_div.get_text()
-            if "Difficulty:" in text:
-                diff_b = mini_div.find("b")
-                if diff_b:
-                    return diff_b.get_text(strip=True)
+        for div in soup.find_all("div", class_="mini"):
+            if "Difficulty:" in div.get_text():
+                match = re.search(r"Difficulty:\s*<b[^>]*>(.*?)</b>", str(div), re.IGNORECASE)
+                if match:
+                    return match.group(1).strip()
         return None
 
     def _parse_max_hit(self, html: str) -> int:
