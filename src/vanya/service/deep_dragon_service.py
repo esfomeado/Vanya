@@ -10,6 +10,8 @@ from src.vanya.core.constants import DEEP_DRAGON_URL
 from src.vanya.core.errors import VanyaError
 from src.vanya.model.hunt import Hunt
 from src.vanya.model.mode import Mode
+from src.vanya.service.pub_service import PubService
+from src.vanya.service.service_registry import service_registry
 
 
 class DeepDragonService:
@@ -18,6 +20,7 @@ class DeepDragonService:
     def __init__(self, account):
         self.account = account
         self.last_hunt_start_time = 0
+        self.pub_service = service_registry.get(PubService, account)
 
     def hunt(self) -> None:
         logging.info(f"Starting deep dragon hunt for {self.account.username}")
@@ -114,6 +117,7 @@ class DeepDragonService:
         if self.last_hunt_start_time > 0 and (time.time() - self.last_hunt_start_time >= self.DURATION):
             logging.info(f"Deep Dragon timer finished for {self.account.username}. Claiming and restarting.")
             self._claim_rewards()
+            self.pub_service.regenerate(sleep=False)
             self.hunt()
             return
 

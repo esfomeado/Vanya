@@ -133,6 +133,7 @@ class LoginService:
             "Demona Edge": Mode.PHANTOM_HALLS,
             "The Penumbula": Mode.PHANTOM_HALLS,
             "The Ossuary Lord": Mode.PHANTOM_HALLS,
+            "Dead Inside": Mode.PHANTOM_HALLS,
         }
 
         try:
