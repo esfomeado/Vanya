@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from src.vanya.core.constants import BASE_URL
 from src.vanya.core.constants import DEEP_DRAGON_URL
 from src.vanya.core.errors import VanyaError
+from src.vanya.model.account import Account
 from src.vanya.model.hunt import Hunt
 from src.vanya.model.mode import Mode
 from src.vanya.service.pub_service import PubService
@@ -17,7 +18,7 @@ from src.vanya.service.service_registry import service_registry
 class DeepDragonService:
     DURATION = 1800
 
-    def __init__(self, account):
+    def __init__(self, account: Account):
         self.account = account
         self.last_hunt_start_time = 0
         self.pub_service = service_registry.get(PubService, account)
@@ -192,7 +193,7 @@ class DeepDragonService:
                 data={
                     "csrf_token": csrf,
                     "action": "buy_potion",
-                    "qty": "1"
+                    "qty": "10"
                 },
                 headers={
                     "referer": DEEP_DRAGON_URL,

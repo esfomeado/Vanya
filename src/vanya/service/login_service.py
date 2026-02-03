@@ -108,7 +108,7 @@ class LoginService:
                 if self.account.mode == Mode.PHANTOM_HALLS:
                     PhantomHallsService(self.account).stop_hunt()
                     PhantomHallsService(self.account).hunt()
-            elif self.account.mode in {Mode.SOLO_HUNT, Mode.PHANTOM_HALLS, Mode.DEEP_DRAGON} and not in_hunt:
+            elif self.account.mode in {Mode.SOLO_HUNT, Mode.PHANTOM_HALLS} and not in_hunt:
                 self.account.mode = Mode.IDLE
                 self.account.hunt = None
 
