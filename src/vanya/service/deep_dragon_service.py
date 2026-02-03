@@ -1,5 +1,6 @@
 import logging
 import re
+import subprocess
 import time
 from typing import Optional
 
@@ -85,7 +86,10 @@ class DeepDragonService:
         self.account.hunt = Hunt(area_id="deep_dragon", name="Deep Dragon", max_hit=max_hit)
         self.last_hunt_start_time = time.time()
 
-        logging.info(f"Deep Dragon started for {self.account.username}. Max hit {max_hit}. Timer set for {self.DURATION}s.")
+        self._manage_training_service("start")
+
+        logging.info(
+            f"Deep Dragon started for {self.account.username}. Max hit {max_hit}. Timer set for {self.DURATION}s.")
 
     def _parse_difficulty(self, html: str) -> Optional[str]:
         soup = BeautifulSoup(html, "html.parser")
@@ -116,8 +120,7 @@ class DeepDragonService:
         if self.last_hunt_start_time > 0 and (time.time() - self.last_hunt_start_time >= self.DURATION):
             logging.info(f"Deep Dragon timer finished for {self.account.username}. Claiming and restarting.")
             self._claim_rewards()
-            self.pub_service.regenerate(sleep=False)
-            self.pub_service.regenerate(sleep=False)
+            self._manage_training_service("stop")
             self.pub_service.regenerate(sleep=False)
             self.hunt()
             return
@@ -261,3 +264,10 @@ class DeepDragonService:
         if csrf_input:
             return csrf_input.get("value", "")
         return ""
+
+    def _manage_training_service(self, action: str) -> None:
+        try:
+            subprocess.run(["sudo", "systemctl", action, "vanya-training.service"], check=True)
+            logging.info(f"Successfully {action}ed vanya-training.service")
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Failed to {action} vanya-training.service: {e}")
