@@ -117,6 +117,8 @@ class DeepDragonService:
             logging.info(f"Deep Dragon timer finished for {self.account.username}. Claiming and restarting.")
             self._claim_rewards()
             self.pub_service.regenerate(sleep=False)
+            self.pub_service.regenerate(sleep=False)
+            self.pub_service.regenerate(sleep=False)
             self.hunt()
             return
 
