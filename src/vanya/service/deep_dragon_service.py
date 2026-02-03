@@ -255,6 +255,7 @@ class DeepDragonService:
 
         self.account.hunt = None
         self.account.mode = Mode.IDLE
+        self._manage_training_service("stop")
 
         logging.info(f"Successfully escaped Deep Dragon for {self.account.username}")
 

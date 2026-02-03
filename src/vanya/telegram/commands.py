@@ -14,6 +14,7 @@ from src.vanya.service.dark_market_service import DarkMarketService
 from src.vanya.service.deep_dragon_service import DeepDragonService
 from src.vanya.service.guild_service import GuildService
 from src.vanya.service.inventory_service import InventoryService
+from src.vanya.service.lounge_service import LoungeService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
 from src.vanya.service.pub_service import PubService
 from src.vanya.service.service_registry import service_registry
@@ -1165,3 +1166,59 @@ async def deep_dragon_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         await update.message.reply_text(f"❌ Deep Dragon command failed for {name}:\n{e}")
+
+
+async def auto_lounge_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Mass like or dislike a post using all accounts.
+    Usage: /auto_lounge <like|dislike> <topic_id> <post_id>
+    """
+    if not allowed(update):
+        return
+
+    if len(context.args) < 3:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/auto_lounge like <topic_id> <post_id>\n"
+            "/auto_lounge dislike <topic_id> <post_id>"
+        )
+        return
+
+    action = context.args[0].lower()
+    topic_id = context.args[1]
+    post_id = context.args[2]
+
+    if not topic_id.isdigit() or not post_id.isdigit():
+        await update.message.reply_text("❌ Topic ID and Post ID must be numbers.")
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+    if not accounts:
+        await update.message.reply_text("No accounts configured.")
+        return
+
+    if action not in ["like", "dislike"]:
+        await update.message.reply_text("Invalid action. Use 'like' or 'dislike'.")
+        return
+
+    await update.message.reply_text(
+        f"🚀 Starting {action} for Topic {topic_id}, Post {post_id} on {len(accounts)} accounts...")
+
+    results = []
+    for account in accounts:
+        try:
+            service = service_registry.get(LoungeService, account)
+            if action == "like":
+                service.like(int(topic_id), int(post_id))
+                results.append(f"✅ {account.username}: Liked")
+            elif action == "dislike":
+                service.dislike(int(topic_id), int(post_id))
+                results.append(f"✅ {account.username}: Disliked")
+        except Exception as e:
+            results.append(f"❌ {account.username}: {str(e)}")
+
+    response_text = "\n".join(results)
+    if len(response_text) > 4000:
+        response_text = response_text[:4000] + "\n...(truncated)"
+
+    await update.message.reply_text(response_text)
