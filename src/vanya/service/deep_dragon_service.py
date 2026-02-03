@@ -85,7 +85,7 @@ class DeepDragonService:
         self.account.hunt = Hunt(area_id="deep_dragon", name="Deep Dragon", max_hit=max_hit)
         self.last_hunt_start_time = time.time()
 
-        logging.info(f"Deep Dragon started for {self.account.username}. Timer set for {self.DURATION}s.")
+        logging.info(f"Deep Dragon started for {self.account.username}. Max hit {max_hit}. Timer set for {self.DURATION}s.")
 
     def _parse_difficulty(self, html: str) -> Optional[str]:
         soup = BeautifulSoup(html, "html.parser")
@@ -130,7 +130,7 @@ class DeepDragonService:
             logging.info(f"Potion count low ({potion_count}) for {self.account.username}. Buying more.")
             self._buy_potions()
 
-        if self.account.stats.health <= self.account.hunt.max_hit * 2:
+        if current_health <= self.account.hunt.max_hit * 2:
             logging.info(f"Low health ({current_health}) detected for {self.account.username}. Using potion.")
             self._use_potion()
 
