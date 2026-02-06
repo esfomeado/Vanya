@@ -1,5 +1,6 @@
 BASE_URL = "https://vanyaonline.com"
 BOOKS_OF_SHADOWS_URL = f"{BASE_URL}/books_of_shadows"
+BUY_ACCUMULATED_URL = f"{BASE_URL}/process/buy_accumulated.php"
 ADVENTURE_URL = f"{BASE_URL}/adventure"
 ADVENTURE_ATTACK_URL = f"{BASE_URL}/process/adventure_attack.php"
 CHECK_HUNT_STATUS_URL = f"{BASE_URL}/check_hunt_status"

@@ -4,7 +4,7 @@ import time
 from typing import Optional
 
 from src.vanya.core.constants import PUB_URL, PUB_NPC_BUY_URL, PUB_REGENERATE_URL, PUB_UPDATE_URL, \
-    PUB_OFFLINE_TRAIN_URL
+    PUB_OFFLINE_TRAIN_URL, BUY_ACCUMULATED_URL
 from src.vanya.core.errors import VanyaError
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
@@ -53,6 +53,17 @@ class PubService:
 
         if sleep:
             time.sleep(125)
+
+    def buy_accumulated_regen(self):
+        self.account.session.post(
+            BUY_ACCUMULATED_URL,
+            data={
+                "currency": "gold",
+            },
+            headers={
+                "referer": PUB_URL,
+            },
+        ).raise_for_status()
 
     def _start_training(self) -> None:
         logging.info(f"Starting training for account {self.account.username}")

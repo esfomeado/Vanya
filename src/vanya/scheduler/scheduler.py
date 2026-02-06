@@ -12,7 +12,6 @@ from src.vanya.service.daily_tasks_service import DailyTasksService
 from src.vanya.service.deep_dragon_service import DeepDragonService
 from src.vanya.service.house_training_service import HouseTrainingService
 from src.vanya.service.login_service import LoginService
-from src.vanya.service.nexus_service import NexusService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
 from src.vanya.service.pub_service import PubService
 from src.vanya.service.service_registry import service_registry
@@ -25,11 +24,11 @@ from src.vanya.telegram.telegram_service import TelegramService
 class Scheduler:
     MODE_TICK_INTERVAL = {
         Mode.BOSSES: 5,
-        Mode.HOUSE_TRAINING: 1,
+        Mode.HOUSE_TRAINING: 0.5,
         Mode.IDLE: 60,
         Mode.TRAINING: 1,
-        Mode.SOLO_HUNT: 20,
-        Mode.PHANTOM_HALLS: 20,
+        Mode.SOLO_HUNT: 25,
+        Mode.PHANTOM_HALLS: 25,
         Mode.DEEP_DRAGON: 5,
     }
 
@@ -77,7 +76,6 @@ class Scheduler:
 
                 if now - last_stats_refresh > 20.0:
                     service_registry.get(StatsService, account).refresh_account_stats()
-                    service_registry.get(NexusService, account).refresh()
                     last_stats_refresh = now
 
                 if account.mode == Mode.SOLO_HUNT:
