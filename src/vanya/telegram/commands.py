@@ -1222,3 +1222,22 @@ async def auto_lounge_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         response_text = response_text[:4000] + "\n...(truncated)"
 
     await update.message.reply_text(response_text)
+
+
+async def auto_pub_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+    results = []
+
+    for account in accounts:
+        service = service_registry.get(PubService, account)
+        try:
+            service.buy_accumulated_regen()
+            results.append(f"✅ {account.username}: Accumulated regen bought")
+        except Exception as e:
+            results.append(f"❌ {account.username}: {str(e)}")
+
+    if results:
+        await update.message.reply_text("\n".join(results))
