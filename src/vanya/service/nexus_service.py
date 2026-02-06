@@ -81,7 +81,7 @@ class NexusService:
         boss_id = 1
         boss = self.bosses.get(boss_id)
 
-        if boss and boss.is_alive and boss.current_life > 100 and self.account.stats.stamina > 60:
+        if boss and boss.is_alive and boss.current_life > 110 and self.account.stats.stamina > 60:
             try:
                 self._attack_boss_once(boss_id)
                 logging.info(f"Farming boss 1 | Stamina: {self.account.stats.stamina}")
