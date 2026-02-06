@@ -77,6 +77,17 @@ class NexusService:
                 except Exception as e:
                     logging.error(f"Failed to attack boss {boss.name}: {e}")
 
+    def farm(self) -> None:
+        boss_id = 1
+        boss = self.bosses.get(boss_id)
+
+        if boss and boss.is_alive and boss.life_percent <= 50 and self.account.stats.stamina > 60:
+            try:
+                self._attack_boss_once(boss_id)
+                logging.info(f"Farming boss 1 | Stamina: {self.account.stats.stamina}")
+            except Exception as e:
+                logging.error(f"Failed to farm boss 1: {e}")
+
     def _attack_boss_once(self, boss_id: int) -> None:
         response = self.account.session.get(DASHBOARD_URL)
         response.raise_for_status()

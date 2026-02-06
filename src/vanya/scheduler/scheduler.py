@@ -12,6 +12,7 @@ from src.vanya.service.daily_tasks_service import DailyTasksService
 from src.vanya.service.deep_dragon_service import DeepDragonService
 from src.vanya.service.house_training_service import HouseTrainingService
 from src.vanya.service.login_service import LoginService
+from src.vanya.service.nexus_service import NexusService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
 from src.vanya.service.pub_service import PubService
 from src.vanya.service.service_registry import service_registry
@@ -74,8 +75,9 @@ class Scheduler:
             try:
                 now = time.time()
 
-                if now - last_stats_refresh > 20.0:
+                if now - last_stats_refresh >= 20.0:
                     service_registry.get(StatsService, account).refresh_account_stats()
+                    service_registry.get(NexusService, account).refresh()
                     last_stats_refresh = now
 
                 if account.mode == Mode.SOLO_HUNT:
@@ -87,6 +89,7 @@ class Scheduler:
 
                 if account.mode == Mode.PHANTOM_HALLS:
                     service_registry.get(PhantomHallsService, account).tick()
+                    service_registry.get(NexusService, account).farm()
 
                 if account.mode == Mode.DEEP_DRAGON:
                     service_registry.get(DeepDragonService, account).tick()
