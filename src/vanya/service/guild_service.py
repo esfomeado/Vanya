@@ -2,10 +2,11 @@ import logging
 
 from src.vanya.core.constants import GUILDS_URL, GUILDS_APPLY_URL, GUILDS_LEAVE_URL
 from src.vanya.core.utils import get_global_csrf
+from src.vanya.model.account import Account
 
 
 class GuildService:
-    def __init__(self, account):
+    def __init__(self, account: Account):
         self.account = account
 
     def join(self, guild_id: int) -> None:

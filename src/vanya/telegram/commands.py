@@ -608,7 +608,7 @@ async def auto_guild_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     results.append(f"{account.username} already in guild {account.guild}")
             elif action == "leave":
                 if account.guild:
-                    service_registry.get(GuildService, account).leave()
+                    service_registry.get(GuildService, account).leave(guild_id)
                     results.append(f"{account.username} left guild {account.guild}")
                 else:
                     results.append(f"{account.username} not in a guild")
