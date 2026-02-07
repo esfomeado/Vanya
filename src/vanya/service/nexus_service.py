@@ -3,6 +3,7 @@ import time
 
 from src.vanya.core.constants import NEXUS_URL, ADVENTURE_ATTACK_URL, ADVENTURE_URL, DASHBOARD_URL
 from src.vanya.core.utils import get_global_csrf
+from src.vanya.model.account import Account
 from src.vanya.model.boss import NexusBoss
 
 
@@ -17,7 +18,7 @@ class NexusService:
         999: 10,
     }
 
-    def __init__(self, account):
+    def __init__(self, account: Account):
         self.account = account
         self.bosses: dict[int, NexusBoss] = {}
         self._hits: dict[int, float] = {}
@@ -81,12 +82,20 @@ class NexusService:
         boss_id = 1
         boss = self.bosses.get(boss_id)
 
-        if boss and boss.is_alive and boss.current_life > 115 and self.account.stats.stamina > 60:
-            try:
-                self._attack_boss_once(boss_id)
-                logging.info(f"Farming boss 1 | Stamina: {self.account.stats.stamina}")
-            except Exception as e:
-                logging.error(f"Failed to farm boss 1: {e}")
+        if self.account.username == "Skyrus":
+            if boss and boss.is_alive and boss.life_percent < 50 and self.account.stats.stamina > 60:
+                try:
+                    self._attack_boss_once(boss_id)
+                    logging.info(f"Farming boss 1 | Stamina: {self.account.stats.stamina}")
+                except Exception as e:
+                    logging.error(f"Failed to farm boss 1: {e}")
+        else:
+            if boss and boss.is_alive and boss.current_life > 115 and self.account.stats.stamina > 60:
+                try:
+                    self._attack_boss_once(boss_id)
+                    logging.info(f"Farming boss 1 | Stamina: {self.account.stats.stamina}")
+                except Exception as e:
+                    logging.error(f"Failed to farm boss 1: {e}")
 
     def _attack_boss_once(self, boss_id: int) -> None:
         response = self.account.session.get(DASHBOARD_URL)

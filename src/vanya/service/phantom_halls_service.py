@@ -1,5 +1,6 @@
 import logging
 import time
+from json import JSONDecodeError
 from typing import Optional
 
 from bs4 import BeautifulSoup
@@ -121,8 +122,11 @@ class PhantomHallsService(BaseHuntService):
                     time.sleep(3)
                     continue
 
-                dungeon_status = self._fetch_dungeon_lobby().get(area_id)
-                if dungeon_status is None:
+                try:
+                    dungeon_status = self._fetch_dungeon_lobby().get(area_id)
+                    if dungeon_status is None:
+                        break
+                except JSONDecodeError:
                     break
 
                 count = dungeon_status.get("count", 0)
