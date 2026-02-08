@@ -90,7 +90,7 @@ class NexusService:
                 except Exception as e:
                     logging.error(f"Failed to farm boss 1: {e}")
         else:
-            if boss and boss.is_alive and boss.current_life > 320 and self.account.stats.stamina > 50:
+            if boss and boss.is_alive and boss.current_life > 340 and self.account.stats.stamina > 50:
                 try:
                     self._attack_boss_once(boss_id)
                     logging.info(f"Farming boss 1 | Stamina: {self.account.stats.stamina}")
