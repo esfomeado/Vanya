@@ -28,8 +28,8 @@ class Scheduler:
         Mode.HOUSE_TRAINING: 0.5,
         Mode.IDLE: 60,
         Mode.TRAINING: 1,
-        Mode.SOLO_HUNT: 25,
-        Mode.PHANTOM_HALLS: 25,
+        Mode.SOLO_HUNT: 20,
+        Mode.PHANTOM_HALLS: 20,
         Mode.DEEP_DRAGON: 5,
     }
 
