@@ -102,17 +102,17 @@ class PhantomHallsService(BaseHuntService):
 
         return None, None, None, None, None
 
-    def hunt(self, area_id: Optional[str] = None) -> None:
-        self.area_id = area_id
+    def hunt(self, specific_area_id: Optional[str] = None) -> None:
+        self.area_id = specific_area_id
         joined = False
 
-        if not area_id:
+        if not specific_area_id:
             _, area_id, max_hit, count, required_count = self._get_latest_enabled_dungeon()
-        if not area_id:
-            return
+            if not area_id:
+                return
         else:
             _, area_id, max_hit, count, required_count = self._get_latest_enabled_dungeon(
-                specific_area_id=area_id)
+                specific_area_id=specific_area_id)
 
         while True:
             try:
