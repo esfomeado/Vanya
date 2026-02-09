@@ -29,7 +29,7 @@ class Scheduler:
         Mode.IDLE: 60,
         Mode.TRAINING: 1,
         Mode.SOLO_HUNT: 20,
-        Mode.PHANTOM_HALLS: 20,
+        Mode.PHANTOM_HALLS: 5,
         Mode.DEEP_DRAGON: 5,
     }
 
@@ -77,7 +77,6 @@ class Scheduler:
 
                 if now - last_stats_refresh >= 20.0:
                     service_registry.get(StatsService, account).refresh_account_stats()
-                    service_registry.get(NexusService, account).refresh()
                     last_stats_refresh = now
 
                 if account.mode == Mode.SOLO_HUNT:
@@ -89,6 +88,7 @@ class Scheduler:
 
                 if account.mode == Mode.PHANTOM_HALLS:
                     service_registry.get(PhantomHallsService, account).tick()
+                    service_registry.get(NexusService, account).refresh()
                     service_registry.get(NexusService, account).farm()
 
                 if account.mode == Mode.DEEP_DRAGON:
