@@ -1241,3 +1241,66 @@ async def auto_pub_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if results:
         await update.message.reply_text("\n".join(results))
+
+
+async def auto_sell_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Automatically lists all units of an item from inventory to the market.
+    Calculates total price based on price per item.
+
+    Usage: /auto_sell <item_name> <price_per_item>
+    Example: /auto_sell Iron Ore 500
+    """
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text("Usage: /auto_sell <item_name> <price_per_item>")
+        return
+
+    try:
+        price_per_item = int(context.args[-1])
+        item_name_input = " ".join(context.args[:-1]).lower()
+    except ValueError:
+        await update.message.reply_text("Price must be a number.")
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    results = []
+
+    for account in accounts:
+        try:
+            # 1. Fetch Inventory to find quantity
+            inv_service = service_registry.get(InventoryService, account)
+            items = inv_service.list_items()
+
+            quantity = 0
+            real_name = ""
+
+            for item in items:
+                if item.name.lower() == item_name_input:
+                    quantity += item.quantity
+                    real_name = item.name
+
+            if quantity == 0:
+                results.append(f"⏭️ {account.username}: Item '{item_name_input}' not found")
+                continue
+
+            total_price = quantity * price_per_item
+
+            market_service = service_registry.get(DarkMarketService, account)
+            market_service.sell_item(real_name, quantity, total_price)
+
+            results.append(
+                f"✅ {account.username}: Listed {quantity}x {real_name} "
+                f"for {total_price:,} ({price_per_item}/ea)"
+            )
+
+        except Exception as e:
+            results.append(f"❌ {account.username}: {str(e)}")
+
+    await update.message.reply_text("\n".join(results))
