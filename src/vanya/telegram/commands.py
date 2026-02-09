@@ -161,7 +161,7 @@ async def solo_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         service_registry.get(PhantomHallsService, account).stop_hunt()
 
     try:
-        service_registry.get(SoloHuntService, account).hunt(area_id=area_id)
+        service_registry.get(SoloHuntService, account).hunt(specific_area_id=area_id)
         hunt = account.hunt
 
         await update.message.reply_text(
@@ -230,7 +230,7 @@ async def phantom_halls_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         service_registry.get(SoloHuntService, account).stop_hunt()
 
     try:
-        service_registry.get(PhantomHallsService, account).hunt(area_id=area_id)
+        service_registry.get(PhantomHallsService, account).hunt(specific_area_id=area_id)
         hunt = account.hunt
 
         await update.message.reply_text(
