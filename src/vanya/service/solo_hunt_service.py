@@ -15,10 +15,10 @@ class SoloHuntService(BaseHuntService):
     def __init__(self, account: Account):
         super().__init__(account)
 
-    def hunt(self, area_id: Optional[str] = None) -> None:
+    def hunt(self, specific_area_id: Optional[str] = None) -> None:
         logging.info(f"Starting solo hunt for {self.account.username}")
 
-        self.area_id = area_id
+        self.area_id = specific_area_id
 
         response = self.account.session.get(EXPLORE_URL)
         response.raise_for_status()
@@ -45,8 +45,8 @@ class SoloHuntService(BaseHuntService):
             if button.has_attr("disabled"):
                 continue
 
-            if area_id:
-                if area_input.get("value") != area_id:
+            if specific_area_id:
+                if area_input.get("value") != specific_area_id:
                     continue
                 selected_area = area
                 break
@@ -57,7 +57,7 @@ class SoloHuntService(BaseHuntService):
         if not selected_area:
             raise VanyaError(
                 f"No enabled hunt area found "
-                f"(area_id={area_id})"
+                f"(area_id={specific_area_id})"
             )
 
         name = selected_area.find("h2").text.strip()

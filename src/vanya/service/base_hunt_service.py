@@ -26,7 +26,7 @@ class BaseHuntService(ABC):
         self.nexus_service = service_registry.get(NexusService, account)
 
     @abstractmethod
-    def hunt(self, area_id: Optional[str] = None) -> None:
+    def hunt(self, specific_area_id: Optional[str] = None) -> None:
         pass
 
     def stop_hunt(self) -> None:
@@ -91,7 +91,7 @@ class BaseHuntService(ABC):
             self.pub_service.go_to_pub_and_heal()
             self.pub_service.regenerate(sleep=False)
             self.auto_equip_service.equip()
-            self.hunt(area_id=self.area_id)
+            self.hunt(specific_area_id=self.area_id)
 
     def _get_csrf(self, html: str) -> Optional[str]:
         soup = BeautifulSoup(html, "html.parser")
