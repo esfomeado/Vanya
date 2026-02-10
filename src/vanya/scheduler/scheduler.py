@@ -29,7 +29,7 @@ class Scheduler:
         Mode.IDLE: 60,
         Mode.TRAINING: 1,
         Mode.SOLO_HUNT: 20,
-        Mode.PHANTOM_HALLS: 5,
+        Mode.PHANTOM_HALLS: 4,
         Mode.DEEP_DRAGON: 5,
     }
 
