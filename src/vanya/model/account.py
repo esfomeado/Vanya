@@ -22,6 +22,7 @@ class Stats:
         self.max_health: int = 0
         self.stamina: int = 0
         self.sword: int = 0
+        self.hashed_accounts: int = 0
 
     def __repr__(self):
         return f"Stats(bow={self.bow}, defence={self.defence}, fishing={self.fishing}, gold={self.gold}, health={self.health}, level={self.level}, magic={self.magic}, max_health={self.max_health}, stamina={self.stamina}, sword={self.sword})"

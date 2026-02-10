@@ -1,3 +1,5 @@
+import re
+
 from bs4 import BeautifulSoup
 
 from src.vanya.core.constants import DASHBOARD_URL
@@ -39,6 +41,13 @@ class StatsService:
                 if tag.startswith("[") and tag.endswith("]"):
                     self.account.guild = f"{tag} {name}"
                     continue
+
+            hashed_acc_el = soup.find("strong", string=re.compile("Hashed Accounts"))
+            if hashed_acc_el:
+                text = hashed_acc_el.get_text(strip=True)
+                match = re.match(r"(\d+)/\d+", text)
+                if match:
+                    self.account.stats.hashed_accounts = match.group(1)
 
         life_panel = soup.select_one(".card h3:-soup-contains('Life')")
         if life_panel:
