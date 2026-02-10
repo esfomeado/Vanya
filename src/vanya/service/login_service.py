@@ -42,7 +42,7 @@ class LoginService:
         self.session.headers.update({
             "accept": "text/html,application/xhtml+xml",
             "accept-language": "en-US,en;q=0.9",
-            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+            "user-agent": self.account.user_agent,
             "Cache-Control": "no-cache, no-store, must-revalidate",
             "Pragma": "no-cache",
             "Expires": "0",
@@ -50,7 +50,7 @@ class LoginService:
 
     def login(self) -> None:
         self.session.headers.update({
-            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+            "user-agent": self.account.user_agent,
             "content-type": "application/x-www-form-urlencoded",
             "origin": BASE_URL,
             "referer": f"{BASE_URL}/index",

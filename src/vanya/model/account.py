@@ -32,15 +32,20 @@ class Account:
         self.username: str = config.username
         self.password: str = config.password
         self.auto_equip: bool = config.auto_equip
+        self.boss_farm: bool = config.boss_farm
         self.stats: Stats = Stats()
         self.mode: Mode = Mode.IDLE
         self.guild: Optional[str] = None
         self.hunt: Optional[Hunt] = None
         self.session: Session = requests.Session()
+        self.user_agent = config.user_agent
+
 
         adapter = VanyaHttpAdapter()
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
+
+        self.session.headers.update({"User-Agent": self.user_agent})
 
     def __repr__(self):
         return f"Account(username='{self.username}', mode={self.mode}, guild={self.guild}, hunt={self.hunt})"

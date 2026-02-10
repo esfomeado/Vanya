@@ -29,7 +29,7 @@ class Scheduler:
         Mode.IDLE: 60,
         Mode.TRAINING: 1,
         Mode.SOLO_HUNT: 20,
-        Mode.PHANTOM_HALLS: 1,
+        Mode.PHANTOM_HALLS: 20,
         Mode.DEEP_DRAGON: 5,
     }
 
@@ -88,8 +88,10 @@ class Scheduler:
 
                 if account.mode == Mode.PHANTOM_HALLS:
                     service_registry.get(PhantomHallsService, account).tick()
-                    service_registry.get(NexusService, account).refresh()
-                    service_registry.get(NexusService, account).farm()
+
+                    if account.boss_farm:
+                        service_registry.get(NexusService, account).refresh()
+                        service_registry.get(NexusService, account).farm()
 
                 if account.mode == Mode.DEEP_DRAGON:
                     service_registry.get(DeepDragonService, account).tick()
@@ -108,7 +110,10 @@ class Scheduler:
 
                 service_registry.get(DailyTasksService, account).run_if_due()
 
-                self._stop_event.wait(self.MODE_TICK_INTERVAL[account.mode])
+                if account.boss_farm:
+                    self._stop_event.wait(1)
+                else:
+                    self._stop_event.wait(self.MODE_TICK_INTERVAL[account.mode])
             except (ConnectionError, ReadTimeout, HTTPError):
                 pass
             except Exception as e:

@@ -1,31 +1,31 @@
 accounts:
   - username: Naruto
     password: francesinha
-    auto_equip: true
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS 7.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.5771.0 Safari/537.36"
   - username: Lakkena
     password: 0A15VjNicRyF
-    auto_equip: true
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS Ubuntu 22.04) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.5785.0 Safari/537.36"
   - username: Nurfe
     password: au73xXLGZeSb
-    auto_equip: true
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS Ubuntu 23.10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.5993.3 Safari/537.36"
   - username: Mohu
     password: r37EMq3sZFDx
-    auto_equip: true
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS 7.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6358.0 Safari/537.36"
   - username: Tala
     password: GcJ8QBHB7zmC
-    auto_equip: true
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS Ubuntu 23.04) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6141.0 Safari/537.36"
   - username: Ipex
     password: rWSuwYLHQTSa
-    auto_equip: true
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS 8.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6061.0 Safari/537.36"
   - username: Cuve
     password: RRP2CdLWLMM2
-    auto_equip: true
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS Ubuntu 22.10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.6312.0 Safari/537.36"
   - username: Arda
     password: heKh6edQyadH
-    auto_equip: true
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS 7.5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6365.0 Safari/537.36"
   - username: Lili
     password: f8bAhk2dLjKG
-    auto_equip: true
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS Ubuntu 23.04) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6036.0 Safari/537.36"
 
 telegram:
   token: 8510867013:AAF3PTwOggCsneFAx_ay2PMVvVMCLJ0jAk0
