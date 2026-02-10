@@ -106,11 +106,11 @@ class Scheduler:
                     service_registry.get(HouseTrainingService, account).tick()
 
                 if account.stats.health <= 1:
-                    service_registry.get(PubService, account).go_to_pub_and_heal()
-
                     area_id = None
                     if account.hunt and account.hunt.area_id:
                         area_id = account.hunt.area_id
+
+                    service_registry.get(PubService, account).go_to_pub_and_heal()
 
                     if account.stats.level < 300:
                         service_registry.get(SoloHuntService, account).hunt(area_id)
