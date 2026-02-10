@@ -54,9 +54,9 @@ class Account:
                 "http": formatted_proxy,
                 "https": formatted_proxy,
             })
-            logging.info(f"🔒 {self.username} initialized with proxy.")
+            logging.info(f"{self.username} initialized with proxy.")
         else:
-            logging.info(f"🌍 {self.username} initialized using current IP (Direct).")
+            logging.info(f"{self.username} initialized using current IP (Direct).")
 
     def _format_proxy(self, proxy_str: str) -> str:
         parts = proxy_str.split(":")
