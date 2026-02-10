@@ -1,24 +1,104 @@
 accounts:
   - username: Waalkai
     password: tJjxQWrvhdpZ
-    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS 7.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.5771.0 Safari/537.36"
-    proxy: "45.145.57.235:13054:drbxF6:1Enr98"
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.85 Safari/537.36"
+    proxy: "85.195.81.170:10542:9bUukk:gyTQRf"
   - username: Skarlax
     password: Tsx7S8zdFqvF
-    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS Ubuntu 24.04) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.5785.0 Safari/537.36"
-    proxy: "45.145.57.235:13054:drbxF6:1Enr98"
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.139 Safari/537.36"
+    proxy: "85.195.81.170:10542:9bUukk:gyTQRf"
   - username: Novax
     password: d3cZKV5S5aVH
-    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS Ubuntu 24.10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.5993.3 Safari/537.36"
-    proxy: "45.145.57.235:13054:drbxF6:1Enr98"
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.94 Safari/537.36"
+    proxy: "85.195.81.170:10542:9bUukk:gyTQRf"
   - username: Vishapin
     password: CUeBE6q52ssM
-    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS 7.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.6358.0 Safari/537.36"
-    proxy: "45.145.57.235:13054:drbxF6:1Enr98"
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.111 Safari/537.36"
+    proxy: "85.195.81.170:10542:9bUukk:gyTQRf"
   - username: Oedyz
     password: GVyRAQ4xRFcf
-    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS Ubuntu 20.04) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6141.0 Safari/537.36"
-    proxy: "45.145.57.235:13054:drbxF6:1Enr98"
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.6312.58 Safari/537.36"
+    proxy: "85.195.81.170:10542:9bUukk:gyTQRf"
+  - username: Anson
+    password: nqLdEPqffTnW
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.6312.86 Safari/537.36"
+    proxy: "85.195.81.170:10541:9bUukk:gyTQRf"
+  - username: Atwaun
+    password: ZttWydr2RBrY
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.6312.105 Safari/537.36"
+    proxy: "85.195.81.170:10541:9bUukk:gyTQRf"
+  - username: Eadred
+    password: 2UTJh7SJPsAY
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.60 Safari/537.36"
+    proxy: "85.195.81.170:10541:9bUukk:gyTQRf"
+  - username: Hearde
+    password: V2KLmdZaSf2m
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.91 Safari/537.36"
+    proxy: "85.195.81.170:10541:9bUukk:gyTQRf"
+  - username: Cuthbeorht
+    password: Nhr4QL2s5s9U
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.155 Safari/537.36"
+    proxy: "85.195.81.170:10541:9bUukk:gyTQRf"
+  - username: Cuthsi
+    password: 9DYEgjsnEB48
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.60 Safari/537.36"
+    proxy: "85.195.81.170:10540:9bUukk:gyTQRf"
+  - username: Ornhelm
+    password: cv7RPdsVKcRn
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.112 Safari/537.36"
+    proxy: "85.195.81.170:10540:9bUukk:gyTQRf"
+  - username: Wini
+    password: axRR7fWKrfKS
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.141 Safari/537.36"
+    proxy: "85.195.81.170:10540:9bUukk:gyTQRf"
+  - username: Holbald
+    password: 5w4bwhtSGeDN
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.55 Safari/537.36"
+    proxy: "85.195.81.170:10540:9bUukk:gyTQRf"
+  - username: Wyne
+    password: JcFPSQwSxan2
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.114 Safari/537.36"
+    proxy: "85.195.81.170:10540:9bUukk:gyTQRf"
+  - username: Ryany
+    password: CqCWhQaZH6A7
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.126 Safari/537.36"
+    proxy: "85.195.81.170:10539:9bUukk:gyTQRf"
+  - username: Rica
+    password: cE8MYJT7pe2k
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.6533.72 Safari/537.36"
+    proxy: "85.195.81.170:10539:9bUukk:gyTQRf"
+  - username: Mesym
+    password: YsG7DqRNnWLf
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.6533.88 Safari/537.36"
+    proxy: "85.195.81.170:10539:9bUukk:gyTQRf"
+  - username: Ernan
+    password: mxJmqXJfbM5y
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.6533.99 Safari/537.36"
+    proxy: "85.195.81.170:10539:9bUukk:gyTQRf"
+  - username: Charrey
+    password: zByMnVnRUPT3
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.6613.84 Safari/537.36"
+    proxy: "85.195.81.170:10539:9bUukk:gyTQRf"
+  - username: Symund
+    password: sNtWmC6PgDBv
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.6613.113 Safari/537.36"
+    proxy: "85.195.81.170:10538:9bUukk:gyTQRf"
+  - username: Wisym
+    password: N8xGqMAQSkgF
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.6613.119 Safari/537.36"
+    proxy: "85.195.81.170:10538:9bUukk:gyTQRf"
+  - username: Berwiu
+    password: u6d6jTqM4sLZ
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.6668.58 Safari/537.36"
+    proxy: "85.195.81.170:10538:9bUukk:gyTQRf"
+  - username: Oftfoth
+    password: HtLYtgyzSkSs
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.6668.89 Safari/537.36"
+    proxy: "85.195.81.170:10538:9bUukk:gyTQRf"
+  - username: Beorhtio
+    password: heestzwarVtJ
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.6723.58 Safari/537.36"
+    proxy: "85.195.81.170:10538:9bUukk:gyTQRf"
 
 telegram:
   token: 8212217750:AAHFX3i0P2EU6Iw-HiqVi_VR1DTjmWnKwfM
