@@ -108,6 +108,11 @@ class Scheduler:
                 if account.stats.health <= 1:
                     service_registry.get(PubService, account).go_to_pub_and_heal()
 
+                    if account.stats.level < 300:
+                        service_registry.get(SoloHuntService, account).hunt()
+                    else:
+                        service_registry.get(PhantomHallsService, account).hunt()
+
                 service_registry.get(DailyTasksService, account).run_if_due()
 
                 if account.boss_farm:
