@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 
 import requests
@@ -41,12 +42,32 @@ class Account:
         self.session: Session = requests.Session()
         self.user_agent = config.user_agent
 
-
         adapter = VanyaHttpAdapter()
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
 
         self.session.headers.update({"User-Agent": self.user_agent})
+
+        if config.proxy:
+            formatted_proxy = self._format_proxy(config.proxy)
+            self.session.proxies.update({
+                "http": formatted_proxy,
+                "https": formatted_proxy,
+            })
+            logging.info(f"🔒 {self.username} initialized with proxy.")
+        else:
+            logging.info(f"🌍 {self.username} initialized using current IP (Direct).")
+
+    def _format_proxy(self, proxy_str: str) -> str:
+        parts = proxy_str.split(":")
+        if len(parts) == 4:
+            ip, port, user, password = parts
+            return f"http://{user}:{password}@{ip}:{port}"
+
+        if "://" not in proxy_str:
+            return f"http://{proxy_str}"
+
+        return proxy_str
 
     def __repr__(self):
         return f"Account(username='{self.username}', mode={self.mode}, guild={self.guild}, hunt={self.hunt})"
