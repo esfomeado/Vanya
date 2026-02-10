@@ -4,16 +4,16 @@ accounts:
     user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS 7.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.5771.0 Safari/537.36"
   - username: Skarlax
     password: Tsx7S8zdFqvF
-    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS Ubuntu 22.04) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.5785.0 Safari/537.36"
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS Ubuntu 24.04) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.5785.0 Safari/537.36"
   - username: Novax
     password: d3cZKV5S5aVH
-    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS Ubuntu 23.10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.5993.3 Safari/537.36"
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS Ubuntu 24.10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.5993.3 Safari/537.36"
   - username: Vishapin
     password: CUeBE6q52ssM
-    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS 7.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6358.0 Safari/537.36"
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS 7.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.6358.0 Safari/537.36"
   - username: Oedyz
     password: GVyRAQ4xRFcf
-    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS Ubuntu 23.04) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6141.0 Safari/537.36"
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64; CentOS Ubuntu 20.04) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6141.0 Safari/537.36"
 
 telegram:
   token: 8212217750:AAHFX3i0P2EU6Iw-HiqVi_VR1DTjmWnKwfM
