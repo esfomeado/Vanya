@@ -103,6 +103,9 @@ class PhantomHallsService(BaseHuntService):
         return None, None, None, None, None
 
     def hunt(self, specific_area_id: Optional[str] = None) -> None:
+        if self.account.username == "Skyrus" and specific_area_id is None:
+            specific_area_id = "the_ossuary_lord"
+
         self.area_id = specific_area_id
         joined = False
 
