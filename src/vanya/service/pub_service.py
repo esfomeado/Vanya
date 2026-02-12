@@ -31,6 +31,8 @@ class PubService:
         self._start_training()
 
     def regenerate(self, sleep: bool = True) -> None:
+        self.go_to_pub()
+
         self.account.session.post(
             PUB_UPDATE_URL,
             data={
