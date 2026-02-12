@@ -26,7 +26,6 @@ class NexusService:
     def refresh(self) -> None:
         url = f"{NEXUS_URL}?ajax_nexus_data=1&_={int(time.time() * 1000)}"
         response = self.account.session.get(url)
-        response.raise_for_status()
         data = response.json()
 
         seen = set()
@@ -80,7 +79,6 @@ class NexusService:
 
     def _attack_boss_once(self, boss_id: int) -> None:
         response = self.account.session.get(DASHBOARD_URL)
-        response.raise_for_status()
 
         csrf = get_global_csrf(response.text)
 
@@ -95,7 +93,7 @@ class NexusService:
                 "x-csrf-token": csrf,
                 "content-type": "application/json",
             },
-        ).raise_for_status()
+        )
 
     def _should_attack(self, boss_id: int) -> bool:
         boss = self.bosses.get(boss_id)

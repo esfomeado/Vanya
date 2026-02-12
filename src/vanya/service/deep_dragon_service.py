@@ -28,7 +28,6 @@ class DeepDragonService:
         logging.info(f"Starting deep dragon hunt for {self.account.username}")
 
         response = self.account.session.get(DEEP_DRAGON_URL)
-        response.raise_for_status()
         csrf = self._get_csrf(response.text)
 
         generate_response = self.account.session.post(
@@ -45,7 +44,6 @@ class DeepDragonService:
                 "content-type": "application/x-www-form-urlencoded"
             }
         )
-        generate_response.raise_for_status()
 
         page_html = generate_response.text
 
@@ -64,7 +62,6 @@ class DeepDragonService:
                     "content-type": "application/x-www-form-urlencoded"
                 }
             )
-            reroll_response.raise_for_status()
             page_html = reroll_response.text
             time.sleep(5)
 
@@ -80,7 +77,7 @@ class DeepDragonService:
                 "csrf_token": csrf,
                 "action": "start"
             }
-        ).raise_for_status()
+        )
 
         self.account.mode = Mode.DEEP_DRAGON
         self.account.hunt = Hunt(area_id="deep_dragon", name="Deep Dragon", max_hit=max_hit)
@@ -126,7 +123,6 @@ class DeepDragonService:
             return
 
         response = self.account.session.get(DEEP_DRAGON_URL)
-        response.raise_for_status()
 
         current_health, max_health = self._parse_current_health(response.text)
         potion_count = self._parse_potion_count(response.text)
@@ -156,7 +152,7 @@ class DeepDragonService:
                     "origin": BASE_URL,
                     "content-type": "application/x-www-form-urlencoded"
                 }
-            ).raise_for_status()
+            )
 
             logging.info(f"Successfully claimed rewards for {self.account.username}")
         except Exception as e:
@@ -181,7 +177,7 @@ class DeepDragonService:
 
     def _parse_potion_count(self, html: str) -> int:
         soup = BeautifulSoup(html, "html.parser")
-        button = soup.find("button", string=re.compile(r"USE LIFE POTION"))
+        button = soup.find("button", string=re.compile(r"USE LIFE POTION", re.IGNORECASE))
         if button:
             match = re.search(r"\((\d+)\)", button.get_text())
             if match:
@@ -205,7 +201,7 @@ class DeepDragonService:
                     "origin": BASE_URL,
                     "content-type": "application/x-www-form-urlencoded"
                 }
-            ).raise_for_status()
+            )
 
             logging.info(f"Successfully bought potions for {self.account.username}")
         except Exception as e:
@@ -227,7 +223,7 @@ class DeepDragonService:
                     "origin": BASE_URL,
                     "content-type": "application/x-www-form-urlencoded"
                 }
-            ).raise_for_status()
+            )
 
             logging.info(f"Potion used successfully for {self.account.username}")
         except Exception as e:
@@ -237,7 +233,6 @@ class DeepDragonService:
         logging.info(f"Stopping Deep Dragon hunt for {self.account.username}")
 
         response = self.account.session.get(DEEP_DRAGON_URL)
-        response.raise_for_status()
         csrf = self._get_csrf(response.text)
 
         self.account.session.post(
@@ -251,7 +246,7 @@ class DeepDragonService:
                 "origin": BASE_URL,
                 "content-type": "application/x-www-form-urlencoded"
             }
-        ).raise_for_status()
+        )
 
         self.account.hunt = None
         self.account.mode = Mode.IDLE

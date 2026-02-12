@@ -22,8 +22,6 @@ class DarkMarketService:
             },
         )
 
-        response.raise_for_status()
-
         soup = BeautifulSoup(response.text, "html.parser")
         listings: list[MarketListing] = []
 
@@ -65,7 +63,6 @@ class DarkMarketService:
                 "referer": MARKET_URL,
             },
         )
-        response.raise_for_status()
 
         csrf = self._extract_list_csrf(response.text)
 
@@ -81,7 +78,7 @@ class DarkMarketService:
                 "csrf_token": csrf,
             },
             allow_redirects=True,
-        ).raise_for_status()
+        )
 
     def sell_item(self, item_name: str, amount: int, price: int) -> None:
         logging.info(f"Selling {amount}x {item_name} for {price} gold")
@@ -92,7 +89,6 @@ class DarkMarketService:
                 "referer": MARKET_URL,
             },
         )
-        response.raise_for_status()
 
         csrf = self._extract_list_csrf(response.text)
 
@@ -111,7 +107,7 @@ class DarkMarketService:
                 "unbind_currency": "gold",
             },
             allow_redirects=True,
-        ).raise_for_status()
+        )
 
     def _extract_list_csrf(self, html: str) -> str:
         soup = BeautifulSoup(html, "html.parser")

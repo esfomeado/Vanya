@@ -38,7 +38,7 @@ class ChatService:
                 "x-csrf-token": csrf,
                 "content-type": "application/x-www-form-urlencoded",
             },
-        ).raise_for_status()
+        )
 
         logging.info(
             "Chat message sent | account=%s | channel=%s",
@@ -53,6 +53,5 @@ class ChatService:
         )
 
         response = self.account.session.get(source_url)
-        response.raise_for_status()
 
         return get_global_csrf(response.text)

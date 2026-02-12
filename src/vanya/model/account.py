@@ -1,10 +1,9 @@
 import logging
+import random
 from typing import Optional
 
-import requests
-from requests import Session
+from curl_cffi import requests, Session
 
-from src.vanya.core.http_adapter import VanyaHttpAdapter
 from src.vanya.model.config import AccountConfig
 from src.vanya.model.hunt import Hunt
 from src.vanya.model.mode import Mode
@@ -39,26 +38,54 @@ class Account:
         self.mode: Mode = Mode.IDLE
         self.guild: Optional[str] = None
         self.hunt: Optional[Hunt] = None
-        self.session: Session = requests.Session()
-        self.user_agent = config.user_agent
+        self.session: Session = self._create_session(config)
 
-        adapter = VanyaHttpAdapter()
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
+    @staticmethod
+    def _create_session(config: AccountConfig) -> Session:
+        impersonations = [
+            "chrome100",
+            "chrome101",
+            "chrome104",
+            "chrome107",
+            "chrome110",
+            "chrome116",
+            "chrome119",
+            "chrome120",
+            "chrome123",
+            "chrome124",
+            "chrome131",
+            "chrome136",
+            "chrome142",
+        ]
 
-        self.session.headers.update({"User-Agent": self.user_agent})
+        session = requests.Session(
+            impersonate=random.choice(impersonations),
+            timeout=10,
+            raise_for_status=True,
+        )
+
+        session.headers.update({
+            "accept": "text/html,application/xhtml+xml",
+            "accept-language": "en-US,en;q=0.9",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        })
 
         if config.proxy:
-            formatted_proxy = self._format_proxy(config.proxy)
-            self.session.proxies.update({
+            formatted_proxy = Account._format_proxy(config.proxy)
+            session.proxies.update({
                 "http": formatted_proxy,
                 "https": formatted_proxy,
             })
-            logging.info(f"{self.username} initialized with proxy.")
+            logging.info(f"{config.username} initialized with proxy.")
         else:
-            logging.info(f"{self.username} initialized using current IP (Direct).")
+            logging.info(f"{config.username} initialized using current IP (Direct).")
 
-    def _format_proxy(self, proxy_str: str) -> str:
+        return session
+
+    @staticmethod
+    def _format_proxy(proxy_str: str) -> str:
         parts = proxy_str.split(":")
         if len(parts) == 4:
             ip, port, user, password = parts

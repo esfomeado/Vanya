@@ -20,7 +20,7 @@ class HouseTrainingService:
                 "x-csrf-token": csrf,
                 "content-type": "application/x-www-form-urlencoded",
             },
-        ).raise_for_status()
+        )
 
     def tick(self) -> None:
         response = self.account.session.get(HOUSE_URL)

@@ -15,7 +15,6 @@ class GuildService:
         )
 
         response = self.account.session.get(GUILDS_URL)
-        response.raise_for_status()
 
         csrf = get_global_csrf(response.text)
 
@@ -29,13 +28,12 @@ class GuildService:
             data={
                 "guild_id": guild_id,
             },
-        ).raise_for_status()
+        )
 
     def leave(self, guild_id: int) -> None:
         logging.info(f"Leaving guild {guild_id} | account={self.account.username}")
 
         response = self.account.session.get(GUILDS_URL)
-        response.raise_for_status()
 
         csrf = get_global_csrf(response.text)
 

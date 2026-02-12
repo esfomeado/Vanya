@@ -27,4 +27,4 @@ class CouponService:
                 "x-csrf-token": csrf,
                 "content-type": "application/x-www-form-urlencoded",
             },
-        ).raise_for_status()
+        )

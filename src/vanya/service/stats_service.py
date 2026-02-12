@@ -12,7 +12,6 @@ class StatsService:
 
     def refresh_account_stats(self) -> None:
         response = self.account.session.get(DASHBOARD_URL)
-        response.raise_for_status()
 
         soup = BeautifulSoup(response.text, "html.parser")
 
@@ -42,7 +41,7 @@ class StatsService:
                     self.account.guild = f"{tag} {name}"
                     continue
 
-            hashed_acc_el = soup.find("strong", string=re.compile("Hashed Accounts"))
+            hashed_acc_el = soup.find("strong", string=re.compile("Hashed Accounts", re.IGNORECASE))
             if hashed_acc_el:
                 text = hashed_acc_el.get_text(strip=True)
                 match = re.match(r"(\d+)/\d+", text)

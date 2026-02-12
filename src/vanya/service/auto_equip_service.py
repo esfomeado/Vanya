@@ -19,7 +19,6 @@ class AutoEquipService:
         logging.info(f"Auto-equipping items for {self.account.username}")
 
         response = self.account.session.get(DASHBOARD_URL)
-        response.raise_for_status()
 
         soup = BeautifulSoup(response.text, "html.parser")
 
@@ -114,4 +113,4 @@ class AutoEquipService:
             headers={
                 "referer": DASHBOARD_URL
             },
-        ).raise_for_status()
+        )

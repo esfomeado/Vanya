@@ -20,8 +20,6 @@ class LoginService:
         self.account = account
         self.session = account.session
 
-        self.init_session()
-
     def cookie_path(self) -> str:
         return os.path.join(COOKIES_DIR, f"{self.account.username}.pkl")
 
@@ -36,21 +34,10 @@ class LoginService:
     def save_cookies(self) -> None:
         path = self.cookie_path()
         with open(path, "wb") as f:
-            pickle.dump(self.session.cookies, f)
-
-    def init_session(self) -> None:
-        self.session.headers.update({
-            "accept": "text/html,application/xhtml+xml",
-            "accept-language": "en-US,en;q=0.9",
-            "user-agent": self.account.user_agent,
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0",
-        })
+            pickle.dump(self.session.cookies.get_dict(), f)
 
     def login(self) -> None:
         self.session.headers.update({
-            "user-agent": self.account.user_agent,
             "content-type": "application/x-www-form-urlencoded",
             "origin": BASE_URL,
             "referer": f"{BASE_URL}/index",
@@ -66,7 +53,6 @@ class LoginService:
             },
             allow_redirects=True,
         )
-        response.raise_for_status()
 
         if "/login" in response.url.lower():
             raise RuntimeError(f"Login failed for {self.account.username}")
@@ -82,7 +68,6 @@ class LoginService:
                     DASHBOARD_URL,
                     allow_redirects=False,
                 )
-                response.raise_for_status()
 
                 if response.status_code == 200:
                     return
@@ -96,7 +81,6 @@ class LoginService:
     def reconcile_mode(self) -> None:
         try:
             response = self.account.session.get(CHECK_HUNT_STATUS_URL)
-            response.raise_for_status()
             json_response = response.json()
             in_hunt = json_response.get("in_hunt", False)
 
@@ -138,7 +122,6 @@ class LoginService:
 
         try:
             response = self.account.session.get(HUNT_URL)
-            response.raise_for_status()
 
             soup = BeautifulSoup(response.text, "html.parser")
             h1 = soup.select_one(".hunt-container h1")

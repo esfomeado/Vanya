@@ -14,7 +14,6 @@ class LoungeService:
 
         try:
             response = self.account.session.get(url)
-            response.raise_for_status()
             csrf = get_global_csrf(response.text)
 
             self.account.session.post(
@@ -31,7 +30,7 @@ class LoungeService:
                     "content-type": "application/json",
                     "x-csrf-token": csrf,
                 }
-            ).raise_for_status()
+            )
 
             logging.info(f"Liked post {post_id} in topic {topic_id} for {self.account.username}")
 
@@ -43,7 +42,6 @@ class LoungeService:
 
         try:
             response = self.account.session.get(url)
-            response.raise_for_status()
             csrf = get_global_csrf(response.text)
 
             self.account.session.post(
@@ -60,7 +58,7 @@ class LoungeService:
                     "content-type": "application/json",
                     "x-csrf-token": csrf,
                 }
-            ).raise_for_status()
+            )
 
             logging.info(f"Disliked post {post_id} in topic {topic_id} for {self.account.username}")
 

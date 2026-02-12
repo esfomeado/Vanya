@@ -2,8 +2,7 @@ import logging
 import threading
 import time
 
-from requests import ConnectionError, HTTPError
-from requests import ReadTimeout
+from curl_cffi.requests.exceptions import ReadTimeout, HTTPError, ConnectionError, Timeout
 
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
@@ -123,7 +122,7 @@ class Scheduler:
 
                     if not account.boss_farm:
                         self._stop_event.wait(self.MODE_TICK_INTERVAL[account.mode])
-            except (ConnectionError, ReadTimeout, HTTPError):
+            except (ConnectionError, ReadTimeout, HTTPError, Timeout):
                 pass
             except Exception as e:
                 logging.exception("Unexpected error in scheduler thread.")

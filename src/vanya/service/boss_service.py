@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 from bs4.element import AttributeValueList
 
 from src.vanya.core.constants import ADVENTURE_ATTACK_URL, ADVENTURE_URL
-from src.vanya.core.errors import VanyaError
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 from src.vanya.model.boss import Boss
@@ -25,7 +24,6 @@ class BossService:
         logging.info(f"Listing available bosses for account {self.account.username}")
 
         response = self.account.session.get(ADVENTURE_URL)
-        response.raise_for_status()
 
         soup = BeautifulSoup(response.text, "html.parser")
         bosses: list[Boss] = []
@@ -123,12 +121,10 @@ class BossService:
                 "x-csrf-token": csrf,
             },
         )
-        response.raise_for_status()
 
         data = response.json()
         if data.get("status") != "ok":
-            self.account.mode = Mode.IDLE
-            raise VanyaError(f"Boss attack failed: {data}")
+            return None
 
         logging.info(
             "Boss hit | account=%s | boss=%s | dmg=%.1f | boss_hp=%.1f/%.1f | player_hp=%d/%d | stamina=%d",
@@ -151,7 +147,7 @@ class BossService:
         logging.info(f"{self.account.username}: Boss {boss_id} life: {boss_life}")
 
         if self.account.username == "Skyrus":
-            if boss_life <= 450 and self.account.stats.stamina > 20:
+            if 0 < boss_life <= 450 and self.account.stats.stamina > 20:
                 self.attack_boss_once(boss_id)
         else:
             if boss_life > 450 and self.account.stats.stamina > 20:
@@ -172,7 +168,6 @@ class BossService:
 
     def _fetch_csrf(self, boss_id: int) -> str:
         response = self.account.session.get(f"{ADVENTURE_URL}?boss_id={boss_id}")
-        response.raise_for_status()
 
         return get_global_csrf(response.text)
 
@@ -180,7 +175,6 @@ class BossService:
         resp = self.account.session.get(
             f"{ADVENTURE_URL}?boss_id={boss_id}",
         )
-        resp.raise_for_status()
 
         soup = BeautifulSoup(resp.text, "html.parser")
         text = soup.select_one("#boss-life-text").text

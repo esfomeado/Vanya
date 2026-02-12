@@ -17,7 +17,6 @@ class VisageService:
         logging.info(f"Fetching owned visages for {self.account.username}")
 
         response = self.account.session.get(DASHBOARD_URL)
-        response.raise_for_status()
 
         soup = BeautifulSoup(response.text, "html.parser")
         visages: list[Visage] = []
@@ -61,7 +60,6 @@ class VisageService:
         logging.info(f"Attempting to equip portrait '{portrait_filename}' for {self.account.username}")
 
         response = self.account.session.get(DASHBOARD_URL)
-        response.raise_for_status()
 
         csrf = get_global_csrf(response.text)
 
@@ -78,7 +76,7 @@ class VisageService:
                 "content-type": "application/x-www-form-urlencoded",
                 "x-csrf-token": csrf,
             }
-        ).raise_for_status()
+        )
 
         logging.info(f"Successfully equipped portrait '{portrait_filename}' for {self.account.username}")
 
@@ -86,7 +84,6 @@ class VisageService:
         logging.info(f"Spinning visage for {self.account.username}")
 
         response = self.account.session.get(DASHBOARD_URL)
-        response.raise_for_status()
         csrf = get_global_csrf(response.text)
 
         response = self.account.session.post(
@@ -104,15 +101,12 @@ class VisageService:
             }
         )
 
-        response.raise_for_status()
-
         return response.json()
 
     def free_spin(self) -> None:
         logging.info(f"Free spinning visage for {self.account.username}")
 
         response = self.account.session.get(DASHBOARD_URL)
-        response.raise_for_status()
         csrf = get_global_csrf(response.text)
 
         self.account.session.post(
@@ -127,4 +121,4 @@ class VisageService:
                 "content-type": "application/x-www-form-urlencoded",
                 "x-csrf-token": csrf,
             }
-        ).raise_for_status()
+        )

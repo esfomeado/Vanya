@@ -44,7 +44,7 @@ class BaseHuntService(ABC):
             headers={
                 "referer": BASE_URL
             },
-        ).raise_for_status()
+        )
 
         self.account.hunt = None
         self.account.mode = Mode.IDLE
@@ -54,14 +54,13 @@ class BaseHuntService(ABC):
             logging.info(f"Attempting to claim hunt chest for {self.account.username}")
 
             response_get = self.account.session.get(HUNT_URL)
-            response_get.raise_for_status()
             csrf = self._get_csrf(response_get.text)
 
             if not csrf:
                 logging.warning("Could not find CSRF token for chest claim.")
                 return
 
-            response_post = self.account.session.post(
+            self.account.session.post(
                 HUNT_URL,
                 data={
                     "action": "claim_hunt_chest",
@@ -71,7 +70,6 @@ class BaseHuntService(ABC):
                     "referer": HUNT_URL,
                 },
             )
-            response_post.raise_for_status()
 
             self.last_chest_claim_time = time.time()
             logging.info(f"Successfully sent chest claim request for {self.account.username}")
@@ -80,7 +78,7 @@ class BaseHuntService(ABC):
             logging.error(f"Failed to claim chest: {e}")
 
     def tick(self) -> None:
-        self.account.session.get(HUNT_URL).raise_for_status()
+        self.account.session.get(HUNT_URL)
 
         if time.time() - self.last_chest_claim_time > 1800:
             self.claim_chest()

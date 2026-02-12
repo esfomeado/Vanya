@@ -44,14 +44,14 @@ class PubService:
                 "x-csrf-token": self.csrf,
                 "content-type": "application/x-www-form-urlencoded",
             },
-        ).raise_for_status()
+        )
 
         self.account.session.post(
             PUB_REGENERATE_URL,
             headers={
                 "referer": PUB_URL,
             },
-        ).raise_for_status()
+        )
 
         if sleep:
             time.sleep(125)
@@ -65,7 +65,7 @@ class PubService:
             headers={
                 "referer": PUB_URL,
             },
-        ).raise_for_status()
+        )
 
     def _start_training(self) -> None:
         logging.info(f"Starting training for account {self.account.username}")
@@ -80,7 +80,7 @@ class PubService:
                 "x-csrf-token": self.csrf,
                 "content-type": "application/x-www-form-urlencoded",
             },
-        ).raise_for_status()
+        )
 
     def _stop_training(self) -> None:
         logging.info(f"Stopping training for account {self.account.username}")
@@ -95,7 +95,7 @@ class PubService:
                 "x-csrf-token": self.csrf,
                 "content-type": "application/x-www-form-urlencoded",
             },
-        ).raise_for_status()
+        )
 
     def _buy_health_potion(self) -> None:
         logging.info(f"Attempting to buy health potion for account {self.account.username}")
@@ -123,11 +123,10 @@ class PubService:
                 "x-csrf-token": self.csrf,
                 "content-type": "application/x-www-form-urlencoded",
             },
-        ).raise_for_status()
+        )
 
     def _get_health_potion_price(self) -> int:
         response = self.account.session.get(PUB_URL)
-        response.raise_for_status()
         html = response.text
 
         match = re.search(r'items\s*=\s*(\[[^]]*])', html)
