@@ -5,7 +5,6 @@ from src.vanya.core.constants import NEXUS_URL, ADVENTURE_ATTACK_URL, ADVENTURE_
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 from src.vanya.model.boss import NexusBoss
-from vanya.model import account
 
 
 class NexusService:
