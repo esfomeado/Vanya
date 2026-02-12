@@ -3,11 +3,12 @@ import re
 from bs4 import BeautifulSoup
 
 from src.vanya.core.constants import DASHBOARD_URL
+from src.vanya.model.account import Account
 from src.vanya.model.item import InventoryItem
 
 
 class InventoryService:
-    def __init__(self, account):
+    def __init__(self, account: Account):
         self.account = account
 
     def list_items(self) -> list[InventoryItem]:

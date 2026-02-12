@@ -5,11 +5,12 @@ from bs4 import BeautifulSoup
 from src.vanya.core.constants import BASE_URL
 from src.vanya.core.constants import DASHBOARD_URL
 from src.vanya.core.utils import get_global_csrf
+from src.vanya.model.account import Account
 from src.vanya.model.visage import Visage
 
 
 class VisageService:
-    def __init__(self, account):
+    def __init__(self, account: Account):
         self.account = account
 
     def list(self) -> list[Visage]:

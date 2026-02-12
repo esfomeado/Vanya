@@ -144,6 +144,19 @@ class BossService:
 
         return data
 
+    def farm(self):
+        boss_id = 2
+
+        boss_life = self._get_boss_current_life(boss_id)
+        logging.info(f"{self.account.username}: Boss {boss_id} life: {boss_life}")
+
+        if self.account.username == "Skyrus":
+            if boss_life <= 450 and self.account.stats.stamina > 20:
+                self.attack_boss_once(boss_id)
+        else:
+            if boss_life > 450 and self.account.stats.stamina > 20:
+                self.attack_boss_once(boss_id)
+
     def _parse_title(self, text: str) -> tuple[int, str]:
         m = re.match(r"Stage\s+(\d+):\s+(.+)", text)
         return int(m.group(1)), m.group(2)

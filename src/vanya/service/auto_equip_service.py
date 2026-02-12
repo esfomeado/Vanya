@@ -30,7 +30,7 @@ class AutoEquipService:
             best = max(items, key=lambda x: x["defense"])
             current = equipped.get(slot)
 
-            if not current or best["defense"] > current["defense"]:
+            if not current and best["defense"] != 0 and best["defense"] > current["defense"]:
                 logging.info(f"Equipping {best['name']} (+{best['defense']} DEF) in {slot} on {self.account.username}")
                 self._equip_item(best["name"], best["csrf"])
 

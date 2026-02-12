@@ -3,11 +3,12 @@ import logging
 from bs4 import BeautifulSoup
 
 from src.vanya.core.constants import MARKET_URL
+from src.vanya.model.account import Account
 from src.vanya.model.market import MarketListing
 
 
 class DarkMarketService:
-    def __init__(self, account):
+    def __init__(self, account: Account):
         self.account = account
 
     def list(self) -> list[MarketListing]:

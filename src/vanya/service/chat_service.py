@@ -14,7 +14,7 @@ class ChatService:
         Mode.TRAINING: PUB_URL,
         Mode.SOLO_HUNT: HUNT_URL,
         Mode.PHANTOM_HALLS: HUNT_URL,
-        Mode.DEEP_DRAGON: HUNT_URL,
+        Mode.DEEP_DRAGON: None,
     }
 
     def __init__(self, account: Account):
