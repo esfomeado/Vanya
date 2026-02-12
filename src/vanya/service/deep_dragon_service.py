@@ -269,7 +269,7 @@ class DeepDragonService:
     def _manage_training_service(self, action: str) -> None:
         try:
             subprocess.run(["sudo", "systemctl", action, "vanya-training.service"], check=True)
-            time.sleep(5)
+            time.sleep(10)
             logging.info(f"Successfully {action}ed vanya-training.service")
         except subprocess.CalledProcessError as e:
             logging.error(f"Failed to {action} vanya-training.service: {e}")
