@@ -28,7 +28,7 @@ class Scheduler:
         Mode.TRAINING: 1,
         Mode.SOLO_HUNT: 20,
         Mode.PHANTOM_HALLS: 20,
-        Mode.DEEP_DRAGON: 5,
+        Mode.DEEP_DRAGON: 3,
     }
 
     def __init__(self, accounts: list[Account]):
