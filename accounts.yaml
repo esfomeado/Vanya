@@ -11,12 +11,16 @@ accounts:
     password: GcJ8QBHB7zmC
   - username: Ipex
     password: rWSuwYLHQTSa
+    proxy: "45.145.57.229:10260:XDBnvu:f2D9Qp"
   - username: Cuve
     password: RRP2CdLWLMM2
+    proxy: "45.145.57.229:10260:XDBnvu:f2D9Qp"
   - username: Arda
     password: heKh6edQyadH
+    proxy: "45.145.57.229:10260:XDBnvu:f2D9Qp"
   - username: Lili
     password: f8bAhk2dLjKG
+    proxy: "45.145.57.229:10260:XDBnvu:f2D9Qp"
 
 telegram:
   token: 8510867013:AAF3PTwOggCsneFAx_ay2PMVvVMCLJ0jAk0
