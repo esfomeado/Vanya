@@ -1,14 +1,19 @@
 accounts:
   - username: Naruto
     password: francesinha
+    proxy: "45.145.57.229:10260:XDBnvu:f2D9Qp"
   - username: Lakkena
     password: 0A15VjNicRyF
+    proxy: "45.145.57.229:10260:XDBnvu:f2D9Qp"
   - username: Nurfe
     password: au73xXLGZeSb
+    proxy: "45.145.57.229:10260:XDBnvu:f2D9Qp"
   - username: Mohu
     password: r37EMq3sZFDx
+    proxy: "45.145.57.229:10260:XDBnvu:f2D9Qp"
   - username: Tala
     password: GcJ8QBHB7zmC
+    proxy: "45.145.57.229:10260:XDBnvu:f2D9Qp"
 
 telegram:
   token: 8510867013:AAF3PTwOggCsneFAx_ay2PMVvVMCLJ0jAk0
