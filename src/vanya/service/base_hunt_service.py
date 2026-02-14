@@ -16,10 +16,13 @@ from src.vanya.service.service_registry import service_registry
 
 
 class BaseHuntService(ABC):
+    MAX_HUNT_DURATION = 43200
+
     def __init__(self, account: Account):
         self.account = account
         self.area_id: Optional[str] = None
         self.last_chest_claim_time: float = 0
+        self.last_hunt_start_time: float = 0
         self.auto_equip_service = service_registry.get(AutoEquipService, account)
         self.boss_service = service_registry.get(BossService, account)
         self.pub_service = service_registry.get(PubService, account)
@@ -83,7 +86,7 @@ class BaseHuntService(ABC):
         if time.time() - self.last_chest_claim_time > 1800:
             self.claim_chest()
 
-        if self.account.stats.health <= self.account.hunt.max_hit + (self.account.hunt.max_hit * 0.1):
+        if self.account.stats.health <= (self.account.hunt.max_hit + (self.account.hunt.max_hit * 0.1)) or (time.time() - self.last_hunt_start_time >= self.MAX_HUNT_DURATION):
             logging.info(f"Health below max hit for account {self.account.username}, stopping hunt")
             self.stop_hunt()
             self.pub_service.go_to_pub_and_heal()

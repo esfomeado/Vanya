@@ -105,6 +105,7 @@ class PhantomHallsService(BaseHuntService):
         if self.account.username == "Skyrus" and specific_area_id is None:
             specific_area_id = "the_ossuary_lord"
 
+        self.last_hunt_start_time = time.time()
         self.area_id = specific_area_id
         joined = False
 

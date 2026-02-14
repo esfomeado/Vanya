@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Optional
 
 from bs4 import BeautifulSoup
@@ -18,6 +19,7 @@ class SoloHuntService(BaseHuntService):
     def hunt(self, specific_area_id: Optional[str] = None) -> None:
         logging.info(f"Starting solo hunt for {self.account.username}")
 
+        self.last_hunt_start_time = time.time()
         self.area_id = specific_area_id
 
         response = self.account.session.get(EXPLORE_URL)
