@@ -92,10 +92,10 @@ class BossService:
         data = self.attack_boss_once(self.boss_id)
 
         if not data:
+            self.account.mode = Mode.IDLE
             return
 
         if data.get("new_stamina", 0) <= 10:
-            self.pub_service.go_to_pub()
             for _ in range(1):
                 self.pub_service.regenerate()
 
@@ -107,7 +107,6 @@ class BossService:
 
         current_life = self._get_boss_current_life(boss_id)
         if current_life == 0:
-            self.account.mode = Mode.IDLE
             return None
 
         response = self.account.session.post(
