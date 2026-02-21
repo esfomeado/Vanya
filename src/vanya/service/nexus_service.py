@@ -15,7 +15,10 @@ class NexusService:
         4: 130,
         5: 180,
         6: 250,
+        7: 450,
+        8: 800,
         999: 10,
+        1000: 10,
     }
 
     def __init__(self, account: Account):
