@@ -96,16 +96,7 @@ class Scheduler:
                         service_registry.get(HouseTrainingService, account).tick()
 
                     if account.stats.health <= 1:
-                        area_id = None
-                        if account.hunt and account.hunt.area_id:
-                            area_id = account.hunt.area_id
-
-                        service_registry.get(PubService, account).go_to_pub_and_heal()
-
-                        if account.stats.level < 300:
-                            service_registry.get(SoloHuntService, account).hunt(area_id)
-                        else:
-                            service_registry.get(PhantomHallsService, account).hunt(area_id)
+                        self._heal_and_resume_hunt(account)
 
                     service_registry.get(DailyTasksService, account).run_if_due()
 
@@ -122,4 +113,13 @@ class Scheduler:
                     f"{e}"
                 )
 
-                time.sleep(5)
+                self._stop_event.wait(5)
+
+    def _heal_and_resume_hunt(self, account: Account) -> None:
+        area_id = account.hunt.area_id if account.hunt and account.hunt.area_id else None
+        service_registry.get(PubService, account).go_to_pub_and_heal()
+
+        if account.stats.level < 300:
+            service_registry.get(SoloHuntService, account).hunt(area_id)
+        else:
+            service_registry.get(PhantomHallsService, account).hunt(area_id)
