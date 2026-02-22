@@ -119,6 +119,7 @@ class DeepDragonService:
             self._claim_rewards()
             self._manage_training_service("stop")
             self.pub_service.regenerate(sleep=False)
+            self.pub_service.stop_training()
             self.hunt()
             return
 
@@ -127,7 +128,7 @@ class DeepDragonService:
         current_health, max_health = self._parse_current_health(response.text)
         potion_count = self._parse_potion_count(response.text)
 
-        if potion_count < 5:
+        if 10 > potion_count >= 0:
             logging.info(f"Potion count low ({potion_count}) for {self.account.username}. Buying more.")
             self._buy_potions()
 
@@ -164,8 +165,8 @@ class DeepDragonService:
         life_now_el = soup.find("b", id="lifeNow")
         life_max_el = soup.find("b", id="lifeMax")
 
-        current_life = 0
-        max_life = 0
+        current_life = -1
+        max_life = -1
 
         if life_now_el:
             current_life = int(life_now_el.get_text(strip=True).replace(",", ""))
@@ -182,7 +183,7 @@ class DeepDragonService:
             match = re.search(r"\((\d+)\)", button.get_text())
             if match:
                 return int(match.group(1))
-        return 0
+        return -1
 
     def _buy_potions(self) -> None:
         try:

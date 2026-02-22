@@ -26,7 +26,7 @@ class PubService:
 
         self.go_to_pub()
 
-        self._stop_training()
+        self.stop_training()
         self._buy_health_potion()
         self._start_training()
 
@@ -82,7 +82,7 @@ class PubService:
             },
         )
 
-    def _stop_training(self) -> None:
+    def stop_training(self) -> None:
         logging.info(f"Stopping training for account {self.account.username}")
 
         self.account.session.post(
