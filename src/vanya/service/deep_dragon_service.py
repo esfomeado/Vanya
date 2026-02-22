@@ -128,11 +128,11 @@ class DeepDragonService:
         current_health, max_health = self._parse_current_health(response.text)
         potion_count = self._parse_potion_count(response.text)
 
-        if 10 > potion_count >= 0:
+        if 10 > potion_count > -1:
             logging.info(f"Potion count low ({potion_count}) for {self.account.username}. Buying more.")
             self._buy_potions()
 
-        if current_health <= self.account.hunt.max_hit * 3:
+        if self.account.hunt.max_hit * 4 >= current_health > -1:
             logging.info(f"Low health ({current_health}) detected for {self.account.username}. Using potion.")
             self._use_potion()
 
