@@ -175,5 +175,6 @@ class DailyTasksService:
             CLAIM_REWARD_URL,
             headers={
                 "referer": f"{BASE_URL}/account_settings",
+                "x-csrf-token": self.account.csrf,
             },
         )
