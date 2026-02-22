@@ -13,6 +13,7 @@ from src.vanya.service.house_training_service import HouseTrainingService
 from src.vanya.service.login_service import LoginService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
 from src.vanya.service.pub_service import PubService
+from src.vanya.service.reconciliation_service import ReconciliationService
 from src.vanya.service.service_registry import service_registry
 from src.vanya.service.solo_hunt_service import SoloHuntService
 from src.vanya.service.stats_service import StatsService
@@ -38,12 +39,6 @@ class Scheduler:
 
     def start(self) -> None:
         for account in self.accounts:
-            login_thread = threading.Thread(target=self._login_loop, args=(account,), daemon=True)
-            login_thread.start()
-            self._threads.append(login_thread)
-
-            time.sleep(5)
-
             main_thread = threading.Thread(target=self._run, args=(account,), daemon=True)
             main_thread.start()
             self._threads.append(main_thread)
@@ -57,26 +52,24 @@ class Scheduler:
 
         logging.info("Scheduler stopped.")
 
-    def _login_loop(self, account: Account) -> None:
-        login_service: LoginService = service_registry.get(LoginService, account)
-
-        while not self._stop_event.is_set():
-            login_service.ensure_logged_in()
-            login_service.reconcile_mode()
-
-            self._stop_event.wait(60)
-
     def _run(self, account: Account) -> None:
+        service_registry.get(LoginService, account).login()
+
         last_stats_refresh = 0.0
         last_mode_tick = 0.0
+        last_reconciliation_tick = 0.0
 
         while not self._stop_event.is_set():
             try:
                 now = time.time()
 
-                if now - last_stats_refresh >= 20.0:
+                if now - last_stats_refresh >= 20:
                     service_registry.get(StatsService, account).refresh_account_stats()
                     last_stats_refresh = now
+
+                if now - last_reconciliation_tick >= 300:
+                    service_registry.get(ReconciliationService, account).reconcile()
+                    last_reconciliation_tick = now
 
                 if account.boss_farm:
                     service_registry.get(BossService, account).farm()
@@ -121,7 +114,7 @@ class Scheduler:
             except (ConnectionError, ReadTimeout, HTTPError, Timeout):
                 pass
             except Exception as e:
-                logging.exception("Unexpected error in scheduler thread.")
+                logging.exception(f"Unexpected error in scheduler thread for {account.username}")
 
                 TelegramService().send(
                     f"Account: {account.username}\n"

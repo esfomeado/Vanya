@@ -1,7 +1,6 @@
 import logging
 
 from src.vanya.core.constants import GUILDS_URL, GUILDS_APPLY_URL, GUILDS_LEAVE_URL
-from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 
 
@@ -14,16 +13,11 @@ class GuildService:
             f"Applying to guild {guild_id} | account={self.account.username}"
         )
 
-        response = self.account.session.get(GUILDS_URL)
-
-        csrf = get_global_csrf(response.text)
-
         self.account.session.post(
             GUILDS_APPLY_URL,
             headers={
                 "referer": GUILDS_URL,
-                "x-csrf-token": csrf,
-                "content-type": "application/x-www-form-urlencoded",
+                "x-csrf-token": self.account.csrf,
             },
             data={
                 "guild_id": guild_id,
@@ -33,16 +27,11 @@ class GuildService:
     def leave(self, guild_id: int) -> None:
         logging.info(f"Leaving guild {guild_id} | account={self.account.username}")
 
-        response = self.account.session.get(GUILDS_URL)
-
-        csrf = get_global_csrf(response.text)
-
         self.account.session.post(
             GUILDS_LEAVE_URL,
             headers={
                 "referer": GUILDS_URL,
-                "x-csrf-token": csrf,
-                "content-type": "application/x-www-form-urlencoded",
+                "x-csrf-token": self.account.csrf,
             },
             data={
                 "guild_id": guild_id,

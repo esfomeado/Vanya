@@ -2,9 +2,7 @@ import logging
 
 from bs4 import BeautifulSoup
 
-from src.vanya.core.constants import BASE_URL
 from src.vanya.core.constants import DASHBOARD_URL
-from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 from src.vanya.model.visage import Visage
 
@@ -59,45 +57,34 @@ class VisageService:
     def equip(self, portrait_filename: str) -> None:
         logging.info(f"Attempting to equip portrait '{portrait_filename}' for {self.account.username}")
 
-        response = self.account.session.get(DASHBOARD_URL)
-
-        csrf = get_global_csrf(response.text)
-
         self.account.session.post(
             DASHBOARD_URL,
             data={
                 "portrait_action": "equip",
-                "csrf_token": csrf,
+                "csrf_token": self.account.csrf,
                 "portrait": portrait_filename
             },
             headers={
                 "referer": DASHBOARD_URL,
-                "origin": BASE_URL,
-                "content-type": "application/x-www-form-urlencoded",
-                "x-csrf-token": csrf,
+                "x-csrf-token": self.account.csrf,
             }
         )
 
         logging.info(f"Successfully equipped portrait '{portrait_filename}' for {self.account.username}")
 
-    def spin(self):
+    def spin(self) -> dict:
         logging.info(f"Spinning visage for {self.account.username}")
-
-        response = self.account.session.get(DASHBOARD_URL)
-        csrf = get_global_csrf(response.text)
 
         response = self.account.session.post(
             DASHBOARD_URL,
             data={
                 "portrait_action": "spin",
-                "csrf_token": csrf,
+                "csrf_token": self.account.csrf,
                 "currency": "gold"
             },
             headers={
                 "referer": DASHBOARD_URL,
-                "origin": BASE_URL,
-                "content-type": "application/x-www-form-urlencoded",
-                "x-csrf-token": csrf,
+                "x-csrf-token": self.account.csrf,
             }
         )
 
@@ -106,19 +93,14 @@ class VisageService:
     def free_spin(self) -> None:
         logging.info(f"Free spinning visage for {self.account.username}")
 
-        response = self.account.session.get(DASHBOARD_URL)
-        csrf = get_global_csrf(response.text)
-
         self.account.session.post(
             DASHBOARD_URL,
             data={
                 "portrait_action": "spin_free",
-                "csrf_token": csrf,
+                "csrf_token": self.account.csrf,
             },
             headers={
                 "referer": DASHBOARD_URL,
-                "origin": BASE_URL,
-                "content-type": "application/x-www-form-urlencoded",
-                "x-csrf-token": csrf,
+                "x-csrf-token": self.account.csrf,
             }
         )

@@ -2,7 +2,6 @@ import logging
 from typing import Optional
 
 from src.vanya.core.constants import PUB_URL, PUB_TRAIN_CLICK_URL
-from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 
@@ -18,7 +17,6 @@ class TrainingService:
     def __init__(self, account: Account):
         self.account = account
         self.skill: Optional[str] = None
-        self.csrf: Optional[str] = None
 
     def tick(self) -> None:
         dummy_id = self.SKILL_TO_DUMMY_ID.get(self.skill)
@@ -27,7 +25,6 @@ class TrainingService:
             return
 
         try:
-            self.csrf = self._fetch_csrf()
             payload = {
                 "dummy_id": str(dummy_id),
                 "skill": self.skill,
@@ -40,8 +37,7 @@ class TrainingService:
                 data=payload,
                 headers={
                     "referer": PUB_URL,
-                    "x-csrf-token": self.csrf,
-                    "content-type": "application/x-www-form-urlencoded",
+                    "x-csrf-token": self.account.csrf,
                 },
             )
 
@@ -65,15 +61,12 @@ class TrainingService:
             "is_lite": str(0),
         }
 
-        self.csrf = self._fetch_csrf()
-
         self.account.session.post(
             PUB_TRAIN_CLICK_URL,
             data=payload,
             headers={
                 "referer": PUB_URL,
-                "x-csrf-token": self.csrf,
-                "content-type": "application/x-www-form-urlencoded",
+                "x-csrf-token": self.account.csrf,
             },
         )
 
@@ -82,8 +75,3 @@ class TrainingService:
         logging.info(
             f"Training started | account={self.account.username} | skill={skill}"
         )
-
-    def _fetch_csrf(self) -> str:
-        response = self.account.session.get(PUB_URL)
-
-        return get_global_csrf(response.text)

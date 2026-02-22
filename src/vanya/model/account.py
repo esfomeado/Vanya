@@ -4,6 +4,7 @@ from typing import Optional
 
 from curl_cffi import requests, Session
 
+from src.vanya.core.vanya_session import VanyaSession
 from src.vanya.model.config import AccountConfig
 from src.vanya.model.hunt import Hunt
 from src.vanya.model.mode import Mode
@@ -38,7 +39,14 @@ class Account:
         self.mode: Mode = Mode.IDLE
         self.guild: Optional[str] = None
         self.hunt: Optional[Hunt] = None
-        self.session: Session = self._create_session(config)
+        self.session: VanyaSession = VanyaSession(self._create_session(config), self._reauthenticate)
+        self.csrf: Optional[str] = None
+
+    def _reauthenticate(self):
+        from src.vanya.service.service_registry import service_registry
+        from src.vanya.service.login_service import LoginService
+
+        service_registry.get(LoginService, self).login()
 
     @staticmethod
     def _create_session(config: AccountConfig) -> Session:

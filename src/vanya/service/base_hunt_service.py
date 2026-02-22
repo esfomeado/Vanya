@@ -3,8 +3,6 @@ import time
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from bs4 import BeautifulSoup
-
 from src.vanya.core.constants import STOP_HUNT_URL, BASE_URL, HUNT_URL
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
@@ -35,14 +33,11 @@ class BaseHuntService(ABC):
     def stop_hunt(self) -> None:
         logging.info(f"Stopping hunt for account {self.account.username}")
 
-        response = self.account.session.get(HUNT_URL)
-        csrf = self._get_csrf(response.text)
-
         self.account.session.post(
             STOP_HUNT_URL,
             data={
                 "action": "stop_hunt",
-                "csrf_token": csrf
+                "csrf_token": self.account.csrf
             },
             headers={
                 "referer": BASE_URL
@@ -56,18 +51,11 @@ class BaseHuntService(ABC):
         try:
             logging.info(f"Attempting to claim hunt chest for {self.account.username}")
 
-            response_get = self.account.session.get(HUNT_URL)
-            csrf = self._get_csrf(response_get.text)
-
-            if not csrf:
-                logging.warning("Could not find CSRF token for chest claim.")
-                return
-
             self.account.session.post(
                 HUNT_URL,
                 data={
                     "action": "claim_hunt_chest",
-                    "csrf_token": csrf
+                    "csrf_token": self.account.csrf
                 },
                 headers={
                     "referer": HUNT_URL,
@@ -93,12 +81,3 @@ class BaseHuntService(ABC):
             self.pub_service.regenerate(sleep=False)
             self.auto_equip_service.equip()
             self.hunt(specific_area_id=self.area_id)
-
-    def _get_csrf(self, html: str) -> Optional[str]:
-        soup = BeautifulSoup(html, "html.parser")
-
-        for inp in soup.find_all("input"):
-            if inp.get("name") == "csrf_token":
-                return inp.get("value")
-
-        return None

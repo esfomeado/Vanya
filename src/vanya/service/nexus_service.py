@@ -1,8 +1,7 @@
 import logging
 import time
 
-from src.vanya.core.constants import NEXUS_URL, ADVENTURE_ATTACK_URL, ADVENTURE_URL, DASHBOARD_URL
-from src.vanya.core.utils import get_global_csrf
+from src.vanya.core.constants import NEXUS_URL, ADVENTURE_ATTACK_URL, ADVENTURE_URL
 from src.vanya.model.account import Account
 from src.vanya.model.boss import NexusBoss
 
@@ -81,10 +80,6 @@ class NexusService:
                     logging.error(f"Failed to attack boss {boss.name}: {e}")
 
     def _attack_boss_once(self, boss_id: int) -> None:
-        response = self.account.session.get(DASHBOARD_URL)
-
-        csrf = get_global_csrf(response.text)
-
         self.account.session.post(
             ADVENTURE_ATTACK_URL,
             json={
@@ -93,7 +88,7 @@ class NexusService:
             },
             headers={
                 "referer": f"{ADVENTURE_URL}?boss_id={boss_id}",
-                "x-csrf-token": csrf,
+                "x-csrf-token": self.account.csrf,
                 "content-type": "application/json",
             },
         )
@@ -112,7 +107,7 @@ class NexusService:
         if self.account.stats.stamina <= 10:
             return False
 
-        if self.account.stats.level < self._boss_min_level.get(boss_id, 99999):
+        if self.account.stats.level < self._boss_min_level.get(boss_id):
             return False
 
         return True

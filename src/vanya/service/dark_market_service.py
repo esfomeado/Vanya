@@ -38,7 +38,6 @@ class DarkMarketService:
 
             form = box.select_one("form")
             listing_id = form.select_one("input[name=listing_id]")["value"]
-            csrf = form.select_one("input[name=csrf_token]")["value"]
 
             listings.append(
                 MarketListing(
@@ -47,7 +46,6 @@ class DarkMarketService:
                     price=price,
                     meta=meta,
                     stats=stats,
-                    csrf_token=csrf,
                 )
             )
 
@@ -56,51 +54,34 @@ class DarkMarketService:
     def buy_item(self, item_id: int) -> None:
         logging.info(f"Buying item {item_id}, for account {self.account.username}")
 
-        response = self.account.session.get(
-            MARKET_URL,
-            headers={
-                "accept": "text/html",
-                "referer": MARKET_URL,
-            },
-        )
-
-        csrf = self._extract_list_csrf(response.text)
-
         self.account.session.post(
             MARKET_URL,
             headers={
-                "content-type": "application/x-www-form-urlencoded",
                 "referer": MARKET_URL,
             },
             data={
                 "action": "buy_item",
                 "listing_id": item_id,
-                "csrf_token": csrf,
+                "csrf_token": self.account.csrf,
             },
             allow_redirects=True,
         )
 
     def sell_item(self, item_name: str, amount: int, price: int) -> None:
-        logging.info(f"Selling {amount}x {item_name} for {price} gold")
-        response = self.account.session.get(
-            MARKET_URL,
-            headers={
-                "accept": "text/html",
-                "referer": MARKET_URL,
-            },
-        )
+        logging.info(f"Selling {amount}x {item_name} for {price} gold, for account {self.account.username}")
 
-        csrf = self._extract_list_csrf(response.text)
+        if item_name == "Drako":
+            self.sell_drako(amount, price)
+            return
 
         self.account.session.post(
             MARKET_URL,
             headers={
-                "content-type": "application/x-www-form-urlencoded",
                 "referer": MARKET_URL,
             },
             data={
                 "action": "list_item",
-                "csrf_token": csrf,
+                "csrf_token": self.account.csrf,
                 "item_name": item_name,
                 "amount": amount,
                 "price": price,
@@ -109,15 +90,19 @@ class DarkMarketService:
             allow_redirects=True,
         )
 
-    def _extract_list_csrf(self, html: str) -> str:
-        soup = BeautifulSoup(html, "html.parser")
+    def sell_drako(self, amount: int, price: int) -> None:
+        logging.info(f"Selling {amount}x Drako for {price} gold, for account {self.account.username}")
 
-        form = soup.select_one(".list-form form")
-        if not form:
-            raise RuntimeError("List form not found")
-
-        token = form.select_one("input[name=csrf_token]")
-        if not token:
-            raise RuntimeError("CSRF token not found in list form")
-
-        return token["value"]
+        self.account.session.post(
+            MARKET_URL,
+            headers={
+                "referer": MARKET_URL,
+            },
+            data={
+                "action": "list_drako",
+                "csrf_token": self.account.csrf,
+                "drako_amount": amount,
+                "price": price,
+            },
+            allow_redirects=True,
+        )

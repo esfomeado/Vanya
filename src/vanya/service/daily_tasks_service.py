@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup
 from src.vanya.core.constants import CLAIM_REWARD_URL
 from src.vanya.core.constants import DASHBOARD_URL, DEMON_PASS_URL, HUNTIARY_URL, UPDEX_URL, SEAL_ITEM_URL, BASE_URL, \
     BOOKS_OF_SHADOWS_URL, QUEST_COMPLETE_URL, GUILDS_URL, GUILD_SHRINE_SPIN_URL
-from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 
 
@@ -36,9 +35,6 @@ class DailyTasksService:
     def _claim_daemon_pass_rewards(self) -> None:
         logging.info(f"Claiming daemon pass rewards for {self.account.username}")
 
-        response = self.account.session.get(DASHBOARD_URL)
-        csrf = get_global_csrf(response.text)
-
         status = self.account.session.get(
             f"{BASE_URL}/actions/demon_pass",
             headers={
@@ -64,8 +60,7 @@ class DailyTasksService:
                 DEMON_PASS_URL,
                 headers={
                     "referer": DASHBOARD_URL,
-                    "x-csrf-token": csrf,
-                    "content-type": "application/x-www-form-urlencoded",
+                    "x-csrf-token": self.account.csrf,
                 },
                 data={
                     "action": "claim",
@@ -83,7 +78,6 @@ class DailyTasksService:
             },
             headers={
                 "referer": HUNTIARY_URL,
-                "content-type": "application/x-www-form-urlencoded",
             },
         )
 
@@ -91,8 +85,6 @@ class DailyTasksService:
         logging.info(f"Sealing updex items for {self.account.username}")
 
         response = self.account.session.get(UPDEX_URL)
-
-        self.csrf = get_global_csrf(response.text)
         soup = BeautifulSoup(response.text, "html.parser")
 
         for btn in soup.select("button.seal-btn.primary"):
@@ -111,8 +103,7 @@ class DailyTasksService:
                 },
                 headers={
                     "referer": UPDEX_URL,
-                    "x-csrf-token": self.csrf,
-                    "content-type": "application/x-www-form-urlencoded",
+                    "x-csrf-token": self.account.csrf,
                 },
             )
 
@@ -164,19 +155,14 @@ class DailyTasksService:
             logging.info(f"{self.account.username} not in guild, skipping guild shrine spin")
             return
 
-        response = self.account.session.get(GUILDS_URL)
-
-        csrf = get_global_csrf(response.text)
-
         self.account.session.post(
             GUILD_SHRINE_SPIN_URL,
             headers={
                 "referer": GUILDS_URL,
-                "x-csrf-token": csrf,
-                "content-type": "application/x-www-form-urlencoded",
+                "x-csrf-token": self.account.csrf,
             },
             data={
-                "csrf_token": csrf,
+                "csrf_token": self.account.csrf,
             },
         )
 

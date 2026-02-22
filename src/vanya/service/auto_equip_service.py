@@ -29,9 +29,9 @@ class AutoEquipService:
             best = max(items, key=lambda x: x["defense"])
             current = equipped.get(slot)
 
-            if best["defense"] != 0 and (not current or best["defense"] > current["defense"]):
+            if not current or best["defense"] > current["defense"]:
                 logging.info(f"Equipping {best['name']} (+{best['defense']} DEF) in {slot} on {self.account.username}")
-                self._equip_item(best["name"], best["csrf"])
+                self._equip_item(best["name"])
 
     def _parse_equipped(self, soup: BeautifulSoup) -> dict[str, dict]:
         equipped_stats = {}
@@ -74,21 +74,19 @@ class AutoEquipService:
             defense = self._extract_defense_from_inventory(title)
 
             name_input = item.select_one("input[name=item_name]")
-            csrf_input = item.select_one("input[name=csrf_token]")
-            if not name_input or not csrf_input:
+            if not name_input:
                 continue
 
             inventory.setdefault(slot, []).append({
                 "name": name_input.get("value"),
                 "defense": defense,
-                "csrf": csrf_input.get("value"),
             })
 
         return inventory
 
     def _extract_defense_from_inventory(self, text: str) -> int:
         if not text:
-            return 0
+            return -1
 
         patterns = [
             r'Defense:\s*\+(\d+)',
@@ -100,15 +98,15 @@ class AutoEquipService:
             if m:
                 return int(m.group(1))
 
-        return 0
+        return -1
 
-    def _equip_item(self, item_name: str, csrf: str) -> None:
+    def _equip_item(self, item_name: str) -> None:
         self.account.session.post(
             EQUIP_URL,
             data={
                 "action": "equip",
                 "item_name": item_name,
-                "csrf_token": csrf,
+                "csrf_token": self.account.csrf,
             },
             headers={
                 "referer": DASHBOARD_URL

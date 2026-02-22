@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 from bs4.element import AttributeValueList
 
 from src.vanya.core.constants import ADVENTURE_ATTACK_URL, ADVENTURE_URL
-from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 from src.vanya.model.boss import Boss
 from src.vanya.model.mode import Mode
@@ -103,8 +102,6 @@ class BossService:
             self.pub_service.go_to_pub_and_heal()
 
     def attack_boss_once(self, boss_id: int) -> Optional[dict]:
-        csrf = self._fetch_csrf(boss_id)
-
         current_life = self._get_boss_current_life(boss_id)
         if current_life == 0:
             return None
@@ -117,7 +114,7 @@ class BossService:
             },
             headers={
                 "referer": f"{ADVENTURE_URL}?boss_id={boss_id}",
-                "x-csrf-token": csrf,
+                "x-csrf-token": self.account.csrf,
             },
         )
 
@@ -164,11 +161,6 @@ class BossService:
     def _parse_required_level(self, info) -> int:
         m = re.search(r"Required Level:\s*(\d+)", info.get_text())
         return int(m.group(1))
-
-    def _fetch_csrf(self, boss_id: int) -> str:
-        response = self.account.session.get(f"{ADVENTURE_URL}?boss_id={boss_id}")
-
-        return get_global_csrf(response.text)
 
     def _get_boss_current_life(self, boss_id: int) -> int:
         resp = self.account.session.get(
