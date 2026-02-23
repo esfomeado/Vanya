@@ -3,7 +3,7 @@ import time
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from src.vanya.core.constants import STOP_HUNT_URL, BASE_URL, HUNT_URL
+from src.vanya.core.constants import STOP_HUNT_URL, BASE_URL, HUNT_URL, CHECK_HUNT_STATUS_URL
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 from src.vanya.service.auto_equip_service import AutoEquipService
@@ -33,16 +33,28 @@ class BaseHuntService(ABC):
     def stop_hunt(self) -> None:
         logging.info(f"Stopping hunt for account {self.account.username}")
 
-        self.account.session.post(
-            STOP_HUNT_URL,
-            data={
-                "action": "stop_hunt",
-                "csrf_token": self.account.csrf
-            },
-            headers={
-                "referer": BASE_URL
-            },
-        )
+        max_retries = 5
+        for _ in range(max_retries):
+            self.account.session.post(
+                STOP_HUNT_URL,
+                data={
+                    "action": "stop_hunt",
+                    "csrf_token": self.account.csrf
+                },
+                headers={
+                    "referer": BASE_URL
+                },
+            )
+
+            status_response = self.account.session.get(CHECK_HUNT_STATUS_URL)
+            in_hunt = status_response.json().get("in_hunt", False)
+
+            if not in_hunt:
+                self.account.hunt = None
+                self.account.mode = Mode.IDLE
+                return
+
+            time.sleep(1)
 
         self.account.hunt = None
         self.account.mode = Mode.IDLE
