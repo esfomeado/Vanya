@@ -136,7 +136,7 @@ class BossService:
 
         return data
 
-    def farm(self):
+    def farm(self) -> None:
         boss_id = 2
 
         boss_life = self._get_boss_current_life(boss_id)

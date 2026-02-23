@@ -42,7 +42,7 @@ class Account:
         self.session: VanyaSession = VanyaSession(self._create_session(config), self._reauthenticate)
         self.csrf: Optional[str] = None
 
-    def _reauthenticate(self):
+    def _reauthenticate(self) -> None:
         from src.vanya.service.service_registry import service_registry
         from src.vanya.service.login_service import LoginService
 

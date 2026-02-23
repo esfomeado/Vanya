@@ -11,3 +11,6 @@ class InventoryItem:
     equipped: bool
     stats: Optional[str]
     image: str
+
+    def __repr__(self):
+        return f"{self.name} ({self.quantity})"
