@@ -16,7 +16,7 @@ from src.vanya.service.service_registry import service_registry
 
 
 class DeepDragonService:
-    DURATION = 1810
+    DURATION = 1800
 
     def __init__(self, account: Account):
         self.account = account

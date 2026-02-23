@@ -123,6 +123,7 @@ class PubService:
 
         match = re.search(r'items\s*=\s*(\[[^]]*])', html)
         if not match:
+            logging.error(f"Failed to get items from pub page: {html}")
             raise VanyaError("Failed to get items from pub page")
 
         items_js = match.group(1)
