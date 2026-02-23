@@ -116,6 +116,8 @@ class Scheduler:
                 self._stop_event.wait(5)
 
     def _heal_and_resume_hunt(self, account: Account) -> None:
+        logging.info(f"Healing and resuming hunt for {account.username}")
+
         area_id = account.hunt.area_id if account.hunt and account.hunt.area_id else None
         service_registry.get(PubService, account).go_to_pub_and_heal()
 
