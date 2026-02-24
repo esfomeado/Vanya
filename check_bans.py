@@ -31,7 +31,6 @@ def check_account_status(account: Account) -> tuple[str, str]:
                 "username": account.username,
                 "password": account.password
             },
-            allow_redirects=True,
             timeout=10
         )
 

@@ -10,7 +10,6 @@ from src.vanya.service.boss_service import BossService
 from src.vanya.service.daily_tasks_service import DailyTasksService
 from src.vanya.service.deep_dragon_service import DeepDragonService
 from src.vanya.service.house_training_service import HouseTrainingService
-from src.vanya.service.login_service import LoginService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
 from src.vanya.service.pub_service import PubService
 from src.vanya.service.reconciliation_service import ReconciliationService
@@ -53,8 +52,6 @@ class Scheduler:
         logging.info("Scheduler stopped.")
 
     def _run(self, account: Account) -> None:
-        service_registry.get(LoginService, account).load_cookies()
-
         last_stats_refresh = 0.0
         last_mode_tick = 0.0
         last_reconciliation_tick = 0.0

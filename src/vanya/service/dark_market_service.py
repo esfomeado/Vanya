@@ -64,7 +64,6 @@ class DarkMarketService:
                 "listing_id": item_id,
                 "csrf_token": self.account.csrf,
             },
-            allow_redirects=True,
         )
 
     def sell_item(self, item_name: str, amount: int, price: int) -> None:
@@ -87,7 +86,6 @@ class DarkMarketService:
                 "price": price,
                 "unbind_currency": "gold",
             },
-            allow_redirects=True,
         )
 
     def sell_drako(self, amount: int, price: int) -> None:
@@ -104,5 +102,4 @@ class DarkMarketService:
                 "drako_amount": amount,
                 "price": price,
             },
-            allow_redirects=True,
         )

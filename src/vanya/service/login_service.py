@@ -55,7 +55,6 @@ class LoginService:
                 "username": self.account.username,
                 "password": self.account.password
             },
-            allow_redirects=True,
         )
 
         current_url = response.url.lower()
