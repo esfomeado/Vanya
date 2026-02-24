@@ -61,7 +61,6 @@ class Scheduler:
                 now = time.time()
 
                 if now - last_stats_refresh >= 20:
-                    logging.debug(f"Refreshing stats for {account.username}")
                     service_registry.get(StatsService, account).refresh_account_stats()
                     if account.stats.level < 1:
                         logging.error(f"Failed to refresh stats for {account.username}")

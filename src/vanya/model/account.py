@@ -70,7 +70,6 @@ class Account:
             impersonate=random.choice(impersonations),
             timeout=3,
             raise_for_status=True,
-            allow_redirects=False,
         )
 
         session.headers.update({

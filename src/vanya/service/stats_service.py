@@ -13,7 +13,6 @@ class StatsService:
 
     def refresh_account_stats(self) -> None:
         response = self.account.session.get(DASHBOARD_URL)
-        logging.info(response.status_code)
 
         soup = BeautifulSoup(response.text, "html.parser")
 
