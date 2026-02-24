@@ -2,7 +2,7 @@ import logging
 import time
 
 from curl_cffi import Session
-from curl_cffi.requests.exceptions import ReadTimeout, HTTPError, ConnectionError, Timeout
+from curl_cffi.requests.exceptions import HTTPError
 
 
 class VanyaSession:
@@ -30,10 +30,10 @@ class VanyaSession:
                     logging.info("Session expired, logging in again")
                     self._login_callback()
                     continue
-                time.sleep(1 ** attempt)
-            except (ConnectionError, ReadTimeout, Timeout) as e:
+                time.sleep(1 * attempt)
+            except Exception as e:
                 last_exception = e
-                time.sleep(1 ** attempt)
+                time.sleep(1 * attempt)
 
         raise last_exception
 

@@ -53,7 +53,7 @@ class Scheduler:
         logging.info("Scheduler stopped.")
 
     def _run(self, account: Account) -> None:
-        service_registry.get(LoginService, account).login()
+        #service_registry.get(LoginService, account).login()
 
         last_stats_refresh = 0.0
         last_mode_tick = 0.0
@@ -64,7 +64,6 @@ class Scheduler:
                 now = time.time()
 
                 if now - last_stats_refresh >= 20:
-                    logging.info(f"Refreshing stats for {account.username}")
                     service_registry.get(StatsService, account).refresh_account_stats()
                     last_stats_refresh = now
 
@@ -104,7 +103,7 @@ class Scheduler:
                     if not account.boss_farm:
                         self._stop_event.wait(self.MODE_TICK_INTERVAL[account.mode])
             except (ConnectionError, ReadTimeout, HTTPError, Timeout):
-                pass
+                continue
             except Exception as e:
                 logging.exception(f"Unexpected error in scheduler thread for {account.username}")
 
