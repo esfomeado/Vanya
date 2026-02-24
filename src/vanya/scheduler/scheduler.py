@@ -53,7 +53,7 @@ class Scheduler:
         logging.info("Scheduler stopped.")
 
     def _run(self, account: Account) -> None:
-        #service_registry.get(LoginService, account).login()
+        service_registry.get(LoginService, account).load_cookies()
 
         last_stats_refresh = 0.0
         last_mode_tick = 0.0

@@ -17,15 +17,13 @@ class LoginService:
         self.account = account
         self.session = account.session
 
-    def load_cookies(self) -> bool:
+    def load_cookies(self) -> None:
         path = self._cookie_path()
         if os.path.exists(path):
             with open(path, "rb") as f:
                 cookies = pickle.load(f)
                 for cookie in cookies:
                     self.session.cookies.jar.set_cookie(cookie)
-            return True
-        return False
 
     def save_cookies(self) -> None:
         path = self._cookie_path()
