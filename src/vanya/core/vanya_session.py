@@ -4,6 +4,8 @@ import time
 from curl_cffi import Session
 from curl_cffi.requests.exceptions import HTTPError
 
+from src.vanya.core.constants import BASE_URL
+
 
 class VanyaSession:
     def __init__(self, session: Session, login_callback):
@@ -24,14 +26,10 @@ class VanyaSession:
                 response = self._session.request(method, *args, **kwargs)
                 response.raise_for_status()
 
-                if response.status_code == 200:
-                    logging.info(response.url)
-                    if "Unauthorized" in response.text:
-                        logging.info("Session expired (200 with Unauthorized), logging in again")
-                        self._login_callback()
-                        continue
-                    else:
-                        logging.info(response.text)
+                if response.url.lower().startswith(f"{BASE_URL}/index?error"):
+                    logging.info("Session expired, logging in again")
+                    self._login_callback()
+                    continue
 
                 return response
             except HTTPError as e:
