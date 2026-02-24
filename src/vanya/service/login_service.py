@@ -67,11 +67,11 @@ class LoginService:
 
         self.save_cookies()
         self.load_cookies()
-        self._get_csrf_token()
+        self.get_csrf_token()
 
         logging.info(f"Login successful for {self.account.username}")
 
-    def _get_csrf_token(self) -> None:
+    def get_csrf_token(self) -> None:
         response = self.session.get(
             DASHBOARD_URL,
         )

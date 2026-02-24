@@ -10,6 +10,7 @@ from src.vanya.service.boss_service import BossService
 from src.vanya.service.daily_tasks_service import DailyTasksService
 from src.vanya.service.deep_dragon_service import DeepDragonService
 from src.vanya.service.house_training_service import HouseTrainingService
+from src.vanya.service.login_service import LoginService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
 from src.vanya.service.pub_service import PubService
 from src.vanya.service.reconciliation_service import ReconciliationService
@@ -38,6 +39,8 @@ class Scheduler:
 
     def start(self) -> None:
         for account in self.accounts:
+            time.sleep(1)
+
             main_thread = threading.Thread(target=self._run, args=(account,), daemon=True)
             main_thread.start()
             self._threads.append(main_thread)
@@ -52,6 +55,9 @@ class Scheduler:
         logging.info("Scheduler stopped.")
 
     def _run(self, account: Account) -> None:
+        service_registry.get(LoginService, account).load_cookies()
+        service_registry.get(LoginService, account).get_csrf_token()
+
         last_stats_refresh = 0.0
         last_mode_tick = 0.0
         last_reconciliation_tick = 0.0
@@ -62,9 +68,6 @@ class Scheduler:
 
                 if now - last_stats_refresh >= 20:
                     service_registry.get(StatsService, account).refresh_account_stats()
-                    if account.stats.level < 1:
-                        logging.error(f"Failed to refresh stats for {account.username}")
-                        exit(1)
                     last_stats_refresh = now
 
                 if now - last_reconciliation_tick >= 300:
