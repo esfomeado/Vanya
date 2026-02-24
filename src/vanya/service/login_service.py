@@ -32,10 +32,15 @@ class LoginService:
         with open(path, "wb") as f:
             pickle.dump(list(self.session.cookies.jar), f)
 
+    def clear_cookies(self) -> None:
+        self.session.cookies.jar.clear()
+
     def _cookie_path(self) -> str:
         return os.path.join(COOKIES_DIR, f"{self.account.username}.pkl")
 
     def login(self) -> None:
+        self.clear_cookies()
+
         self.session.headers.update({
             "content-type": "application/x-www-form-urlencoded",
             "origin": BASE_URL,
