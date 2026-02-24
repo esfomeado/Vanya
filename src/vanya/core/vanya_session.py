@@ -25,6 +25,7 @@ class VanyaSession:
                 response.raise_for_status()
 
                 if response.status_code == 200:
+                    logging.info(response.url)
                     if "Unauthorized" in response.text:
                         logging.info("Session expired (200 with Unauthorized), logging in again")
                         self._login_callback()
