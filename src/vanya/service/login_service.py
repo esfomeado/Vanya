@@ -58,9 +58,6 @@ class LoginService:
         current_url = response.url.lower()
         response_text = response.text.lower()
 
-        logging.info(f"Current URL: {current_url}")
-        logging.info(f"Response text: {response_text}")
-
         if "/login" in current_url:
             if "banned" in response_text or "suspended" in response_text:
                 raise VanyaError(f"Account {self.account.username} is banned")
@@ -75,7 +72,6 @@ class LoginService:
     def _get_csrf_token(self) -> None:
         response = self.session.get(
             DASHBOARD_URL,
-            allow_redirects=False,
         )
 
         self.account.csrf = get_global_csrf(response.text)

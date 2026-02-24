@@ -23,7 +23,6 @@ class SoloHuntService(BaseHuntService):
         self.area_id = specific_area_id
 
         response = self.account.session.get(EXPLORE_URL)
-        logging.info(response.text)
 
         soup = BeautifulSoup(response.text, "html.parser")
         hunt_areas = soup.select(".hunt-area")
