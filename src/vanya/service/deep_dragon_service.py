@@ -6,7 +6,6 @@ from typing import Optional
 
 from bs4 import BeautifulSoup
 
-from src.vanya.core.constants import BASE_URL
 from src.vanya.core.constants import DEEP_DRAGON_URL
 from src.vanya.core.errors import VanyaError
 from src.vanya.model.account import Account
@@ -17,7 +16,7 @@ from src.vanya.service.service_registry import service_registry
 
 
 class DeepDragonService:
-    DURATION = 1800
+    DURATION = 1810
 
     def __init__(self, account: Account):
         self.account = account
@@ -27,21 +26,16 @@ class DeepDragonService:
     def hunt(self) -> None:
         logging.info(f"Starting deep dragon hunt for {self.account.username}")
 
-        response = self.account.session.get(DEEP_DRAGON_URL)
-        csrf = self._get_csrf(response.text)
-
         generate_response = self.account.session.post(
             DEEP_DRAGON_URL,
             data={
-                "csrf_token": csrf,
+                "csrf_token": self.account.csrf,
                 "action": "generate",
                 "mode": "solo",
                 "duration": f"{self.DURATION}"
             },
             headers={
                 "referer": DEEP_DRAGON_URL,
-                "origin": BASE_URL,
-                "content-type": "application/x-www-form-urlencoded"
             }
         )
 
@@ -53,13 +47,11 @@ class DeepDragonService:
             reroll_response = self.account.session.post(
                 DEEP_DRAGON_URL,
                 data={
-                    "csrf_token": csrf,
+                    "csrf_token": self.account.csrf,
                     "action": "reroll"
                 },
                 headers={
                     "referer": DEEP_DRAGON_URL,
-                    "origin": BASE_URL,
-                    "content-type": "application/x-www-form-urlencoded"
                 }
             )
             page_html = reroll_response.text
@@ -70,11 +62,11 @@ class DeepDragonService:
         self.account.session.post(
             DEEP_DRAGON_URL,
             data={
-                "csrf_token": csrf,
+                "csrf_token": self.account.csrf,
                 "action": "start"
             },
             headers={
-                "csrf_token": csrf,
+                "csrf_token": self.account.csrf,
                 "action": "start"
             }
         )
@@ -139,19 +131,14 @@ class DeepDragonService:
     def _claim_rewards(self) -> None:
         logging.info(f"Claiming Deep Dragon rewards for {self.account.username}")
         try:
-            response = self.account.session.get(DEEP_DRAGON_URL)
-            csrf = self._get_csrf(response.text)
-
             self.account.session.post(
                 DEEP_DRAGON_URL,
                 data={
-                    "csrf_token": csrf,
+                    "csrf_token": self.account.csrf,
                     "action": "claim"
                 },
                 headers={
                     "referer": DEEP_DRAGON_URL,
-                    "origin": BASE_URL,
-                    "content-type": "application/x-www-form-urlencoded"
                 }
             )
 
@@ -187,20 +174,15 @@ class DeepDragonService:
 
     def _buy_potions(self) -> None:
         try:
-            response = self.account.session.get(DEEP_DRAGON_URL)
-            csrf = self._get_csrf(response.text)
-
             self.account.session.post(
                 DEEP_DRAGON_URL,
                 data={
-                    "csrf_token": csrf,
+                    "csrf_token": self.account.csrf,
                     "action": "buy_potion",
                     "qty": "10"
                 },
                 headers={
                     "referer": DEEP_DRAGON_URL,
-                    "origin": BASE_URL,
-                    "content-type": "application/x-www-form-urlencoded"
                 }
             )
 
@@ -210,19 +192,14 @@ class DeepDragonService:
 
     def _use_potion(self) -> None:
         try:
-            response = self.account.session.get(DEEP_DRAGON_URL)
-            csrf = self._get_csrf(response.text)
-
             self.account.session.post(
                 DEEP_DRAGON_URL,
                 data={
-                    "csrf_token": csrf,
+                    "csrf_token": self.account.csrf,
                     "action": "use_potion"
                 },
                 headers={
                     "referer": DEEP_DRAGON_URL,
-                    "origin": BASE_URL,
-                    "content-type": "application/x-www-form-urlencoded"
                 }
             )
 
@@ -233,19 +210,14 @@ class DeepDragonService:
     def stop_hunt(self) -> None:
         logging.info(f"Stopping Deep Dragon hunt for {self.account.username}")
 
-        response = self.account.session.get(DEEP_DRAGON_URL)
-        csrf = self._get_csrf(response.text)
-
         self.account.session.post(
             DEEP_DRAGON_URL,
             data={
-                "csrf_token": csrf,
+                "csrf_token": self.account.csrf,
                 "action": "escape"
             },
             headers={
                 "referer": DEEP_DRAGON_URL,
-                "origin": BASE_URL,
-                "content-type": "application/x-www-form-urlencoded"
             }
         )
 
@@ -254,13 +226,6 @@ class DeepDragonService:
         self._manage_training_service("stop")
 
         logging.info(f"Successfully escaped Deep Dragon for {self.account.username}")
-
-    def _get_csrf(self, html: str) -> str:
-        soup = BeautifulSoup(html, "html.parser")
-        csrf_input = soup.find("input", {"type": "hidden", "name": "csrf_token"})
-        if csrf_input:
-            return csrf_input.get("value", "")
-        return ""
 
     def _manage_training_service(self, action: str) -> None:
         try:

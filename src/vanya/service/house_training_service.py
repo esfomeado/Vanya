@@ -1,35 +1,21 @@
-from src.vanya.core.constants import PUB_URL, PUB_OFFLINE_TRAIN_URL, HOUSE_TRAIN_URL, HOUSE_URL
-from src.vanya.core.utils import get_global_csrf
+from src.vanya.core.constants import HOUSE_TRAIN_URL
+from src.vanya.service.pub_service import PubService
+from src.vanya.service.service_registry import service_registry
 
 
 class HouseTrainingService:
     def __init__(self, account):
         self.account = account
+        self.pub_service = service_registry.get(PubService, account)
 
     def train(self) -> None:
-        response = self.account.session.get(PUB_URL)
-        csrf = get_global_csrf(response.text)
-
-        self.account.session.post(
-            PUB_OFFLINE_TRAIN_URL,
-            data={
-                "action": "stop"
-            },
-            headers={
-                "referer": PUB_URL,
-                "x-csrf-token": csrf,
-                "content-type": "application/x-www-form-urlencoded",
-            },
-        )
+        self.pub_service.stop_training()
 
     def tick(self) -> None:
-        response = self.account.session.get(HOUSE_URL)
-        csrf = get_global_csrf(response.text)
-
         self.account.session.post(
             HOUSE_TRAIN_URL,
             headers={
-                "x-csrf-token": csrf,
+                "x-csrf-token": self.account.csrf,
             },
             data={
                 "skill": "defense",

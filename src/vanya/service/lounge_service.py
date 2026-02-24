@@ -1,7 +1,6 @@
 import logging
 
 from src.vanya.core.constants import BASE_URL
-from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 
 
@@ -13,9 +12,6 @@ class LoungeService:
         url = f"{BASE_URL}/view_topic?id={topic_id}"
 
         try:
-            response = self.account.session.get(url)
-            csrf = get_global_csrf(response.text)
-
             self.account.session.post(
                 url,
                 json={
@@ -26,9 +22,8 @@ class LoungeService:
                 },
                 headers={
                     "referer": url,
-                    "origin": BASE_URL,
                     "content-type": "application/json",
-                    "x-csrf-token": csrf,
+                    "x-csrf-token": self.account.csrf,
                 }
             )
 
@@ -41,9 +36,6 @@ class LoungeService:
         url = f"{BASE_URL}/view_topic?id={topic_id}"
 
         try:
-            response = self.account.session.get(url)
-            csrf = get_global_csrf(response.text)
-
             self.account.session.post(
                 url,
                 json={
@@ -54,9 +46,8 @@ class LoungeService:
                 },
                 headers={
                     "referer": url,
-                    "origin": BASE_URL,
                     "content-type": "application/json",
-                    "x-csrf-token": csrf,
+                    "x-csrf-token": self.account.csrf,
                 }
             )
 

@@ -1,25 +1,21 @@
 import logging
 import re
 import time
-from typing import Optional
 
 from src.vanya.core.constants import PUB_URL, PUB_NPC_BUY_URL, PUB_REGENERATE_URL, PUB_UPDATE_URL, \
     PUB_OFFLINE_TRAIN_URL, BUY_ACCUMULATED_URL
 from src.vanya.core.errors import VanyaError
-from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 
 
 class PubService:
     def __init__(self, account: Account):
         self.account = account
-        self.csrf: Optional[str] = None
 
     def go_to_pub(self) -> None:
         logging.info(f"Going to pub for account {self.account.username}")
 
-        response = self.account.session.get(PUB_URL)
-        self.csrf = get_global_csrf(response.text)
+        self.account.session.get(PUB_URL)
 
     def go_to_pub_and_heal(self) -> None:
         logging.info(f"Going to pub and healing for account {self.account.username}")
@@ -41,8 +37,7 @@ class PubService:
             },
             headers={
                 "referer": PUB_URL,
-                "x-csrf-token": self.csrf,
-                "content-type": "application/x-www-form-urlencoded",
+                "x-csrf-token": self.account.csrf,
             },
         )
 
@@ -77,8 +72,7 @@ class PubService:
             },
             headers={
                 "referer": PUB_URL,
-                "x-csrf-token": self.csrf,
-                "content-type": "application/x-www-form-urlencoded",
+                "x-csrf-token": self.account.csrf,
             },
         )
 
@@ -92,8 +86,7 @@ class PubService:
             },
             headers={
                 "referer": PUB_URL,
-                "x-csrf-token": self.csrf,
-                "content-type": "application/x-www-form-urlencoded",
+                "x-csrf-token": self.account.csrf,
             },
         )
 
@@ -120,8 +113,7 @@ class PubService:
             },
             headers={
                 "referer": PUB_URL,
-                "x-csrf-token": self.csrf,
-                "content-type": "application/x-www-form-urlencoded",
+                "x-csrf-token": self.account.csrf,
             },
         )
 

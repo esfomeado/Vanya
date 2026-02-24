@@ -37,10 +37,9 @@ class SoloHuntService(BaseHuntService):
                 continue
 
             area_input = form.find("input", {"name": "area_id"})
-            csrf_input = form.find("input", {"name": "csrf_token"})
             button = form.find("button", type="submit")
 
-            if not area_input or not csrf_input or not button:
+            if not area_input or not button:
                 continue
 
             if button.has_attr("disabled"):
@@ -73,7 +72,6 @@ class SoloHuntService(BaseHuntService):
 
         form = selected_area.find("form", action="hunt_start")
         area_id_value = form.find("input", {"name": "area_id"}).get("value")
-        csrf_value = form.find("input", {"name": "csrf_token"}).get("value")
 
         hunt = Hunt(
             area_id=area_id_value,
@@ -92,7 +90,7 @@ class SoloHuntService(BaseHuntService):
             post_url,
             data={
                 "area_id": hunt.area_id,
-                "csrf_token": csrf_value,
+                "csrf_token": self.account.csrf,
             },
             headers={
                 "referer": EXPLORE_URL
