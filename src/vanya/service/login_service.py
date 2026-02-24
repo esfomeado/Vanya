@@ -3,6 +3,7 @@ import os
 import pickle
 
 from src.vanya.core.constants import BASE_URL, LOGIN_URL, DASHBOARD_URL
+from src.vanya.core.errors import VanyaError
 from src.vanya.core.utils import get_global_csrf
 from src.vanya.model.account import Account
 
@@ -54,8 +55,13 @@ class LoginService:
             allow_redirects=True,
         )
 
-        if "/login" in response.url.lower():
-            raise RuntimeError(f"Login failed for {self.account.username}")
+        current_url = response.url.lower()
+        response_text = response.text.lower()
+
+        if "/login" in current_url:
+            if "banned" in response_text or "suspended" in response_text:
+                raise VanyaError(f"Account {self.account.username} is banned")
+            raise VanyaError(f"Login failed for {self.account.username}")
 
         self.save_cookies()
         self.load_cookies()
