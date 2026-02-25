@@ -56,7 +56,12 @@ class Scheduler:
 
     def _run(self, account: Account) -> None:
         service_registry.get(LoginService, account).load_cookies()
-        service_registry.get(LoginService, account).get_csrf_token()
+
+        while account.csrf is None:
+            try:
+                service_registry.get(LoginService, account).get_csrf_token()
+            except Exception:
+                pass
 
         last_stats_refresh = 0.0
         last_mode_tick = 0.0
