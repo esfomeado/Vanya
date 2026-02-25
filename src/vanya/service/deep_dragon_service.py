@@ -75,6 +75,7 @@ class DeepDragonService:
         self.account.hunt = Hunt(area_id="deep_dragon", name="Deep Dragon", max_hit=max_hit)
         self.last_hunt_start_time = time.time()
 
+        self.pub_service.stop_training()
         self._manage_training_service("start")
 
         logging.info(
@@ -111,7 +112,6 @@ class DeepDragonService:
             self._claim_rewards()
             self._manage_training_service("stop")
             self.pub_service.regenerate(sleep=False)
-            self.pub_service.stop_training()
             self.hunt()
             return
 
