@@ -17,7 +17,7 @@ class DailyTasksService:
 
     def run_if_due(self) -> None:
         now = datetime.datetime.now()
-        if now.hour != 21:
+        if now.hour != 22:
             return
 
         if self._last_run == now.date():
