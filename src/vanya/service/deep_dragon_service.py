@@ -42,7 +42,9 @@ class DeepDragonService:
         page_html = generate_response.text
 
         while self._parse_difficulty(page_html) != "Void":
-            logging.info(f"Difficulty not Void. Rerolling for {self.account.username}...")
+            max_hit = self._parse_max_hit(page_html)
+
+            logging.info(f"Difficulty not Void. Max hit {max_hit}. Rerolling for {self.account.username}...")
 
             reroll_response = self.account.session.post(
                 DEEP_DRAGON_URL,
