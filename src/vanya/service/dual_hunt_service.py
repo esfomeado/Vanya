@@ -2,14 +2,15 @@ import logging
 import time
 from typing import Optional
 
+from src.vanya.core.constants import DEEP_DRAGON_URL
 from src.vanya.model.account import Account
+from src.vanya.model.hunt import Hunt
 from src.vanya.model.mode import Mode
 from src.vanya.service.deep_dragon_service import DeepDragonService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
-from src.vanya.service.service_registry import service_registry
-from src.vanya.core.constants import DEEP_DRAGON_URL
-from src.vanya.model.hunt import Hunt
 from src.vanya.service.pub_service import PubService
+from src.vanya.service.service_registry import service_registry
+from src.vanya.service.stats_service import StatsService
 
 
 class DualHuntService:
@@ -20,6 +21,7 @@ class DualHuntService:
         self.phantom_halls_service = service_registry.get(PhantomHallsService, account)
         self.deep_dragon_service = service_registry.get(DeepDragonService, account)
         self.pub_service = service_registry.get(PubService, account)
+        self.stats_service = service_registry.get(StatsService, account)
         self.area_id: Optional[str] = None
         self.max_hit = 0
         self.last_hunt_start_time: float = 0
@@ -47,7 +49,9 @@ class DualHuntService:
 
             self.phantom_halls_service.stop_hunt()
             self.deep_dragon_service.claim_rewards()
+            self.pub_service.go_to_pub_and_heal()
             self.pub_service.regenerate(sleep=False)
+            self.stats_service.refresh_account_stats()
             self.hunt(specific_area_id=self.area_id)
         else:
             response = self.account.session.get(DEEP_DRAGON_URL)
