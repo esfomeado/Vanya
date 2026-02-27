@@ -2,7 +2,7 @@ import logging
 import time
 from typing import Optional
 
-from src.vanya.core.constants import DEEP_DRAGON_URL
+from src.vanya.core.constants import DEEP_DRAGON_URL, HUNT_URL
 from src.vanya.model.account import Account
 from src.vanya.model.hunt import Hunt
 from src.vanya.model.mode import Mode
@@ -14,7 +14,7 @@ from src.vanya.service.stats_service import StatsService
 
 
 class DualHuntService:
-    HUNT_DURATION = 3600
+    HUNT_DURATION = 1810
 
     def __init__(self, account: Account):
         self.account = account
@@ -40,6 +40,8 @@ class DualHuntService:
 
 
     def tick(self) -> None:
+        self.account.session.get(HUNT_URL)
+
         if time.time() - self.last_chest_claim_time > 1800:
             self.phantom_halls_service.claim_chest()
             self.last_chest_claim_time = time.time()
