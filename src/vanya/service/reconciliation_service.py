@@ -20,7 +20,7 @@ class ReconciliationService:
             response = self.account.session.get(CHECK_HUNT_STATUS_URL)
             in_hunt = response.json().get("in_hunt", False)
 
-            if self.account.mode in {Mode.SOLO_HUNT, Mode.PHANTOM_HALLS} and not in_hunt:
+            if self.account.mode in {Mode.SOLO_HUNT, Mode.PHANTOM_HALLS, Mode.DUAL_HUNT} and not in_hunt:
                 logging.info(f"Reconciled mode for {self.account.username}: stopped hunt")
 
                 self.account.mode = Mode.IDLE

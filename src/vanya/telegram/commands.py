@@ -12,6 +12,7 @@ from src.vanya.service.chat_service import ChatService
 from src.vanya.service.coupon_service import CouponService
 from src.vanya.service.dark_market_service import DarkMarketService
 from src.vanya.service.deep_dragon_service import DeepDragonService
+from src.vanya.service.dual_hunt_service import DualHuntService
 from src.vanya.service.guild_service import GuildService
 from src.vanya.service.inventory_service import InventoryService
 from src.vanya.service.lounge_service import LoungeService
@@ -1305,3 +1306,77 @@ async def auto_sell_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             results.append(f"❌ {account.username}: {str(e)}")
 
     await update.message.reply_text("\n".join(results))
+
+async def dual_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/dual_hunt <account> start [area_id]\n"
+            "/dual_hunt <account> stop"
+        )
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+
+    name = context.args[0]
+    action = context.args[1]
+    area_id = context.args[2] if len(context.args) > 2 else None
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    if action == "stop":
+        if account.mode != Mode.DUAL_HUNT:
+            await update.message.reply_text(f"{name} is not in dual hunt mode")
+            return
+
+        service_registry.get(DualHuntService, account).stop_hunt()
+
+        await update.message.reply_text(f"{name} stopped dual hunting")
+        return
+
+    if action != "start":
+        await update.message.reply_text(
+            "Usage:\n"
+            "/dual_hunt <account> start [area_id]\n"
+            "/dual_hunt <account> stop"
+        )
+        return
+
+    if account.mode == Mode.DUAL_HUNT:
+        hunt = account.hunt
+        await update.message.reply_text(
+            f"{name} already in dual hunt mode\n{hunt.name}"
+        )
+        return
+
+    if account.mode in {Mode.SOLO_HUNT, Mode.PHANTOM_HALLS, Mode.DEEP_DRAGON}:
+        # Stop any existing hunt mode before starting dual hunt
+        if account.mode == Mode.SOLO_HUNT:
+            service_registry.get(SoloHuntService, account).stop_hunt()
+        elif account.mode == Mode.PHANTOM_HALLS:
+            service_registry.get(PhantomHallsService, account).stop_hunt()
+        elif account.mode == Mode.DEEP_DRAGON:
+            service_registry.get(DeepDragonService, account).stop_hunt()
+
+    try:
+        service_registry.get(DualHuntService, account).hunt(specific_area_id=area_id)
+        hunt = account.hunt
+
+        await update.message.reply_text(
+            f"🗡️🐉 {name} started dual hunting\n\n"
+            f"Mode: {hunt.name}\n"
+            f"Max hit: {hunt.max_hit}"
+        )
+
+    except Exception as e:
+        account.hunt = None
+        account.mode = Mode.IDLE
+        await update.message.reply_text(
+            f"Failed to start dual hunt for {name}:\n{e}"
+        )

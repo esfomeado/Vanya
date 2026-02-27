@@ -9,6 +9,7 @@ from src.vanya.model.mode import Mode
 from src.vanya.service.boss_service import BossService
 from src.vanya.service.daily_tasks_service import DailyTasksService
 from src.vanya.service.deep_dragon_service import DeepDragonService
+from src.vanya.service.dual_hunt_service import DualHuntService
 from src.vanya.service.house_training_service import HouseTrainingService
 from src.vanya.service.login_service import LoginService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
@@ -30,6 +31,7 @@ class Scheduler:
         Mode.SOLO_HUNT: 20,
         Mode.PHANTOM_HALLS: 20,
         Mode.DEEP_DRAGON: 2,
+        Mode.DUAL_HUNT: 2,
     }
 
     def __init__(self, accounts: list[Account]):
@@ -102,6 +104,9 @@ class Scheduler:
 
                     if account.mode == Mode.HOUSE_TRAINING:
                         service_registry.get(HouseTrainingService, account).tick()
+
+                    if account.mode == Mode.DUAL_HUNT:
+                        service_registry.get(DualHuntService, account).tick()
 
                     if account.stats.health <= 1:
                         self._heal_and_resume_hunt(account)
