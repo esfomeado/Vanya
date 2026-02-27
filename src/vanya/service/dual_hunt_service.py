@@ -14,7 +14,7 @@ from src.vanya.service.stats_service import StatsService
 
 
 class DualHuntService:
-    HUNT_DURATION = 1810
+    HUNT_DURATION = 1800
 
     def __init__(self, account: Account):
         self.account = account
@@ -65,7 +65,7 @@ class DualHuntService:
                 logging.info(f"Potion count low ({potion_count}) for {self.account.username}. Buying more.")
                 self.deep_dragon_service.buy_potions()
 
-            if self.account.hunt.max_hit * 1.5 >= current_health > -1:
+            if self.account.hunt.max_hit * 1.6 >= current_health > -1:
                 logging.info(f"Low health ({current_health}) detected for {self.account.username}. Using potion.")
                 self.deep_dragon_service.use_potion()
 
