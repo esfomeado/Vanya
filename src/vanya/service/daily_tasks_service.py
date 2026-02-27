@@ -29,6 +29,7 @@ class DailyTasksService:
         self._claim_shadow_book()
         self._spin_guild_shrine()
         self._claim_eventide()
+        self._daily_logion()
 
         self._last_run = now.date()
 
@@ -177,4 +178,19 @@ class DailyTasksService:
                 "referer": f"{BASE_URL}/account_settings",
                 "x-csrf-token": self.account.csrf,
             },
+        )
+
+    def _daily_logion(self) -> None:
+        logging.info(f"Daily logion for {self.account.username}")
+
+        self.account.session.post(
+            DASHBOARD_URL,
+            headers={
+                "referer": DASHBOARD_URL,
+                "x-csrf-token": self.account.csrf,
+            },
+            data={
+                "csrf_token": self.account.csrf,
+                "streak_action": "claim",
+            }
         )

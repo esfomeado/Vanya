@@ -12,57 +12,68 @@ class StatsService:
 
     def refresh_account_stats(self) -> None:
         response = self.account.session.get(DASHBOARD_URL)
-
         soup = BeautifulSoup(response.text, "html.parser")
 
         self.account.guild = None
 
-        pills = soup.select(".profile .stat-pill")
+        pills = soup.select(".stat-pill")
         for pill in pills:
-            text = pill.get_text(strip=True)
+            text = pill.get_text(" ", strip=True)
+
             if "Level" in text:
-                self.account.stats.level = int(text.split("Level")[-1].strip())
-            elif (img := pill.find("img")) and "assets/img/items/gold.png" in img.get("src", ""):
-                raw = pill.find("strong").text
-                value = raw.replace(",", "").replace("\xa0", "").strip()
-                self.account.stats.gold = int(value)
-            elif (img := pill.find("img")) and "assets/img/items/drako.png" in img.get("src", ""):
-                raw = pill.find("strong").text
-                value = raw.replace(",", "").replace("\xa0", "").strip()
-                self.account.stats.drako = int(value)
+                match = re.search(r"Level\s+(\d+)", text)
+                if match:
+                    self.account.stats.level = int(match.group(1))
+
+            img_gold = pill.find("img", src=re.compile("gold.png"))
+            if img_gold:
+                val = pill.find("span", class_="val")
+                if val:
+                    self.account.stats.gold = int(val.text.replace(",", "").strip())
+
+            img_drako = pill.find("img", src=re.compile("drako.png"))
+            if img_drako:
+                val = pill.find("span", class_="val")
+                if val:
+                    self.account.stats.drako = int(val.text.replace(",", "").strip())
 
             strong = pill.find("strong")
-            span = pill.find("span")
-
-            if strong and span:
+            if strong:
                 tag = strong.get_text(strip=True)
-                name = span.get_text(strip=True)
                 if tag.startswith("[") and tag.endswith("]"):
-                    self.account.guild = f"{tag} {name}"
-                    continue
+                    span = strong.find_next_sibling("span")
+                    if span:
+                        name = span.get_text(strip=True)
+                        self.account.guild = f"{tag} {name}"
 
-            hashed_acc_el = soup.find("strong", string=re.compile("Hashed Accounts", re.IGNORECASE))
-            if hashed_acc_el:
-                text = hashed_acc_el.get_text(strip=True)
-                match = re.match(r"(\d+)/\d+", text)
-                if match:
-                    self.account.stats.hashed_accounts = match.group(1)
+        accounts_span = soup.find(string=re.compile(r"(\d+)/\d+\s+Accounts", re.IGNORECASE))
+        if accounts_span:
+            match = re.search(r"(\d+)/\d+", accounts_span)
+            if match:
+                self.account.stats.hashed_accounts = int(match.group(1))
 
-        life_panel = soup.select_one(".card h3:-soup-contains('Life')")
+        life_panel = soup.find("h3", string=re.compile("Life", re.IGNORECASE))
         if life_panel:
-            muted = life_panel.find_next("div", class_="muted").text
-            health, max_health = muted.split("/")
-            self.account.stats.health = int(health.strip())
-            self.account.stats.max_health = int(max_health.strip())
+            muted = life_panel.find_next_sibling("div", class_="muted")
+            if muted and "/" in muted.text:
+                health, max_health = muted.text.split("/")
+                self.account.stats.health = int(health.replace(",", "").strip())
+                self.account.stats.max_health = int(max_health.replace(",", "").strip())
 
         skills = soup.select(".stat-line")
         for skill in skills:
-            name = skill.find("span").text.strip().lower()
-            raw = skill.find("strong").text.strip()
-            base = int(raw.split("(")[0].strip())
+            name_el = skill.find("span")
+            strong_el = skill.find("strong")
+            if not name_el or not strong_el:
+                continue
+
+            name = name_el.text.strip().lower()
+            raw = strong_el.text.strip()
+            base = int(raw.split("(")[0].replace(",", "").strip())
             bonus = 0
             if "(" in raw:
-                bonus = int(raw.split("+")[1].split(")")[0])
+                bonus_str = raw.split("+")[1].split(")")[0].replace(",", "").strip()
+                bonus = int(bonus_str)
             total = base + bonus
 
             if name == "sword":
@@ -76,14 +87,12 @@ class StatsService:
             elif name == "fishing":
                 self.account.stats.fishing = total
 
-        stamina_h3 = soup.select_one("h3:-soup-contains('Stamina')")
+        stamina_h3 = soup.find("h3", string=re.compile("Stamina", re.IGNORECASE))
         if stamina_h3:
             panel_title = stamina_h3.parent
             value_container = panel_title.find_next_sibling("div")
-            value_muted = value_container.select_one(".muted")
-
-            if value_muted and "/" in value_muted.text:
-                current, _ = value_muted.text.split("/", 1)
-                self.account.stats.stamina = int(
-                    current.replace(",", "").strip()
-                )
+            if value_container:
+                value_muted = value_container.find("div", class_="muted")
+                if value_muted and "/" in value_muted.text:
+                    current, _ = value_muted.text.split("/", 1)
+                    self.account.stats.stamina = int(current.replace(",", "").strip())
