@@ -16,15 +16,18 @@ from src.vanya.service.service_registry import service_registry
 
 
 class DeepDragonService:
-    DURATION = 1810
+    DEFAULT_DURATION = 1810
 
     def __init__(self, account: Account):
         self.account = account
         self.last_hunt_start_time = 0
+        self.duration = self.DEFAULT_DURATION
         self.pub_service = service_registry.get(PubService, account)
 
-    def hunt(self) -> None:
+    def hunt(self, duration: Optional[int] = DEFAULT_DURATION, train: bool = True) -> None:
         logging.info(f"Starting deep dragon hunt for {self.account.username}")
+
+        self.duration = duration
 
         generate_response = self.account.session.post(
             DEEP_DRAGON_URL,
@@ -32,7 +35,7 @@ class DeepDragonService:
                 "csrf_token": self.account.csrf,
                 "action": "generate",
                 "mode": "solo",
-                "duration": f"{self.DURATION}"
+                "duration": f"{self.duration}"
             },
             headers={
                 "referer": DEEP_DRAGON_URL,
@@ -77,11 +80,12 @@ class DeepDragonService:
         self.account.hunt = Hunt(area_id="deep_dragon", name="Deep Dragon", max_hit=max_hit)
         self.last_hunt_start_time = time.time()
 
-        self.pub_service.stop_training()
-        self._manage_training_service("start")
+        if train:
+            self.pub_service.stop_training()
+            self._manage_training_service("start")
 
         logging.info(
-            f"Deep Dragon started for {self.account.username}. Max hit {max_hit}. Timer set for {self.DURATION}s.")
+            f"Deep Dragon started for {self.account.username}. Max hit {max_hit}. Timer set for {duration}s.")
 
     def _parse_difficulty(self, html: str) -> Optional[str]:
         soup = BeautifulSoup(html, "html.parser")
@@ -109,9 +113,9 @@ class DeepDragonService:
         raise VanyaError("Failed to parse max hit from Deep Dragon page")
 
     def tick(self) -> None:
-        if self.last_hunt_start_time > 0 and (time.time() - self.last_hunt_start_time >= self.DURATION):
+        if self.last_hunt_start_time > 0 and (time.time() - self.last_hunt_start_time >= self.duration):
             logging.info(f"Deep Dragon timer finished for {self.account.username}. Claiming and restarting.")
-            self._claim_rewards()
+            self.claim_rewards()
             self._manage_training_service("stop")
             self.pub_service.regenerate(sleep=False)
             self.hunt()
@@ -119,18 +123,18 @@ class DeepDragonService:
 
         response = self.account.session.get(DEEP_DRAGON_URL)
 
-        current_health, max_health = self._parse_current_health(response.text)
-        potion_count = self._parse_potion_count(response.text)
+        current_health, max_health = self.parse_current_health(response.text)
+        potion_count = self.parse_potion_count(response.text)
 
         if 10 > potion_count > -1:
             logging.info(f"Potion count low ({potion_count}) for {self.account.username}. Buying more.")
-            self._buy_potions()
+            self.buy_potions()
 
         if self.account.hunt.max_hit * 4 >= current_health > -1:
             logging.info(f"Low health ({current_health}) detected for {self.account.username}. Using potion.")
-            self._use_potion()
+            self.use_potion()
 
-    def _claim_rewards(self) -> None:
+    def claim_rewards(self) -> None:
         logging.info(f"Claiming Deep Dragon rewards for {self.account.username}")
         try:
             self.account.session.post(
@@ -148,7 +152,7 @@ class DeepDragonService:
         except Exception as e:
             logging.error(f"Failed to claim rewards for {self.account.username}: {e}")
 
-    def _parse_current_health(self, html: str) -> tuple[int, int]:
+    def parse_current_health(self, html: str) -> tuple[int, int]:
         soup = BeautifulSoup(html, "html.parser")
 
         life_now_el = soup.find("b", id="lifeNow")
@@ -165,7 +169,7 @@ class DeepDragonService:
 
         return current_life, max_life
 
-    def _parse_potion_count(self, html: str) -> int:
+    def parse_potion_count(self, html: str) -> int:
         soup = BeautifulSoup(html, "html.parser")
         button = soup.find("button", string=re.compile(r"USE LIFE POTION", re.IGNORECASE))
         if button:
@@ -174,7 +178,7 @@ class DeepDragonService:
                 return int(match.group(1))
         return -1
 
-    def _buy_potions(self) -> None:
+    def buy_potions(self) -> None:
         try:
             self.account.session.post(
                 DEEP_DRAGON_URL,
@@ -192,7 +196,7 @@ class DeepDragonService:
         except Exception as e:
             logging.error(f"Failed to buy potion for {self.account.username}: {e}")
 
-    def _use_potion(self) -> None:
+    def use_potion(self) -> None:
         try:
             self.account.session.post(
                 DEEP_DRAGON_URL,

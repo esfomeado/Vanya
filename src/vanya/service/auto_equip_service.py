@@ -4,7 +4,7 @@ import re
 from bs4 import BeautifulSoup, Tag
 from bs4.element import AttributeValueList
 
-from src.vanya.core.constants import DASHBOARD_URL, EQUIP_URL
+from src.vanya.core.constants import DASHBOARD_URL, EQUIP_URL, SHADOW_SCROLL_URL
 from src.vanya.model.account import Account
 
 
@@ -70,15 +70,32 @@ class AutoEquipService:
             if not slot:
                 continue
 
-            title = item.get("title", "")
-            defense = self._extract_defense_from_inventory(title)
+            stats_div = item.select_one(".item-stats")
+            stats_text = stats_div.text if stats_div else ""
+            defense = self._extract_defense_from_inventory(stats_text)
 
             name_input = item.select_one("input[name=item_name]")
             if not name_input:
                 continue
 
+            name = name_input.get("value")
+
+            if name == "Shadow Scroll":
+                logging.info(f"Using Shadow Scroll on {self.account.username}")
+                self.account.session.post(
+                    SHADOW_SCROLL_URL,
+                    data = {
+                        "item_name": name,
+                        "csrf_token": self.account.csrf,
+                    },
+                    headers = {
+                        "referer": DASHBOARD_URL
+                    },
+                )
+                continue
+
             inventory.setdefault(slot, []).append({
-                "name": name_input.get("value"),
+                "name": name,
                 "defense": defense,
             })
 
@@ -86,7 +103,7 @@ class AutoEquipService:
 
     def _extract_defense_from_inventory(self, text: str) -> int:
         if not text:
-            return -1
+            return 0
 
         patterns = [
             r'Defense:\s*\+(\d+)',
@@ -98,7 +115,7 @@ class AutoEquipService:
             if m:
                 return int(m.group(1))
 
-        return -1
+        return 0
 
     def _equip_item(self, item_name: str) -> None:
         self.account.session.post(
