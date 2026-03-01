@@ -6,7 +6,7 @@ from typing import Optional
 
 from bs4 import BeautifulSoup
 
-from src.vanya.core.constants import DEEP_DRAGON_URL
+from src.vanya.core.constants import DEEP_DRAGON_URL, DUNGEON_VIEW_URL
 from src.vanya.core.errors import VanyaError
 from src.vanya.model.account import Account
 from src.vanya.model.hunt import Hunt
@@ -21,6 +21,7 @@ class DeepDragonService:
     def __init__(self, account: Account):
         self.account = account
         self.last_hunt_start_time = 0
+        self.tracked_hunters = {}
         self.duration = self.DEFAULT_DURATION
         self.pub_service = service_registry.get(PubService, account)
 
@@ -240,3 +241,54 @@ class DeepDragonService:
             logging.info(f"Successfully {action}ed vanya-training.service")
         except subprocess.CalledProcessError as e:
             logging.error(f"Failed to {action} vanya-training.service: {e}")
+
+    def check_tracked_hunters(self) -> None:
+        response = self.account.session.get(DEEP_DRAGON_URL)
+        page_html = response.text
+        now = time.time()
+
+        hunters = self._parse_active_hunters(page_html)
+        target = "Whisper"
+
+        if target in hunters and target not in self.tracked_hunters:
+            logging.info(f"Whisper's hunt is starting for {self.account.username}")
+            self.tracked_hunters[target] = now + (hunters[target] * 60)
+
+        if target in self.tracked_hunters:
+            if target not in hunters:
+                logging.info(f"Whisper's hunt is over for {self.account.username}")
+                del self.tracked_hunters[target]
+            else:
+                time_left = self.tracked_hunters[target] - now
+                if 0 < time_left <= 600:
+                    self._execute_tracked_action()
+
+    def _parse_active_hunters(self, html: str) -> dict[str, int]:
+        soup = BeautifulSoup(html, "html.parser")
+        hunters = {}
+        for item in soup.select(".list .item"):
+            name_el = item.select_one(".name")
+            meta_el = item.select_one(".meta")
+            if name_el and meta_el:
+                name = name_el.get_text(strip=True)
+                match = re.search(r"(\d+)m", meta_el.get_text(strip=True))
+                if match:
+                    hunters[name] = int(match.group(1))
+        return hunters
+
+    def _execute_tracked_action(self) -> None:
+        logging.info("Whisper's hunt is ending soon! Killing him...")
+
+        self.account.session.post(
+            DUNGEON_VIEW_URL,
+            data={
+                "ritual_dead": "1",
+                "area_id": "dead_inside",
+                "csrf_token": self.account.csrf,
+                "target_user_id": "110",
+                "pay_currency": "auto"
+            },
+            headers={
+                "referer": DUNGEON_VIEW_URL
+            }
+        )

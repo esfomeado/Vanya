@@ -73,6 +73,9 @@ class Scheduler:
             try:
                 now = time.time()
 
+                if account.username == "Tala":
+                    service_registry.get(DeepDragonService, account).check_tracked_hunters()
+
                 if now - last_stats_refresh >= 20:
                     service_registry.get(StatsService, account).refresh_account_stats()
                     last_stats_refresh = now
