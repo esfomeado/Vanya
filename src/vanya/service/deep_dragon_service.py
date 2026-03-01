@@ -6,14 +6,13 @@ from typing import Optional
 
 from bs4 import BeautifulSoup
 
-from src.vanya.core.constants import DEEP_DRAGON_URL, DUNGEON_VIEW_URL
+from src.vanya.core.constants import DEEP_DRAGON_URL, DUNGEON_VIEW_URL, HUNT_URL
 from src.vanya.core.errors import VanyaError
 from src.vanya.model.account import Account
 from src.vanya.model.hunt import Hunt
 from src.vanya.model.mode import Mode
 from src.vanya.service.pub_service import PubService
 from src.vanya.service.service_registry import service_registry
-from vanya.core.constants import HUNT_URL
 
 
 class DeepDragonService:
