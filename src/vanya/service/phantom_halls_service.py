@@ -46,6 +46,21 @@ class PhantomHallsService(BaseHuntService):
 
         logging.info(f"Started dungeon {dungeon_id} for account {self.account.username}")
 
+    def _skip_dungeon(self, dungeon_id: str) -> None:
+        self.account.session.post(
+            DUNGEON_VIEW_URL,
+            data={
+                "area_id": dungeon_id,
+                "dungeon_action": "skip",
+                "csrf_token": self.account.csrf
+            },
+            headers={
+                "referer": DUNGEON_VIEW_URL
+            },
+        )
+
+        logging.info(f"Started dungeon {dungeon_id} for account {self.account.username}")
+
     def _fetch_dungeon_lobby(self) -> dict:
         return self.account.session.get(
             DUNGEON_LOBBY_URL,
@@ -103,7 +118,7 @@ class PhantomHallsService(BaseHuntService):
 
         return None, None, None, None, None
 
-    def hunt(self, specific_area_id: Optional[str] = None) -> None:
+    def hunt(self, specific_area_id: Optional[str] = None, solo: bool = False) -> None:
         self.last_hunt_start_time = time.time()
         self.area_id = specific_area_id
         joined = False
@@ -115,6 +130,13 @@ class PhantomHallsService(BaseHuntService):
         else:
             _, area_id, max_hit, count, required_count = self._get_latest_enabled_dungeon(
                 specific_area_id=specific_area_id)
+
+        if solo:
+            self._skip_dungeon(area_id)
+            self.account.hunt = Hunt(area_id=area_id, name=area_id, max_hit=max_hit)
+            self.account.mode = Mode.PHANTOM_HALLS
+            logging.info(f"Joined dungeon {area_id} for account {self.account.username}")
+            return
 
         while True:
             try:

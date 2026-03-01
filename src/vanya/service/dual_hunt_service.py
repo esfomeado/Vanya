@@ -29,7 +29,7 @@ class DualHuntService:
 
     def hunt(self, specific_area_id: Optional[str] = None) -> None:
         self.area_id = specific_area_id
-        self.phantom_halls_service.hunt(specific_area_id)
+        self.phantom_halls_service.hunt(specific_area_id=specific_area_id, solo=True)
         self.max_hit = self.account.hunt.max_hit
 
         self.deep_dragon_service.hunt(duration=self.HUNT_DURATION, train=False)
