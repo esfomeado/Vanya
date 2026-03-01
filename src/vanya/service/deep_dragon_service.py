@@ -13,6 +13,7 @@ from src.vanya.model.hunt import Hunt
 from src.vanya.model.mode import Mode
 from src.vanya.service.pub_service import PubService
 from src.vanya.service.service_registry import service_registry
+from vanya.core.constants import HUNT_URL
 
 
 class DeepDragonService:
@@ -48,7 +49,8 @@ class DeepDragonService:
         while self._parse_difficulty(page_html) not in {"Void", "Inferno"}:
             max_hit = self._parse_max_hit(page_html)
 
-            logging.info(f"Difficulty not Void: {self._parse_difficulty(page_html)}. Max hit {max_hit}. Rerolling for {self.account.username}...")
+            logging.info(
+                f"Difficulty not Void: {self._parse_difficulty(page_html)}. Max hit {max_hit}. Rerolling for {self.account.username}...")
 
             reroll_response = self.account.session.post(
                 DEEP_DRAGON_URL,
@@ -261,7 +263,8 @@ class DeepDragonService:
             else:
                 time_left = self.tracked_hunters[target] - now
                 if 0 < time_left <= 600:
-                    self._execute_tracked_action()
+                    if self._is_user_hunting(target):
+                        self._execute_tracked_action()
 
     def _parse_active_hunters(self, html: str) -> dict[str, int]:
         soup = BeautifulSoup(html, "html.parser")
@@ -292,3 +295,8 @@ class DeepDragonService:
                 "referer": DUNGEON_VIEW_URL
             }
         )
+
+    def _is_user_hunting(self, target: str) -> bool:
+        response = self.account.session.get(HUNT_URL)
+        soup = BeautifulSoup(response.text, "html.parser")
+        return soup.find("img", alt=target) is not None
