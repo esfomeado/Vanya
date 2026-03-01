@@ -62,6 +62,11 @@ class DualHuntService:
             current_health, max_health = self.deep_dragon_service.parse_current_health(response.text)
             potion_count = self.deep_dragon_service.parse_potion_count(response.text)
 
+            if current_health == 0:
+                logging.info(f"Deep Dragon health is 0 for {self.account.username}. Restarting.")
+                self.hunt(specific_area_id=self.area_id)
+                return
+
             if 10 > potion_count > -1:
                 logging.info(f"Potion count low ({potion_count}) for {self.account.username}. Buying more.")
                 self.deep_dragon_service.buy_potions()

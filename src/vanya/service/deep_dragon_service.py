@@ -160,8 +160,8 @@ class DeepDragonService:
         life_now_el = soup.find("b", id="lifeNow")
         life_max_el = soup.find("b", id="lifeMax")
 
-        current_life = -1
-        max_life = -1
+        current_life = 0
+        max_life = 0
 
         if life_now_el:
             current_life = int(life_now_el.get_text(strip=True).replace(",", ""))
