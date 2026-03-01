@@ -262,6 +262,9 @@ class DeepDragonService:
                     self._execute_tracked_action()
                     del self.tracked_hunters[target]
 
+            if time_left > 0:
+                del self.tracked_hunters[target]
+
     def _parse_active_hunters(self, html: str) -> dict[str, int]:
         soup = BeautifulSoup(html, "html.parser")
         hunters = {}
