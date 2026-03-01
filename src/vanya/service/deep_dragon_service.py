@@ -256,14 +256,11 @@ class DeepDragonService:
             self.tracked_hunters[target] = now + (hunters[target] * 60)
 
         if target in self.tracked_hunters:
-            if target not in hunters:
-                logging.info(f"Whisper's hunt is over for {self.account.username}")
-                del self.tracked_hunters[target]
-            else:
-                time_left = self.tracked_hunters[target] - now
-                if 0 < time_left <= 600:
-                    if self._is_user_hunting(target):
-                        self._execute_tracked_action()
+            time_left = self.tracked_hunters[target] - now
+            if 0 < time_left <= 600:
+                if self._is_user_hunting(target):
+                    self._execute_tracked_action()
+                    del self.tracked_hunters[target]
 
     def _parse_active_hunters(self, html: str) -> dict[str, int]:
         soup = BeautifulSoup(html, "html.parser")
