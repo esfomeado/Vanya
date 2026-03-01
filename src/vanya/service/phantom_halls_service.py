@@ -22,6 +22,7 @@ class PhantomHallsService(BaseHuntService):
             data={
                 "area_id": dungeon_id,
                 "dungeon_action": "join",
+                "csrf_token": self.account.csrf,
             },
             headers={
                 "referer": DUNGEON_VIEW_URL
@@ -36,6 +37,7 @@ class PhantomHallsService(BaseHuntService):
             data={
                 "area_id": dungeon_id,
                 "dungeon_action": "start",
+                "csrf_token": self.account.csrf
             },
             headers={
                 "referer": DUNGEON_VIEW_URL
