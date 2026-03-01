@@ -64,6 +64,9 @@ class DualHuntService:
 
             if current_health == 0:
                 logging.info(f"Deep Dragon health is 0 for {self.account.username}. Restarting.")
+                self.pub_service.go_to_pub_and_heal()
+                self.pub_service.regenerate(sleep=False)
+                self.stats_service.refresh_account_stats()
                 self.hunt(specific_area_id=self.area_id)
                 return
 
