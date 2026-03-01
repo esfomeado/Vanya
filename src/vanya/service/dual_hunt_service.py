@@ -15,6 +15,7 @@ from src.vanya.service.stats_service import StatsService
 
 class DualHuntService:
     HUNT_DURATION = 3605
+    DEEP_DRAGON_DURATION = 3600
 
     def __init__(self, account: Account):
         self.account = account
@@ -32,7 +33,7 @@ class DualHuntService:
         self.phantom_halls_service.hunt(specific_area_id=specific_area_id, solo=False)
         self.max_hit = self.account.hunt.max_hit
 
-        self.deep_dragon_service.hunt(duration=self.HUNT_DURATION, train=False)
+        self.deep_dragon_service.hunt(duration=self.DEEP_DRAGON_DURATION, train=False)
 
         self.last_hunt_start_time = time.time()
         self.account.mode = Mode.DUAL_HUNT
