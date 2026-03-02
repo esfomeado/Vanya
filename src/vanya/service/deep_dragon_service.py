@@ -16,7 +16,7 @@ from src.vanya.service.service_registry import service_registry
 
 
 class DeepDragonService:
-    DEFAULT_DURATION = 1810
+    DEFAULT_DURATION = 1805
 
     def __init__(self, account: Account):
         self.account = account
@@ -45,7 +45,7 @@ class DeepDragonService:
 
         page_html = generate_response.text
 
-        while self._parse_difficulty(page_html) not in {"Void", "Inferno"}:
+        while self._parse_difficulty(page_html) not in {"Inferno"}:
             max_hit = self._parse_max_hit(page_html)
 
             logging.info(
@@ -62,7 +62,7 @@ class DeepDragonService:
                 }
             )
             page_html = reroll_response.text
-            time.sleep(5)
+            time.sleep(3)
 
         max_hit = self._parse_max_hit(page_html)
 
