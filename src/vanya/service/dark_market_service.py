@@ -1,4 +1,5 @@
 import logging
+import re
 
 from bs4 import BeautifulSoup
 
@@ -26,9 +27,18 @@ class DarkMarketService:
         listings: list[MarketListing] = []
 
         for box in soup.select(".listing-box"):
-            name = box.select_one("strong").text.strip()
+            strong_text = box.select_one("strong").text.strip()
 
-            meta = box.select_one(".item-details span").get_text(strip=True)
+            quantity = 1
+            name = strong_text
+
+            match = re.match(r'^(\d+)x\s+(.*)', strong_text)
+            if match:
+                quantity = int(match.group(1))
+                name = match.group(2)
+
+            meta_span = box.select_one(".item-details span")
+            meta = meta_span.get_text(strip=True) if meta_span else ""
 
             stats_el = box.select_one(".item-stats")
             stats = stats_el.text.strip() if stats_el else ""
@@ -43,6 +53,7 @@ class DarkMarketService:
                 MarketListing(
                     listing_id=int(listing_id),
                     name=name,
+                    quantity=quantity,
                     price=price,
                     meta=meta,
                     stats=stats,
@@ -103,3 +114,13 @@ class DarkMarketService:
                 "price": price,
             },
         )
+
+    def buy_cheap_silver_crows(self) -> None:
+        listings = self.list()
+        for listing in listings:
+            if listing.name.lower() == "silver crow":
+                price_per_item = listing.price / listing.quantity
+                if price_per_item < 1_000_000:
+                    self.buy_item(listing.listing_id)
+                else:
+                    logging.info(f"Not buying {listing.name} because it's too expensive: {price_per_item}")

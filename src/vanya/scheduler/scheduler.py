@@ -8,6 +8,7 @@ from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 from src.vanya.service.boss_service import BossService
 from src.vanya.service.daily_tasks_service import DailyTasksService
+from src.vanya.service.dark_market_service import DarkMarketService
 from src.vanya.service.deep_dragon_service import DeepDragonService
 from src.vanya.service.dual_hunt_service import DualHuntService
 from src.vanya.service.house_training_service import HouseTrainingService
@@ -73,8 +74,7 @@ class Scheduler:
             try:
                 now = time.time()
 
-                if account.username == "Tala":
-                    service_registry.get(DeepDragonService, account).check_tracked_hunters()
+                #service_registry.get(DarkMarketService).buy_cheap_silver_crows()
 
                 if now - last_stats_refresh >= 20:
                     service_registry.get(StatsService, account).refresh_account_stats()

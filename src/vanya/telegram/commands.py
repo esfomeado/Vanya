@@ -5,6 +5,7 @@ from io import BytesIO
 from telegram import Update
 from telegram.ext import ContextTypes
 
+from src.vanya.core.constants import DUNGEON_VIEW_URL
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 from src.vanya.service.boss_service import BossService
@@ -1380,3 +1381,38 @@ async def dual_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"Failed to start dual hunt for {name}:\n{e}"
         )
+
+async def ritual_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text("Usage: /ritual <account> <target_user_id>")
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+    name = context.args[0]
+    target_user_id = context.args[1]
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    try:
+        account.session.post(
+            DUNGEON_VIEW_URL,
+            data={
+                "ritual_dead": "1",
+                "area_id": "dead_inside",
+                "csrf_token": account.csrf,
+                "target_user_id": target_user_id,
+                "pay_currency": "auto"
+            },
+            headers={
+                "referer": DUNGEON_VIEW_URL
+            }
+        )
+        await update.message.reply_text(f"💀 {name} performed ritual on user {target_user_id}")
+    except Exception as e:
+        await update.message.reply_text(f"❌ Ritual failed for {name}:\n{e}")
