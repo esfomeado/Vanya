@@ -50,12 +50,9 @@ class DualHuntService:
         if self.last_hunt_start_time > 0 and (time.time() - self.last_hunt_start_time >= self.HUNT_DURATION):
             logging.info(f"Dual Hunt timer finished for {self.account.username}. Claiming and restarting.")
 
-            self.phantom_halls_service.stop_hunt()
             self.deep_dragon_service.claim_rewards()
-            self.pub_service.go_to_pub_and_heal()
-            self.pub_service.regenerate(sleep=False)
-            self.stats_service.refresh_account_stats()
-            self.hunt(specific_area_id=self.area_id)
+            self.deep_dragon_service.hunt(duration=self.DEEP_DRAGON_DURATION, train=False)
+            self.last_hunt_start_time = time.time()
         else:
             response = self.account.session.get(DEEP_DRAGON_URL)
 
