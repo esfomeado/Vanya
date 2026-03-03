@@ -24,11 +24,11 @@ class VisageService:
             logging.warning(f"Owned portraits grid not found for {self.account.username}")
             return []
 
-        for card in grid.select(".portrait-card"):
-            name_el = card.find("div", style=lambda s: s and "font-weight:800" in s)
+        for card in grid.select(".portrait-card[data-owned='1']"):
+            name_el = card.select_one(".portrait-name")
             name = name_el.get_text(strip=True) if name_el else "Unknown"
 
-            bonus_el = card.find("div", style=lambda s: s and "font-size:11px" in s)
+            bonus_el = card.select_one(".portrait-bonus")
             bonus = bonus_el.get_text(strip=True) if bonus_el else "No bonus"
 
             img_el = card.find("img")
