@@ -15,6 +15,7 @@ from src.vanya.service.dark_market_service import DarkMarketService
 from src.vanya.service.deep_dragon_service import DeepDragonService
 from src.vanya.service.dual_hunt_service import DualHuntService
 from src.vanya.service.guild_service import GuildService
+from src.vanya.service.house_service import HouseService
 from src.vanya.service.inventory_service import InventoryService
 from src.vanya.service.lounge_service import LoungeService
 from src.vanya.service.phantom_halls_service import PhantomHallsService
@@ -22,6 +23,7 @@ from src.vanya.service.pub_service import PubService
 from src.vanya.service.service_registry import service_registry
 from src.vanya.service.solo_hunt_service import SoloHuntService
 from src.vanya.service.training_service import TrainingService
+from src.vanya.service.vault_service import VaultService
 from src.vanya.service.visage_service import VisageService
 from src.vanya.telegram.acl import allowed
 
@@ -1414,3 +1416,141 @@ async def ritual_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"💀 {name} performed ritual on user {target_user_id}")
     except Exception as e:
         await update.message.reply_text(f"❌ Ritual failed for {name}:\n{e}")
+
+
+async def auto_vault_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text("Usage: /auto_vault open_box <season>")
+        return
+
+    action = context.args[0].lower()
+
+    if action == "open_box":
+        try:
+            season = int(context.args[1])
+        except ValueError:
+            await update.message.reply_text("Season must be an integer.")
+            return
+
+        accounts: list[Account] = context.application.bot_data.get("accounts", [])
+        if not accounts:
+            await update.message.reply_text("No accounts configured")
+            return
+
+        results = []
+        for account in accounts:
+            try:
+                service = service_registry.get(VaultService, account)
+                service.open_box(season)
+                results.append(f"✅ {account.username}: Box opened (Season {season})")
+            except Exception as e:
+                results.append(f"❌ {account.username}: {str(e)}")
+
+        await update.message.reply_text("\n".join(results))
+    else:
+        await update.message.reply_text("Unknown action. Usage: /auto_vault open_box <season>")
+
+
+async def auto_outfit_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/auto_outfit list\n"
+            "/auto_outfit random\n"
+            "/auto_outfit equip <filename>"
+        )
+        return
+
+    action = context.args[0].lower()
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    if action == "list":
+        sections = []
+        for account in accounts:
+            try:
+                service = service_registry.get(HouseService, account)
+                outfits = service.list_outfits()
+
+                if not outfits:
+                    sections.append(
+                        f"<details><summary>👕 {escape(account.username)} (0)</summary>"
+                        f"<p style='margin-left:1em'>No outfits found.</p></details>"
+                    )
+                    continue
+
+                rows = []
+                for outfit in outfits:
+                    rows.append(
+                        f"<div>"
+                        f"<b>{escape(outfit.name)}</b> <br>"
+                        f"<small>{escape(outfit.filename)}</small>"
+                        f"</div>"
+                    )
+
+                body = "<div style='margin-left:1em; display:grid; gap:8px;'>" + "".join(rows) + "</div>"
+
+                sections.append(
+                    f"<details><summary>👕 {escape(account.username)} ({len(outfits)})</summary>"
+                    f"{body}</details>"
+                )
+            except Exception as e:
+                sections.append(
+                    f"<details><summary>❌ {escape(account.username)} - Error</summary>"
+                    f"<pre>{escape(str(e))}</pre></details>"
+                )
+
+        html = (
+            "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+            "<style>body{font-family:sans-serif; background:#fff; color:#000}"
+            "details{margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:8px}"
+            "summary{cursor:pointer; font-weight:bold; margin-bottom:6px}"
+            "</style></head><body>"
+            + "".join(sections) +
+            "</body></html>"
+        )
+
+        buf = BytesIO(html.encode("utf-8"))
+        buf.name = "outfits.html"
+        await update.message.reply_document(document=buf, caption="All Accounts Outfits")
+
+    elif action == "random":
+        results = []
+        for account in accounts:
+            try:
+                service = service_registry.get(HouseService, account)
+                service.equip_random_outfit()
+                results.append(f"✅ {account.username}: Equipped random outfit")
+            except Exception as e:
+                results.append(f"❌ {account.username}: {str(e)}")
+
+        await update.message.reply_text("\n".join(results))
+
+    elif action == "equip":
+        if len(context.args) < 2:
+            await update.message.reply_text("Usage: /auto_outfit equip <filename>")
+            return
+
+        filename = context.args[1]
+        results = []
+        for account in accounts:
+            try:
+                service = service_registry.get(HouseService, account)
+                service.change_outfit(filename)
+                results.append(f"✅ {account.username}: Equipped {filename}")
+            except Exception as e:
+                results.append(f"❌ {account.username}: {str(e)}")
+
+        await update.message.reply_text("\n".join(results))
+
+    else:
+        await update.message.reply_text("Unknown action. Use list, random, or equip.")
