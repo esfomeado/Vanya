@@ -464,9 +464,8 @@ async def boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             lines = [f"👹 Available bosses for {name}:"]
             for boss in bosses:
-                boost_icon = "⚡" if boss.boosted else ""
                 lines.append(
-                    f"{boost_icon}Stage {boss.stage}: {boss.name}\n"
+                    f"  Stage {boss.stage}: {boss.name}\n"
                     f"  ID: {boss.boss_id}\n"
                     f"  Life: {boss.life:,} | XP: {boss.xp:,}\n"
                     f"  Required Level: {boss.required_level}"
@@ -689,7 +688,6 @@ async def auto_boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("No accounts configured")
         return
 
-    # List mode doesn't need boss_id
     if action == "list":
         results = []
         for account in accounts:
@@ -703,9 +701,8 @@ async def auto_boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 lines = [f"👹 {account.username}:"]
                 for boss in bosses:
-                    boost_icon = "⚡" if boss.boosted else ""
                     lines.append(
-                        f"  {boost_icon}Stage {boss.stage}: {boss.name} "
+                        f"  Stage {boss.stage}: {boss.name} "
                         f"(ID: {boss.boss_id}, HP: {boss.life:,}, XP: {boss.xp:,})"
                     )
                 results.append("\n".join(lines))
@@ -720,7 +717,6 @@ async def auto_boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("\n\n".join(results))
         return
 
-    # Attack and kill modes require boss_id
     if len(context.args) < 2:
         await update.message.reply_text(
             f"Usage: /auto_boss {action} <boss_id>"
@@ -1308,6 +1304,7 @@ async def auto_sell_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("\n".join(results))
 
+
 async def dual_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not allowed(update):
         return
@@ -1381,6 +1378,7 @@ async def dual_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"Failed to start dual hunt for {name}:\n{e}"
         )
+
 
 async def ritual_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not allowed(update):

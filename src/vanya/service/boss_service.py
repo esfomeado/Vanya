@@ -3,7 +3,6 @@ import re
 from typing import Optional
 
 from bs4 import BeautifulSoup
-from bs4.element import AttributeValueList
 
 from src.vanya.core.constants import ADVENTURE_ATTACK_URL, ADVENTURE_URL
 from src.vanya.model.account import Account
@@ -28,9 +27,6 @@ class BossService:
         bosses: list[Boss] = []
 
         for card in soup.select("a.boss-card.unlocked"):
-            if card.select_one("span:-soup-contains('DEAD')"):
-                continue
-
             status = card.get_text(strip=True)
             if "ALIVE" not in status:
                 continue
@@ -48,8 +44,6 @@ class BossService:
             life, xp = self._parse_life_xp(info)
             required_level = self._parse_required_level(info)
 
-            boosted = "boosted" in card.get("class", AttributeValueList())
-
             bosses.append(
                 Boss(
                     boss_id=boss_id,
@@ -58,7 +52,6 @@ class BossService:
                     life=life,
                     xp=xp,
                     required_level=required_level,
-                    boosted=boosted,
                 )
             )
 
@@ -110,7 +103,7 @@ class BossService:
             ADVENTURE_ATTACK_URL,
             json={
                 "boss_id": boss_id,
-                "recaptcha_token": "",
+                "mode": "global",
             },
             headers={
                 "referer": f"{ADVENTURE_URL}?boss_id={boss_id}",
@@ -119,6 +112,38 @@ class BossService:
         )
 
         data = response.json()
+        if data.get("status") == "human_check_required":
+            logging.info(f"Human check required for {self.account.username}. Solving...")
+
+            human_check = data.get("human_check", {})
+            token = human_check.get("token")
+            question = human_check.get("question")
+
+            try:
+                answer = self._solve_math_challenge(question)
+                logging.info(f"Math Question: '{question}' -> Answer: '{answer}'")
+
+                payload = {
+                    "boss_id": boss_id,
+                    "mode": "global",
+                    "human_token": token,
+                    "human_answer": answer,
+                }
+
+                response = self.account.session.post(
+                    ADVENTURE_ATTACK_URL,
+                    json=payload,
+                    headers={
+                        "referer": f"{ADVENTURE_URL}?boss_id={boss_id}",
+                        "x-csrf-token": self.account.csrf,
+                    },
+                )
+                data = response.json()
+
+            except Exception as e:
+                logging.exception(f"Failed to solve human check for {self.account.username}: {e}")
+                return None
+
         if data.get("status") != "ok":
             return None
 
@@ -159,8 +184,11 @@ class BossService:
         return int(m.group(1).replace(",", "")), int(m.group(2).replace(",", ""))
 
     def _parse_required_level(self, info) -> int:
-        m = re.search(r"Required Level:\s*(\d+)", info.get_text())
-        return int(m.group(1))
+        text = info.get_text()
+        m = re.search(r"(?:Required\s+)?Level:\s*(\d+)", text, re.IGNORECASE)
+        if m:
+            return int(m.group(1))
+        return 0
 
     def _get_boss_current_life(self, boss_id: int) -> int:
         resp = self.account.session.get(
@@ -171,3 +199,27 @@ class BossService:
         text = soup.select_one("#boss-life-text").text
         cur, _ = text.split("/")
         return int(cur.replace(",", "").strip())
+
+    def _solve_math_challenge(self, question: str) -> str:
+        match = re.search(r'(\d+)\s*([+\-*/])\s*(\d+)', question)
+        if not match:
+            raise ValueError(f"Could not parse math question: {question}")
+
+        a = int(match.group(1))
+        op = match.group(2)
+        b = int(match.group(3))
+
+        result = 0
+        if op == '+':
+            result = a + b
+        elif op == '-':
+            result = a - b
+        elif op == '*':
+            result = a * b
+        elif op == '/':
+            if b == 0:
+                result = 0
+            else:
+                result = a // b
+
+        return str(result)

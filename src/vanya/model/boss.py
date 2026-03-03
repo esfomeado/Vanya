@@ -9,7 +9,6 @@ class Boss:
     life: int
     xp: int
     required_level: int
-    boosted: bool
 
     def __repr__(self):
         return f"{self.name} ({self.life})"
