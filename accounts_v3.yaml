@@ -1,34 +1,34 @@
 accounts:
   - username: Nehileila
     password: 95QhHQtWzh7J
-    proxy: "45.91.209.150:13124"
+    proxy: "45.91.209.150:13124:PQLEhQ:47tsqF"
   - username: Irizheghan
     password: mky2wPvSsTr8
-    proxy: "45.91.209.150:13124"
+    proxy: "45.91.209.150:13124:PQLEhQ:47tsqF"
   - username: Nazarakoo
     password: ug67A4584ccw
-    proxy: "45.91.209.150:13124"
+    proxy: "45.91.209.150:13124:PQLEhQ:47tsqF"
   - username: Shervashara
     password: NGsAUbaEzfTt
-    proxy: "45.91.209.150:13124"
+    proxy: "45.91.209.150:13124:PQLEhQ:47tsqF"
   - username: Amerervih
     password: kMLd92A6kjEY
-    proxy: "45.91.209.150:13124"
+    proxy: "45.91.209.150:13124:PQLEhQ:47tsqF"
   - username: Gandehengiz
     password: SQeQP34kqUzD
-    proxy: "45.91.209.150:13123"
+    proxy: "45.91.209.150:13123:PQLEhQ:47tsqF"
   - username: Mehaneha
     password: nKTbwVbUEjvg
-    proxy: "45.91.209.150:13123"
+    proxy: "45.91.209.150:13123:PQLEhQ:47tsqF"
   - username: Gahedagha
     password: 9gCfwdqeaQ2h
-    proxy: "45.91.209.150:13123"
+    proxy: "45.91.209.150:13123:PQLEhQ:47tsqF"
   - username: Alebeh
     password: Chtre62RMVYv
-    proxy: "45.91.209.150:13123"
+    proxy: "45.91.209.150:13123:PQLEhQ:47tsqF"
   - username: Drop
     password: GRBAnrMoEMGZVmqk
-    proxy: "45.91.209.150:13123"
+    proxy: "45.91.209.150:13123:PQLEhQ:47tsqF"
 
 telegram:
   token: 8584767807:AAH6PBo0_e4ndvno8UCF5HAgVfls1JNYqMU
