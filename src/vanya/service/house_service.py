@@ -31,6 +31,7 @@ class HouseService:
             return [
                 Outfit(name=item.get("name"), filename=item.get("filename"))
                 for item in data
+                if item.get("filename") != "default_sprite.png"
             ]
         except json.JSONDecodeError as e:
             logging.error(f"Failed to decode outfits JSON for {self.account.username}: {e}")
