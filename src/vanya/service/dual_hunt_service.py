@@ -15,7 +15,6 @@ from src.vanya.service.stats_service import StatsService
 
 class DualHuntService:
     HUNT_DURATION = 3600
-    DEEP_DRAGON_DURATION = 3600
 
     def __init__(self, account: Account):
         self.account = account
@@ -33,7 +32,7 @@ class DualHuntService:
         self.phantom_halls_service.hunt(specific_area_id=specific_area_id, solo=False)
         self.max_hit = self.account.hunt.max_hit
 
-        self.deep_dragon_service.hunt(duration=self.DEEP_DRAGON_DURATION, train=False)
+        self.deep_dragon_service.hunt(duration=self.HUNT_DURATION, train=False)
 
         self.last_hunt_start_time = time.time()
         self.account.mode = Mode.DUAL_HUNT
@@ -50,12 +49,12 @@ class DualHuntService:
         if self.last_hunt_start_time > 0 and (time.time() - self.last_hunt_start_time >= self.HUNT_DURATION):
             logging.info(f"Dual Hunt timer finished for {self.account.username}. Claiming and restarting.")
 
+            self.phantom_halls_service.stop_hunt()
             self.deep_dragon_service.claim_rewards()
-            hunt_mode = self.account.hunt
-            self.deep_dragon_service.hunt(duration=self.DEEP_DRAGON_DURATION, train=False)
-            self.account.mode = Mode.DUAL_HUNT
-            self.account.hunt = hunt_mode
-            self.last_hunt_start_time = time.time()
+            self.pub_service.go_to_pub_and_heal()
+            self.pub_service.regenerate(sleep=False)
+            self.stats_service.refresh_account_stats()
+            self.hunt(specific_area_id=self.area_id)
         else:
             response = self.account.session.get(DEEP_DRAGON_URL)
 
@@ -63,7 +62,7 @@ class DualHuntService:
             potion_count = self.deep_dragon_service.parse_potion_count(response.text)
 
             if current_health == 0:
-                logging.info(f"Deep Dragon health is 0 for {self.account.username}. Restarting.")
+                logging.info(f"Dual Hunt health is 0 for {self.account.username}. Restarting.")
                 self.pub_service.go_to_pub_and_heal()
                 self.pub_service.regenerate(sleep=False)
                 self.stats_service.refresh_account_stats()
