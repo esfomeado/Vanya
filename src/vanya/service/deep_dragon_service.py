@@ -172,7 +172,7 @@ class DeepDragonService:
 
     def parse_potion_count(self, html: str) -> int:
         soup = BeautifulSoup(html, "html.parser")
-        button = soup.find("button", string=re.compile(r"USE LIFE POTION", re.IGNORECASE))
+        button = soup.find("button", class_="dd-potion-btn")
         if button:
             match = re.search(r"\((\d+)\)", button.get_text())
             if match:
