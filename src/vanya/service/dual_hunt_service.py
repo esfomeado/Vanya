@@ -40,8 +40,6 @@ class DualHuntService:
 
 
     def tick(self) -> None:
-        self.account.session.get(HUNT_URL)
-
         if time.time() - self.last_chest_claim_time > 1800:
             self.phantom_halls_service.claim_chest()
             self.last_chest_claim_time = time.time()
