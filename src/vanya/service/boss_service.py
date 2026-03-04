@@ -1,5 +1,6 @@
 import logging
 import re
+import time
 from typing import Optional
 
 from bs4 import BeautifulSoup
@@ -17,6 +18,7 @@ class BossService:
         self.account = account
         self.pub_service = service_registry.get(PubService, account)
         self.boss_id: Optional[int] = None
+        self._next_farm_time: float = 0
 
     def list_available_bosses(self) -> list[Boss]:
         logging.info(f"Listing available bosses for account {self.account.username}")
@@ -162,9 +164,17 @@ class BossService:
         return data
 
     def farm(self) -> None:
+        if time.time() < self._next_farm_time:
+            return
+
         boss_id = 2
 
         boss_life = self._get_boss_current_life(boss_id)
+        if boss_life == 0:
+            logging.info(f"{self.account.username}: Boss {boss_id} is dead. Waiting 10m.")
+            self._next_farm_time = time.time() + 600
+            return
+
         logging.info(f"{self.account.username}: Boss {boss_id} life: {boss_life}")
 
         if self.account.username == "Skyrus":
