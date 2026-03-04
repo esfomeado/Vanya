@@ -97,10 +97,6 @@ class BossService:
             self.pub_service.go_to_pub_and_heal()
 
     def attack_boss_once(self, boss_id: int) -> Optional[dict]:
-        current_life = self._get_boss_current_life(boss_id)
-        if current_life == 0:
-            return None
-
         response = self.account.session.post(
             ADVENTURE_ATTACK_URL,
             json={
