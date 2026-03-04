@@ -63,17 +63,13 @@ class DualHuntService:
 
             if current_health == 0:
                 logging.info(f"Dual Hunt health is 0 for {self.account.username}. Restarting.")
-                self.pub_service.go_to_pub_and_heal()
-                self.pub_service.regenerate(sleep=False)
-                self.stats_service.refresh_account_stats()
-                self.hunt(specific_area_id=self.area_id)
                 return
 
             if 10 > potion_count > -1:
                 logging.info(f"Potion count low ({potion_count}) for {self.account.username}. Buying more.")
                 self.deep_dragon_service.buy_potions()
 
-            if self.account.hunt.max_hit * 1.6 >= current_health > -1:
+            if self.account.hunt.max_hit * 2 >= current_health > -1:
                 logging.info(f"Low health ({current_health}) detected for {self.account.username}. Using potion.")
                 self.deep_dragon_service.use_potion()
 

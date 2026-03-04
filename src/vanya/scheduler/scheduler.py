@@ -8,7 +8,6 @@ from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
 from src.vanya.service.boss_service import BossService
 from src.vanya.service.daily_tasks_service import DailyTasksService
-from src.vanya.service.dark_market_service import DarkMarketService
 from src.vanya.service.deep_dragon_service import DeepDragonService
 from src.vanya.service.dual_hunt_service import DualHuntService
 from src.vanya.service.house_training_service import HouseTrainingService
@@ -67,14 +66,11 @@ class Scheduler:
                 pass
 
         last_stats_refresh = 0.0
-        last_mode_tick = 0.0
         last_reconciliation_tick = 0.0
 
         while not self._stop_event.is_set():
             try:
                 now = time.time()
-
-                #service_registry.get(DarkMarketService).buy_cheap_silver_crows()
 
                 if now - last_stats_refresh >= 20:
                     service_registry.get(StatsService, account).refresh_account_stats()
@@ -84,40 +80,36 @@ class Scheduler:
                     service_registry.get(ReconciliationService, account).reconcile()
                     last_reconciliation_tick = now
 
+                if account.mode == Mode.SOLO_HUNT:
+                    service_registry.get(SoloHuntService, account).tick()
+
+                if account.mode == Mode.PHANTOM_HALLS:
+                    service_registry.get(PhantomHallsService, account).tick()
+
+                if account.mode == Mode.DEEP_DRAGON:
+                    service_registry.get(DeepDragonService, account).tick()
+
+                if account.mode == Mode.TRAINING:
+                    service_registry.get(TrainingService, account).tick()
+
+                if account.mode == Mode.BOSSES:
+                    service_registry.get(BossService, account).tick()
+
+                if account.mode == Mode.HOUSE_TRAINING:
+                    service_registry.get(HouseTrainingService, account).tick()
+
+                if account.mode == Mode.DUAL_HUNT:
+                    service_registry.get(DualHuntService, account).tick()
+
                 if account.boss_farm:
                     service_registry.get(BossService, account).farm()
 
-                if now - last_mode_tick >= self.MODE_TICK_INTERVAL[account.mode]:
-                    last_mode_tick = now
+                if account.stats.health <= 1:
+                    self._heal_and_resume_hunt(account)
 
-                    if account.mode == Mode.SOLO_HUNT:
-                        service_registry.get(SoloHuntService, account).tick()
+                service_registry.get(DailyTasksService, account).run_if_due()
 
-                    if account.mode == Mode.PHANTOM_HALLS:
-                        service_registry.get(PhantomHallsService, account).tick()
-
-                    if account.mode == Mode.DEEP_DRAGON:
-                        service_registry.get(DeepDragonService, account).tick()
-
-                    if account.mode == Mode.TRAINING:
-                        service_registry.get(TrainingService, account).tick()
-
-                    if account.mode == Mode.BOSSES:
-                        service_registry.get(BossService, account).tick()
-
-                    if account.mode == Mode.HOUSE_TRAINING:
-                        service_registry.get(HouseTrainingService, account).tick()
-
-                    if account.mode == Mode.DUAL_HUNT:
-                        service_registry.get(DualHuntService, account).tick()
-
-                    if account.stats.health <= 1:
-                        self._heal_and_resume_hunt(account)
-
-                    service_registry.get(DailyTasksService, account).run_if_due()
-
-                    if not account.boss_farm:
-                        self._stop_event.wait(self.MODE_TICK_INTERVAL[account.mode])
+                self._stop_event.wait(self.MODE_TICK_INTERVAL[account.mode])
             except (ConnectionError, ReadTimeout, HTTPError, Timeout):
                 continue
             except Exception as e:
@@ -137,7 +129,9 @@ class Scheduler:
         area_id = account.hunt.area_id if account.hunt and account.hunt.area_id else None
         service_registry.get(PubService, account).go_to_pub_and_heal()
 
-        if account.stats.level < 300:
+        if account.username == "Skyrus":
+            service_registry.get(DualHuntService, account).hunt(area_id)
+        elif account.stats.level < 300:
             service_registry.get(SoloHuntService, account).hunt(area_id)
         else:
             service_registry.get(PhantomHallsService, account).hunt(area_id)

@@ -659,7 +659,7 @@ async def auto_stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def auto_boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Attacks or kills a specific boss for all configured accounts.
+    Attacks or kills a specific boss for all configured accounts, or toggles boss farming.
     """
     if not allowed(update):
         return
@@ -669,25 +669,48 @@ async def auto_boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Usage:\n"
             "/auto_boss attack <boss_id>\n"
             "/auto_boss kill <boss_id>\n"
-            "/auto_boss list"
+            "/auto_boss list\n"
+            "/auto_boss farm <on|off>"
         )
         return
 
     action = context.args[0].lower()
 
-    if action not in {"attack", "kill", "list"}:
+    if action not in {"attack", "kill", "list", "farm"}:
         await update.message.reply_text(
             f"Unknown action: {action}\n\n"
             "Available actions:\n"
             "- attack <boss_id>\n"
             "- kill <boss_id>\n"
-            "- list"
+            "- list\n"
+            "- farm <on|off>"
         )
         return
 
     accounts: list[Account] = context.application.bot_data.get("accounts", [])
     if not accounts:
         await update.message.reply_text("No accounts configured")
+        return
+
+    if action == "farm":
+        if len(context.args) < 2:
+            await update.message.reply_text("Usage: /auto_boss farm <on|off>")
+            return
+
+        state_arg = context.args[1].lower()
+        if state_arg in ["on", "true", "1"]:
+            new_state = True
+        elif state_arg in ["off", "false", "0"]:
+            new_state = False
+        else:
+            await update.message.reply_text("Invalid state. Use 'on' or 'off'.")
+            return
+
+        for account in accounts:
+            account.boss_farm = new_state
+
+        state_str = "enabled" if new_state else "disabled"
+        await update.message.reply_text(f"✅ Boss farm {state_str} for all accounts")
         return
 
     if action == "list":

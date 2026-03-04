@@ -114,13 +114,3 @@ class DarkMarketService:
                 "price": price,
             },
         )
-
-    def buy_cheap_silver_crows(self) -> None:
-        listings = self.list()
-        for listing in listings:
-            if listing.name.lower() == "silver crow":
-                price_per_item = listing.price / listing.quantity
-                if price_per_item < 1_000_000:
-                    self.buy_item(listing.listing_id)
-                else:
-                    logging.info(f"Not buying {listing.name} because it's too expensive: {price_per_item}")
