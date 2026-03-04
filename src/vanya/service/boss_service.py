@@ -172,8 +172,8 @@ class BossService:
 
         boss_life = self._get_boss_current_life(boss_id)
         if boss_life == 0:
-            logging.info(f"{self.account.username}: Boss {boss_id} is dead. Waiting 10m.")
-            self._next_farm_time = time.time() + 600
+            logging.info(f"{self.account.username}: Boss {boss_id} is dead. Waiting 2m.")
+            self._next_farm_time = time.time() + 120
             return
 
         logging.info(f"{self.account.username}: Boss {boss_id} life: {boss_life}")
