@@ -147,6 +147,7 @@ class BossService:
                 return None
 
         if data.get("status") != "ok":
+            logging.error(f"Failed to hit boss {data.get("message")}")
             return None
 
         logging.info(
