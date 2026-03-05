@@ -12,10 +12,11 @@ class PubService:
     def __init__(self, account: Account):
         self.account = account
 
-    def go_to_pub(self) -> None:
+    def go_to_pub(self) -> str:
         logging.info(f"Going to pub for account {self.account.username}")
 
-        self.account.session.get(PUB_URL)
+        response = self.account.session.get(PUB_URL)
+        return response.text
 
     def go_to_pub_and_heal(self) -> None:
         logging.info(f"Going to pub and healing for account {self.account.username}")
@@ -27,7 +28,10 @@ class PubService:
         self._start_training()
 
     def regenerate(self, sleep: bool = True) -> None:
-        self.go_to_pub()
+        html = self.go_to_pub()
+
+        token_match = re.search(r"const PUB_REGEN_TOKEN\s*=\s*'([^']+)'", html)
+        regen_token = token_match.group(1) if token_match else ""
 
         self.account.session.post(
             PUB_UPDATE_URL,
@@ -45,6 +49,7 @@ class PubService:
             PUB_REGENERATE_URL,
             headers={
                 "referer": PUB_URL,
+                "x-pub-regen": regen_token,
             },
         )
 
