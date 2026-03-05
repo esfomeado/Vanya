@@ -198,14 +198,18 @@ class BossService:
         return 0
 
     def _get_boss_current_life(self, boss_id: int) -> int:
-        resp = self.account.session.get(
-            f"{ADVENTURE_URL}?boss_id={boss_id}",
-        )
+        try:
+            resp = self.account.session.get(
+                f"{ADVENTURE_URL}?boss_id={boss_id}",
+            )
 
-        soup = BeautifulSoup(resp.text, "html.parser")
-        text = soup.select_one("#boss-life-text").text
-        cur, _ = text.split("/")
-        return int(cur.replace(",", "").strip())
+            soup = BeautifulSoup(resp.text, "html.parser")
+            text = soup.select_one("#boss-life-text").text
+            cur, _ = text.split("/")
+            return int(cur.replace(",", "").strip())
+        except Exception as e:
+            logging.exception(f"Error while getting boss life: {e}")
+            return 0
 
     def _solve_math_challenge(self, question: str) -> str:
         match = re.search(r'(\d+)\s*([+\-*/])\s*(\d+)', question)
