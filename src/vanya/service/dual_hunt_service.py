@@ -26,6 +26,7 @@ class DualHuntService:
         self.max_hit = 0
         self.last_hunt_start_time: float = 0
         self.last_chest_claim_time: float = 0
+        self.last_hunt_health_check: float = 0
 
     def hunt(self, specific_area_id: Optional[str] = None) -> None:
         self.area_id = specific_area_id
@@ -55,9 +56,14 @@ class DualHuntService:
             self.hunt(specific_area_id=self.area_id)
         else:
             response = self.account.session.get(DEEP_DRAGON_URL)
-
             current_health, max_health = self.deep_dragon_service.parse_current_health(response.text)
             potion_count = self.deep_dragon_service.parse_potion_count(response.text)
+
+            if time.time() - self.last_hunt_health_check > 60:
+                response = self.account.session.get(HUNT_URL)
+                hunt_health = self.phantom_halls_service.parse_current_health(response.text)
+                current_health = int(min(current_health, hunt_health))
+                self.last_hunt_health_check = time.time()
 
             if current_health == 0:
                 logging.info(f"Dual Hunt health is 0 for {self.account.username}. Restarting.")
@@ -75,7 +81,7 @@ class DualHuntService:
                 logging.info(f"Potion count low ({potion_count}) for {self.account.username}. Buying more.")
                 self.deep_dragon_service.buy_potions()
 
-            if self.account.hunt.max_hit * 2.1 >= current_health > -1:
+            if self.account.hunt.max_hit * 2.1 >= current_health > 0:
                 logging.info(f"Low health ({current_health}) detected for {self.account.username}. Using potion.")
                 self.deep_dragon_service.use_potion()
 

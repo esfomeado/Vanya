@@ -3,6 +3,8 @@ import time
 from abc import ABC, abstractmethod
 from typing import Optional
 
+from bs4 import BeautifulSoup
+
 from src.vanya.core.constants import STOP_HUNT_URL, BASE_URL, HUNT_URL
 from src.vanya.model.account import Account
 from src.vanya.model.mode import Mode
@@ -65,6 +67,13 @@ class BaseHuntService(ABC):
 
         except Exception as e:
             logging.error(f"Failed to claim chest: {e}")
+
+    def parse_current_health(self, html: str) -> int:
+        soup = BeautifulSoup(html, "html.parser")
+        life_span = soup.find("span", id="lifeSpan")
+        if life_span:
+            return int(life_span.get_text(strip=True).replace(",", ""))
+        return self.account.stats.health
 
     def tick(self) -> None:
         self.account.session.get(HUNT_URL)
