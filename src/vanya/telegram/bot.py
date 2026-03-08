@@ -5,7 +5,7 @@ from src.vanya.model.account import Account
 from src.vanya.telegram.commands import stats_cmd, accounts_cmd, solo_hunt_cmd, say_cmd, train_cmd, phantom_halls_cmd, \
     boss_cmd, auto_hunt_cmd, guild_cmd, auto_guild_cmd, auto_stats_cmd, auto_boss_cmd, auto_items_cmd, market_cmd, \
     auto_coupon_cmd, auto_regenerate_cmd, visage_cmd, deep_dragon_cmd, auto_visage_cmd, auto_lounge_cmd, auto_pub_cmd, \
-    auto_sell_cmd, dual_hunt_cmd, ritual_cmd, auto_vault_cmd, auto_outfit_cmd
+    auto_sell_cmd, dual_hunt_cmd, ritual_cmd, auto_vault_cmd, auto_outfit_cmd, auto_gold_cmd
 
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
@@ -26,6 +26,7 @@ def start_telegram(accounts: list[Account]):
     application.add_handler(CommandHandler("auto_boss", auto_boss_cmd))
     application.add_handler(CommandHandler("auto_coupon", auto_coupon_cmd))
     application.add_handler(CommandHandler("auto_guild", auto_guild_cmd))
+    application.add_handler(CommandHandler("auto_gold", auto_gold_cmd))
     application.add_handler(CommandHandler("auto_hunt", auto_hunt_cmd))
     application.add_handler(CommandHandler("auto_items", auto_items_cmd))
     application.add_handler(CommandHandler("auto_lounge", auto_lounge_cmd))

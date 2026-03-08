@@ -3,7 +3,9 @@ import logging
 import random
 import re
 
-from src.vanya.core.constants import HOUSE_URL, HOUSE_CHANGE_OUTFIT_URL
+from bs4 import BeautifulSoup
+
+from src.vanya.core.constants import HOUSE_URL, HOUSE_CHANGE_OUTFIT_URL, HOUSE_BANK_URL
 from src.vanya.model.account import Account
 from src.vanya.model.outfit import Outfit
 
@@ -60,3 +62,43 @@ class HouseService:
             logging.info(f"Successfully changed outfit to {filename}")
         except Exception as e:
             logging.error(f"Failed to change outfit to {filename}: {e}")
+
+    def withdraw_all_gold(self) -> None:
+        logging.info(f"Checking banked gold for {self.account.username}")
+        response = self.account.session.get(HOUSE_URL)
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        bank_span = soup.find("span", id="bank-banked-gold")
+        if not bank_span:
+            logging.warning(f"Banked gold span not found for {self.account.username}")
+            return
+
+        banked_gold_str = bank_span.get_text(strip=True).replace(",", "")
+
+        try:
+            banked_gold = int(banked_gold_str)
+        except ValueError:
+            logging.error(f"Failed to parse banked gold '{banked_gold_str}' for {self.account.username}")
+            return
+
+        if banked_gold <= 0:
+            logging.info(f"No gold in bank for {self.account.username}")
+            return
+
+        logging.info(f"Withdrawing {banked_gold} gold for {self.account.username}")
+
+        try:
+            self.account.session.post(
+                HOUSE_BANK_URL,
+                data={
+                    "action": "withdraw",
+                    "amount": str(banked_gold)
+                },
+                headers={
+                    "referer": HOUSE_URL,
+                    "x-csrf-token": self.account.csrf,
+                }
+            )
+            logging.info(f"Successfully withdrew {banked_gold} gold for {self.account.username}")
+        except Exception as e:
+            logging.error(f"Failed to withdraw gold for {self.account.username}: {e}")

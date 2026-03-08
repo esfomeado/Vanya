@@ -1577,3 +1577,25 @@ async def auto_outfit_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     else:
         await update.message.reply_text("Unknown action. Use list, random, or equip.")
+
+
+async def auto_gold_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    results = []
+
+    for account in accounts:
+        try:
+            service = service_registry.get(HouseService, account)
+            service.withdraw_all_gold()
+            results.append(f"✅ {account.username}: Bank withdrawal executed")
+        except Exception as e:
+            results.append(f"❌ {account.username}: {str(e)}")
+
+    await update.message.reply_text("\n".join(results))
