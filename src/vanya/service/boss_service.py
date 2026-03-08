@@ -175,10 +175,10 @@ class BossService:
         logging.info(f"{self.account.username}: Boss {boss_id} life: {boss_life}")
 
         if self.account.username == "Skyrus":
-            if 0 < boss_life <= 550 and self.account.stats.stamina > 20:
+            if 0 < boss_life <= 600 and self.account.stats.stamina > 20:
                 self.attack_boss_once(boss_id)
         else:
-            if boss_life > 550 and self.account.stats.stamina > 20:
+            if boss_life > 600 and self.account.stats.stamina > 20:
                 self.attack_boss_once(boss_id)
 
     def _parse_title(self, text: str) -> tuple[int, str]:
