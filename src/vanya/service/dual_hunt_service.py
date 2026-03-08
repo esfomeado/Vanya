@@ -33,7 +33,7 @@ class DualHuntService:
         self.phantom_halls_service.hunt(specific_area_id=specific_area_id, solo=False)
         self.max_hit = self.account.hunt.max_hit
 
-        self.deep_dragon_service.hunt(duration=self.HUNT_DURATION, train=False)
+        self.deep_dragon_service.hunt(duration=self.HUNT_DURATION, train=True)
 
         self.last_hunt_start_time = time.time()
         self.account.mode = Mode.DUAL_HUNT
@@ -50,7 +50,8 @@ class DualHuntService:
 
             self.phantom_halls_service.stop_hunt()
             self.deep_dragon_service.claim_rewards()
-            self.pub_service.go_to_pub_and_heal()
+            self.pub_service.go_to_pub()
+            self.pub_service.buy_health_potion()
             self.pub_service.regenerate(sleep=False)
             self.stats_service.refresh_account_stats()
             self.hunt(specific_area_id=self.area_id)
@@ -71,7 +72,8 @@ class DualHuntService:
                 self.account.session.get(HUNT_URL)
                 self.phantom_halls_service.stop_hunt()
                 self.account.session.get(DEEP_DRAGON_URL)
-                self.pub_service.go_to_pub_and_heal()
+                self.pub_service.go_to_pub()
+                self.pub_service.buy_health_potion()
                 self.pub_service.regenerate(sleep=False)
                 self.stats_service.refresh_account_stats()
                 self.hunt(specific_area_id=self.area_id)

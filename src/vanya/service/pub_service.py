@@ -24,7 +24,7 @@ class PubService:
         self.go_to_pub()
 
         self.stop_training()
-        self._buy_health_potion()
+        self.buy_health_potion()
         self._start_training()
 
     def regenerate(self, sleep: bool = True) -> None:
@@ -95,7 +95,7 @@ class PubService:
             },
         )
 
-    def _buy_health_potion(self) -> None:
+    def buy_health_potion(self) -> None:
         logging.info(f"Attempting to buy health potion for account {self.account.username}")
 
         health_potion_price = self._get_health_potion_price()
