@@ -57,13 +57,11 @@ class DualHuntService:
         else:
             response = self.account.session.get(DEEP_DRAGON_URL)
             current_health, max_health = self.deep_dragon_service.parse_current_health(response.text)
-            logging.info(f"Deep Dragon health: {current_health}")
             potion_count = self.deep_dragon_service.parse_potion_count(response.text)
 
             if time.time() - self.last_hunt_health_check > 60:
                 response = self.account.session.get(HUNT_URL)
                 hunt_health = self.phantom_halls_service.parse_current_health(response.text)
-                logging.info(f"Hunt health: {hunt_health}")
                 current_health = int(min(current_health, hunt_health))
                 self.last_hunt_health_check = time.time()
 
