@@ -1599,3 +1599,30 @@ async def auto_gold_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             results.append(f"❌ {account.username}: {str(e)}")
 
     await update.message.reply_text("\n".join(results))
+
+
+async def auto_flag_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text("Usage: /auto_flag <flag_code>")
+        return
+
+    flag = context.args[0].lower()
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    results = []
+    for account in accounts:
+        try:
+            service = service_registry.get(PubService, account)
+            service.change_flag(flag)
+            results.append(f"✅ {account.username}: Flag set to {flag}")
+        except Exception as e:
+            results.append(f"❌ {account.username}: {str(e)}")
+
+    await update.message.reply_text("\n".join(results))

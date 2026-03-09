@@ -3,7 +3,7 @@ import re
 import time
 
 from src.vanya.core.constants import PUB_URL, PUB_NPC_BUY_URL, PUB_REGENERATE_URL, PUB_UPDATE_URL, \
-    PUB_OFFLINE_TRAIN_URL, BUY_ACCUMULATED_URL
+    PUB_OFFLINE_TRAIN_URL, BUY_ACCUMULATED_URL, PUB_SAVE_FLAG_URL
 from src.vanya.core.errors import VanyaError
 from src.vanya.model.account import Account
 
@@ -139,3 +139,15 @@ class PubService:
         cost_text = potion_match.group(1).replace(",", "").strip()
         digits = "".join(filter(str.isdigit, cost_text))
         return int(digits) if digits else 0
+
+    def change_flag(self, flag: str) -> None:
+        self.account.session.post(
+            PUB_SAVE_FLAG_URL,
+            data={
+                "country_flag": flag
+            },
+            headers={
+                "referer": PUB_URL,
+                "x-csrf-token": self.account.csrf,
+            },
+        )
