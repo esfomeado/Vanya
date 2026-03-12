@@ -68,7 +68,7 @@ class Account:
 
         session = requests.Session(
             impersonate=random.choice(impersonations),
-            timeout=3,
+            timeout=5,
             raise_for_status=True,
         )
 
