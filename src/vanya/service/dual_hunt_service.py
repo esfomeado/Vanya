@@ -45,7 +45,7 @@ class DualHuntService:
             self.phantom_halls_service.claim_chest()
             self.last_chest_claim_time = time.time()
 
-        if self.last_hunt_start_time > 0 and (time.time() - self.last_hunt_start_time >= self.HUNT_DURATION):
+        if self.last_hunt_start_time > 0 and (time.time() - self.last_hunt_start_time >= (self.HUNT_DURATION + 10)):
             logging.info(f"Dual Hunt timer finished for {self.account.username}. Claiming and restarting.")
 
             self.phantom_halls_service.stop_hunt()
