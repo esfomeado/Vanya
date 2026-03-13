@@ -1,5 +1,4 @@
 import logging
-import random
 from typing import Optional
 
 from curl_cffi import requests, Session
@@ -50,24 +49,8 @@ class Account:
 
     @staticmethod
     def _create_session(config: AccountConfig) -> Session:
-        impersonations = [
-            "chrome100",
-            "chrome101",
-            "chrome104",
-            "chrome107",
-            "chrome110",
-            "chrome116",
-            "chrome119",
-            "chrome120",
-            "chrome123",
-            "chrome124",
-            "chrome131",
-            "chrome136",
-            "chrome142",
-        ]
-
         session = requests.Session(
-            impersonate=random.choice(impersonations),
+            impersonate="chrome145",
             timeout=5,
             raise_for_status=True,
         )
