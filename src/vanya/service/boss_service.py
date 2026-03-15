@@ -164,7 +164,7 @@ class BossService:
         if time.time() < self._next_farm_time:
             return
 
-        boss_id = 2
+        boss_id = 3
 
         boss_life = self._get_boss_current_life(boss_id)
         if boss_life == 0:
@@ -175,10 +175,10 @@ class BossService:
         logging.info(f"{self.account.username}: Boss {boss_id} life: {boss_life}")
 
         if self.account.username == "Skyrus":
-            if 0 < boss_life <= 610 and self.account.stats.stamina > 20:
+            if 0 < boss_life <= 800 and self.account.stats.stamina > 20:
                 self.attack_boss_once(boss_id)
         else:
-            if boss_life > 610 and self.account.stats.stamina > 20:
+            if boss_life > 800 and self.account.stats.stamina > 20:
                 self.attack_boss_once(boss_id)
 
     def _parse_title(self, text: str) -> tuple[int, str]:
