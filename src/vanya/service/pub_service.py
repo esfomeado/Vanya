@@ -127,14 +127,15 @@ class PubService:
         response = self.account.session.get(PUB_URL)
         soup = BeautifulSoup(response.text, "html.parser")
 
-        for item in soup.find_all(class_="pub-shop-item"):
-            name = item.find(class_="pub-shop-item-name")
-            if name and name.text.strip() == "Full Life Potion":
-                cost = item.find(class_="cost")
-                if cost:
-                    return int("".join(filter(str.isdigit, cost.text)))
+        name_span = soup.find("span", class_="pub-shop-item-name", string=re.compile("Full Life Potion", re.IGNORECASE))
 
-        logging.error("Failed to find health potion price")
+        if name_span:
+            cost_span = name_span.find_next_sibling("span", class_=re.compile("cost"))
+            if cost_span:
+                digits = "".join(filter(str.isdigit, cost_span.text))
+                return int(digits) if digits else 20000
+
+        logging.error("Failed to find health potion price. Using default value of 20000.")
         return 20000
 
     def change_flag(self, flag: str) -> None:
