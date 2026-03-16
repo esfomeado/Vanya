@@ -2,8 +2,6 @@ import logging
 import re
 import time
 
-from bs4 import BeautifulSoup
-
 from src.vanya.core.constants import PUB_URL, PUB_NPC_BUY_URL, PUB_REGENERATE_URL, PUB_UPDATE_URL, \
     PUB_OFFLINE_TRAIN_URL, BUY_ACCUMULATED_URL, PUB_SAVE_FLAG_URL
 from src.vanya.model.account import Account
@@ -125,18 +123,20 @@ class PubService:
 
     def _get_health_potion_price(self) -> int:
         response = self.account.session.get(PUB_URL)
-        soup = BeautifulSoup(response.text, "html.parser")
+        html = response.text
 
-        name_span = soup.find("span", class_="pub-shop-item-name", string=re.compile("Full Life Potion", re.IGNORECASE))
+        match = re.search(
+            r"name\s*:\s*['\"]Full Life Potion['\"][\s\S]*?cost\s*:\s*['\"]([^'\"]+)['\"]",
+            html,
+            re.IGNORECASE
+        )
 
-        if name_span:
-            cost_span = name_span.find_next_sibling("span", class_=re.compile("cost"))
-            if cost_span:
-                digits = "".join(filter(str.isdigit, cost_span.text))
-                return int(digits) if digits else 20000
+        if not match:
+            logging.warning(f"Could not find health potion price for account {self.account.username}")
+            return 20000
 
-        logging.error("Failed to find health potion price. Using default value of 20000.")
-        return 20000
+        digits = "".join(filter(str.isdigit, match.group(1)))
+        return int(digits) if digits else 20000
 
     def change_flag(self, flag: str) -> None:
         self.account.session.post(
