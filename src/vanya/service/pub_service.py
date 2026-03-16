@@ -2,9 +2,10 @@ import logging
 import re
 import time
 
+from bs4 import BeautifulSoup
+
 from src.vanya.core.constants import PUB_URL, PUB_NPC_BUY_URL, PUB_REGENERATE_URL, PUB_UPDATE_URL, \
     PUB_OFFLINE_TRAIN_URL, BUY_ACCUMULATED_URL, PUB_SAVE_FLAG_URL
-from src.vanya.core.errors import VanyaError
 from src.vanya.model.account import Account
 
 
@@ -124,21 +125,17 @@ class PubService:
 
     def _get_health_potion_price(self) -> int:
         response = self.account.session.get(PUB_URL)
-        html = response.text
+        soup = BeautifulSoup(response.text, "html.parser")
 
-        match = re.search(r'items\s*=\s*(\[[^]]*])', html)
-        if not match:
-            raise VanyaError("Failed to get items from pub page")
+        for item in soup.find_all(class_="pub-shop-item"):
+            name = item.find(class_="pub-shop-item-name")
+            if name and name.text.strip() == "Full Life Potion":
+                cost = item.find(class_="cost")
+                if cost:
+                    return int("".join(filter(str.isdigit, cost.text)))
 
-        items_js = match.group(1)
-
-        potion_match = re.search(r'{[^}]*name\s*:\s*"Full Life Potion"[^}]*cost\s*:\s*"([^"]+)"', items_js)
-        if not potion_match:
-            raise VanyaError("Failed to get health potion price from pub page")
-
-        cost_text = potion_match.group(1).replace(",", "").strip()
-        digits = "".join(filter(str.isdigit, cost_text))
-        return int(digits) if digits else 0
+        logging.error("Failed to find health potion price")
+        return 20000
 
     def change_flag(self, flag: str) -> None:
         self.account.session.post(
