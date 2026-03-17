@@ -113,7 +113,7 @@ class PubService:
         self.account.session.post(
             PUB_NPC_BUY_URL,
             data={
-                "item_id": "3"
+                "item_id": "4"
             },
             headers={
                 "referer": PUB_URL,
