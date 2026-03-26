@@ -122,6 +122,13 @@ class DeepDragonService:
             self.hunt()
             return
 
+        self.account.session.get(
+            f"{DEEP_DRAGON_URL}?ajax=live&csrf_token={self.account.csrf}",
+            headers={
+                "referer": DEEP_DRAGON_URL,
+            }
+        )
+
         response = self.account.session.get(DEEP_DRAGON_URL)
 
         current_health, max_health = self.parse_current_health(response.text)

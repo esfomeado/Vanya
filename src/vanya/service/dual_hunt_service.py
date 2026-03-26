@@ -56,6 +56,13 @@ class DualHuntService:
             self.stats_service.refresh_account_stats()
             self.hunt(specific_area_id=self.area_id)
         else:
+            self.account.session.get(
+                f"{DEEP_DRAGON_URL}?ajax=live&csrf_token={self.account.csrf}",
+                headers={
+                    "referer": DEEP_DRAGON_URL,
+                }
+            )
+
             response = self.account.session.get(DEEP_DRAGON_URL)
             current_health, max_health = self.deep_dragon_service.parse_current_health(response.text)
             potion_count = self.deep_dragon_service.parse_potion_count(response.text)
