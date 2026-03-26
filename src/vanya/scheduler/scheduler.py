@@ -25,7 +25,7 @@ from src.vanya.telegram.telegram_service import TelegramService
 class Scheduler:
     MODE_TICK_INTERVAL = {
         Mode.BOSSES: 5,
-        Mode.HOUSE_TRAINING: 0.5,
+        Mode.HOUSE_TRAINING: 1,
         Mode.IDLE: 60,
         Mode.TRAINING: 1,
         Mode.SOLO_HUNT: 20,
