@@ -5,7 +5,7 @@ import re
 
 from bs4 import BeautifulSoup
 
-from src.vanya.core.constants import HOUSE_URL, HOUSE_CHANGE_OUTFIT_URL, HOUSE_BANK_URL
+from src.vanya.core.constants import HOUSE_URL, HOUSE_CHANGE_OUTFIT_URL, HOUSE_BANK_URL, BASE_URL
 from src.vanya.model.account import Account
 from src.vanya.model.outfit import Outfit
 
@@ -63,17 +63,63 @@ class HouseService:
         except Exception as e:
             logging.error(f"Failed to change outfit to {filename}: {e}")
 
+    def generate_friend_code(self) -> str:
+        logging.info(f"Generating house friend code for {self.account.username}")
+        try:
+            response = self.account.session.post(
+                f"{BASE_URL}/process/house_friend_code.php",
+                data={
+                    "action": "generate"
+                },
+                headers={
+                    "referer": HOUSE_URL,
+                    "x-csrf-token": self.account.csrf,
+                }
+            )
+
+            data = response.json()
+            code = data.get("code", "")
+            logging.info(f"Successfully generated friend code for {self.account.username}: {code}")
+            return code
+
+        except Exception as e:
+            logging.error(f"Failed to generate house friend code for {self.account.username}: {e}")
+            return ""
+
+    def join_house(self, friend_code: str) -> None:
+        logging.info(f"Attempting to join house with code {friend_code} for {self.account.username}")
+        try:
+            response = self.account.session.post(
+                f"{BASE_URL}/process/house_friend_code.php",
+                data={
+                    "action": "join",
+                    "code": friend_code
+                },
+                headers={
+                    "referer": HOUSE_URL,
+                    "x-csrf-token": self.account.csrf,
+                }
+            )
+
+            data = response.json()
+            logging.info(f"Join house response for {self.account.username}: {data}")
+
+        except Exception as e:
+            logging.error(f"Failed to join house for {self.account.username}: {e}")
+
     def withdraw_all_gold(self) -> None:
         logging.info(f"Checking banked gold for {self.account.username}")
         response = self.account.session.get(HOUSE_URL)
         soup = BeautifulSoup(response.text, "html.parser")
 
-        bank_span = soup.find("span", id="bank-banked-gold")
-        if not bank_span:
-            logging.warning(f"Banked gold span not found for {self.account.username}")
+        bank_chip = soup.find("strong", id="banked-gold-chip")
+        if not bank_chip:
+            logging.warning(f"Banked gold chip not found for {self.account.username}")
             return
 
-        banked_gold_str = bank_span.get_text(strip=True).replace(",", "")
+        banked_gold_str = bank_chip.get("data-raw-gold")
+        if not banked_gold_str:
+            banked_gold_str = bank_chip.get_text(strip=True).replace(",", "")
 
         try:
             banked_gold = int(banked_gold_str)

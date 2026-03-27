@@ -1626,3 +1626,64 @@ async def auto_flag_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             results.append(f"❌ {account.username}: {str(e)}")
 
     await update.message.reply_text("\n".join(results))
+
+
+async def auto_house_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Manage house friend codes for all accounts.
+    Usage:
+    /auto_house generate
+    /auto_house join <friend_code>
+    """
+    if not allowed(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/auto_house generate\n"
+            "/auto_house join <friend_code>"
+        )
+        return
+
+    action = context.args[0].lower()
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    results = []
+
+    if action == "generate":
+        for account in accounts:
+            try:
+                service = service_registry.get(HouseService, account)
+                code = service.generate_friend_code()
+                if code:
+                    results.append(f"✅ {account.username}: Code {code}")
+                else:
+                    results.append(f"❌ {account.username}: Failed to generate code")
+            except Exception as e:
+                results.append(f"❌ {account.username}: {str(e)}")
+
+        await update.message.reply_text("\n".join(results))
+
+    elif action == "join":
+        if len(context.args) < 2:
+            await update.message.reply_text("Usage: /auto_house join <friend_code>")
+            return
+
+        friend_code = context.args[1]
+        for account in accounts:
+            try:
+                service = service_registry.get(HouseService, account)
+                service.join_house(friend_code)
+                results.append(f"✅ {account.username}: Sent join request to {friend_code}")
+            except Exception as e:
+                results.append(f"❌ {account.username}: {str(e)}")
+
+        await update.message.reply_text("\n".join(results))
+
+    else:
+        await update.message.reply_text("Unknown action. Use 'generate' or 'join'.")
