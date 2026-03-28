@@ -44,7 +44,7 @@ class DeepDragonService:
 
         page_html = generate_response.text
 
-        while self._parse_difficulty(page_html) not in {"Inferno"}:
+        while self._parse_difficulty(page_html) not in {"Inferno", "Greed"}:
             max_hit = self._parse_max_hit(page_html)
 
             logging.info(
