@@ -1,6 +1,7 @@
-from curl_cffi import requests
-import time
 import re
+import time
+
+from curl_cffi import requests
 
 BASE_URL = "https://vanyaonline.com"
 LOGIN_URL = f"{BASE_URL}/login"
@@ -14,7 +15,7 @@ def get_global_csrf(html: str) -> str:
     return match.group(1)
 
 def authenticate():
-    session = requests.Session(impersonate="chrome120")
+    session = requests.Session(impersonate="chrome142")
 
     session.cookies.update({
         '__stripe_mid': '2b6d1538-820f-48df-8514-892fd8965b9f39483b'
