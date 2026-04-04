@@ -1,6 +1,5 @@
 import logging
 import re
-import subprocess
 import time
 from typing import Optional
 
@@ -83,7 +82,6 @@ class DeepDragonService:
 
         if train:
             self.pub_service.stop_training()
-            self._manage_training_service("start")
 
         logging.info(
             f"Deep Dragon started for {self.account.username}. Max hit {max_hit}. Timer set for {duration}s.")
@@ -117,7 +115,6 @@ class DeepDragonService:
         if self.last_hunt_start_time > 0 and (time.time() - self.last_hunt_start_time >= self.duration):
             logging.info(f"Deep Dragon timer finished for {self.account.username}. Claiming and restarting.")
             self.claim_rewards()
-            self._manage_training_service("stop")
             self.pub_service.regenerate(sleep=False)
             self.hunt()
             return
@@ -237,14 +234,5 @@ class DeepDragonService:
 
         self.account.hunt = None
         self.account.mode = Mode.IDLE
-        self._manage_training_service("stop")
 
         logging.info(f"Successfully escaped Deep Dragon for {self.account.username}")
-
-    def _manage_training_service(self, action: str) -> None:
-        try:
-            subprocess.run(["sudo", "systemctl", action, "vanya-training.service"], check=True)
-            time.sleep(10)
-            logging.info(f"Successfully {action}ed vanya-training.service")
-        except subprocess.CalledProcessError as e:
-            logging.error(f"Failed to {action} vanya-training.service: {e}")
