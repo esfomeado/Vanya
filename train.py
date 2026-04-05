@@ -1,12 +1,12 @@
-import re
-import time
-
 from curl_cffi import requests
+import time
+import re
 
 BASE_URL = "https://vanyaonline.com"
 LOGIN_URL = f"{BASE_URL}/login"
 url_train = f"{BASE_URL}/process/house_train_click.php"
 url_dash = f"{BASE_URL}/dashboard"
+
 
 def get_global_csrf(html: str) -> str:
     match = re.search(r'globalCsrfToken\s*=\s*"([a-f0-9]+)"', html)
@@ -14,8 +14,9 @@ def get_global_csrf(html: str) -> str:
         raise RuntimeError("Global CSRF token not found")
     return match.group(1)
 
+
 def authenticate():
-    session = requests.Session(impersonate="chrome145")
+    session = requests.Session(impersonate="chrome120")
 
     session.cookies.update({
         '__stripe_mid': '2b6d1538-820f-48df-8514-892fd8965b9f39483b'
@@ -46,7 +47,9 @@ def authenticate():
     session.headers.update({'x-csrf-token': csrf_token})
     return session
 
+
 session = authenticate()
+last_login_time = time.time()
 
 train_headers = {
     'referer': f"{BASE_URL}/house",
@@ -64,6 +67,11 @@ interval = 3
 
 while True:
     try:
+        if time.time() - last_login_time >= 3600:
+            print("One hour elapsed. Re-authenticating proactively...")
+            session = authenticate()
+            last_login_time = time.time()
+
         start_time = time.time()
         response = session.post(url_train, headers=train_headers, data=train_data, timeout=5)
         elapsed = time.time() - start_time
@@ -72,8 +80,9 @@ while True:
 
         response_text_lower = response.text.lower()
         if "unauthorized" in response_text_lower or "unautorized" in response_text_lower:
-            print("Re-authenticating...")
+            print("Unauthorized detected. Re-authenticating...")
             session = authenticate()
+            last_login_time = time.time()
             continue
 
         try:
