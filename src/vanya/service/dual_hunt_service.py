@@ -14,7 +14,7 @@ from src.vanya.service.stats_service import StatsService
 
 
 class DualHuntService:
-    HUNT_DURATION = 3600
+    HUNT_DURATION = 5400
 
     def __init__(self, account: Account):
         self.account = account
