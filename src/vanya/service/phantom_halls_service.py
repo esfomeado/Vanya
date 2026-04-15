@@ -1,11 +1,10 @@
 import logging
 import time
-from json import JSONDecodeError
 from typing import Optional
 
 from bs4 import BeautifulSoup
 
-from src.vanya.core.constants import DUNGEON_VIEW_URL, DUNGEON_LOBBY_URL, CHECK_HUNT_STATUS_URL
+from src.vanya.core.constants import DUNGEON_VIEW_URL
 from src.vanya.model.account import Account
 from src.vanya.model.hunt import Hunt
 from src.vanya.model.mode import Mode
@@ -16,42 +15,13 @@ class PhantomHallsService(BaseHuntService):
     def __init__(self, account: Account):
         super().__init__(account)
 
-    def _join_dungeon_queue(self, dungeon_id: str) -> None:
-        self.account.session.post(
-            DUNGEON_VIEW_URL,
-            data={
-                "area_id": dungeon_id,
-                "dungeon_action": "join",
-                "csrf_token": self.account.csrf,
-            },
-            headers={
-                "referer": DUNGEON_VIEW_URL
-            },
-        )
-
-        logging.info(f"Joined dungeon {dungeon_id} queue for account {self.account.username}")
-
-    def _start_dungeon(self, dungeon_id: str) -> None:
-        self.account.session.post(
-            DUNGEON_VIEW_URL,
-            data={
-                "area_id": dungeon_id,
-                "dungeon_action": "start",
-                "csrf_token": self.account.csrf
-            },
-            headers={
-                "referer": DUNGEON_VIEW_URL
-            },
-        )
-
-        logging.info(f"Started dungeon {dungeon_id} for account {self.account.username}")
-
-    def _skip_dungeon(self, dungeon_id: str) -> None:
+    def _start_dungeon(self, dungeon_id: str, pay_mode: str) -> None:
         self.account.session.post(
             DUNGEON_VIEW_URL,
             data={
                 "area_id": dungeon_id,
                 "dungeon_action": "skip",
+                "pay_mode": pay_mode,
                 "csrf_token": self.account.csrf
             },
             headers={
@@ -59,19 +29,7 @@ class PhantomHallsService(BaseHuntService):
             },
         )
 
-        logging.info(f"Started dungeon {dungeon_id} for account {self.account.username}")
-
-    def _fetch_dungeon_lobby(self) -> dict:
-        return self.account.session.get(
-            DUNGEON_LOBBY_URL,
-            params={
-                "ajax_lobby_status": "1",
-                "_": int(time.time() * 1000),
-            },
-            headers={
-                "referer": DUNGEON_VIEW_URL
-            },
-        ).json()
+        logging.info(f"Started Phantom Halls {dungeon_id} using {pay_mode} for account {self.account.username}")
 
     def _get_latest_enabled_dungeon(self, specific_area_id: Optional[str] = None):
         response = self.account.session.get(DUNGEON_VIEW_URL)
@@ -79,7 +37,35 @@ class PhantomHallsService(BaseHuntService):
         dungeon_areas = soup.select(".hunt-area")
 
         if not dungeon_areas:
-            return None, None, None, None, None
+            logging.info(f"No dungeons found, attempting to claim daily tickets for {self.account.username}")
+            self.account.session.post(
+                DUNGEON_VIEW_URL,
+                data={
+                    "csrf_token": self.account.csrf,
+                    "claim_phantom_daily_tickets": "1"
+                },
+                headers={
+                    "referer": DUNGEON_VIEW_URL
+                }
+            )
+
+            response = self.account.session.get(DUNGEON_VIEW_URL)
+            soup = BeautifulSoup(response.text, "html.parser")
+            dungeon_areas = soup.select(".hunt-area")
+
+            if not dungeon_areas:
+                return None, None, None, 0
+
+        tickets = 0
+        ticket_text = soup.find(string=lambda text: text and "Phantom Tickets:" in text)
+        if ticket_text:
+            try:
+                parent = ticket_text.parent
+                val_span = parent.find("span")
+                if val_span:
+                    tickets = int(val_span.text.strip())
+            except Exception as e:
+                logging.debug(f"Failed to parse tickets: {e}")
 
         for area in reversed(dungeon_areas):
             forms = area.find_all("form")
@@ -97,7 +83,7 @@ class PhantomHallsService(BaseHuntService):
                 continue
 
             button = form.find("button", type="submit")
-            if not button or ("QUEUE UP" not in button.text and "Leave" not in button.text):
+            if not button or "HUNT" not in button.text.upper():
                 continue
 
             dmg_span = area.select_one(".stat-row.damage-row span[title*='Expected damage']")
@@ -106,82 +92,24 @@ class PhantomHallsService(BaseHuntService):
                 text = dmg_span.text.strip()
                 max_hit = int(text.strip("()").split("-")[1].strip())
 
-            lobby_span = area.select_one(f"span#lobby-count-{area_id}")
-            count, required_count = 0, 0
-            if lobby_span:
-                text = lobby_span.text.strip()
-                if "/" in text:
-                    count_str, req_str = text.split("/")
-                    count, required_count = int(count_str.strip()), int(req_str.strip())
+            return area, area_id, max_hit, tickets
 
-            return area, area_id, max_hit, count, required_count
+        return None, None, None, tickets
 
-        return None, None, None, None, None
-
-    def hunt(self, specific_area_id: Optional[str] = None, solo: bool = False) -> None:
+    def hunt(self, specific_area_id: Optional[str] = None) -> None:
         self.last_hunt_start_time = time.time()
         self.area_id = specific_area_id
-        joined = False
 
-        if not specific_area_id:
-            _, area_id, max_hit, count, required_count = self._get_latest_enabled_dungeon()
-            if not area_id:
-                return
-        else:
-            _, area_id, max_hit, count, required_count = self._get_latest_enabled_dungeon(
-                specific_area_id=specific_area_id)
+        _, area_id, max_hit, tickets = self._get_latest_enabled_dungeon(specific_area_id=specific_area_id)
 
-        if solo:
-            self._skip_dungeon(area_id)
-            self.account.hunt = Hunt(area_id=area_id, name=area_id, max_hit=max_hit)
-            self.account.mode = Mode.PHANTOM_HALLS
-            logging.info(f"Joined dungeon {area_id} for account {self.account.username}")
+        if not area_id:
+            logging.info(f"No available dungeon found for {self.account.username}")
             return
 
-        while True:
-            try:
-                if not joined:
-                    self._join_dungeon_queue(area_id)
-                    joined = True
-                    time.sleep(3)
-                    continue
+        pay_mode = "ticket" if tickets > 0 else "stamina"
 
-                try:
-                    dungeon_status = self._fetch_dungeon_lobby().get(area_id)
-                    if dungeon_status is None:
-                        break
-                except JSONDecodeError:
-                    break
+        self._start_dungeon(area_id, pay_mode)
 
-                count = dungeon_status.get("count", 0)
-                am_i_in = dungeon_status.get("am_i_in", False)
-
-                if joined and not am_i_in:
-                    response = self.account.session.get(
-                        CHECK_HUNT_STATUS_URL,
-                    )
-                    in_hunt = response.json().get("in_hunt", False)
-
-                    if in_hunt:
-                        self.account.hunt = Hunt(area_id=area_id, name=area_id, max_hit=max_hit)
-                        self.account.mode = Mode.PHANTOM_HALLS
-
-                        logging.info(f"Joined dungeon {area_id} for account {self.account.username}")
-                        return
-
-                    joined = False
-                    time.sleep(5)
-
-                if count < required_count:
-                    time.sleep(5)
-                    continue
-
-                self._start_dungeon(area_id)
-                self.account.hunt = Hunt(area_id=area_id, name=area_id, max_hit=max_hit)
-                self.account.mode = Mode.PHANTOM_HALLS
-                logging.info(f"Joined dungeon {area_id} for account {self.account.username}")
-
-                return
-            except Exception as e:
-                logging.exception(f"Error while running dungeon hunt: {e}")
-                time.sleep(10)
+        self.account.hunt = Hunt(area_id=area_id, name=area_id, max_hit=max_hit)
+        self.account.mode = Mode.PHANTOM_HALLS
+        logging.info(f"Joined Phantom Halls dungeon {area_id} for account {self.account.username}")
