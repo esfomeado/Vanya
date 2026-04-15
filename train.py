@@ -65,12 +65,18 @@ train_data = {
 
 interval = 3
 
+stamina = 100
+
 while True:
     try:
         if time.time() - last_login_time >= 3600:
             print("One hour elapsed. Re-authenticating proactively...")
             session = authenticate()
             last_login_time = time.time()
+
+        if stamina <= 50:
+            print(f"Stamina is {stamina}. Sleeping for 5 minutes...")
+            time.sleep(300)
 
         start_time = time.time()
         response = session.post(url_train, headers=train_headers, data=train_data, timeout=5)
@@ -87,10 +93,7 @@ while True:
 
         try:
             data = response.json()
-            if data.get("stamina") <=50:
-                print("Stamina is 50. Sleeping for 5 minutes...")
-                time.sleep(300)
-                continue
+            stamina = data.get("stamina", stamina)
         except Exception:
             pass
 
