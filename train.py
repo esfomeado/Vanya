@@ -87,8 +87,8 @@ while True:
 
         try:
             data = response.json()
-            if data.get("stamina") == 0:
-                print("Stamina is 0. Sleeping for 5 minutes...")
+            if data.get("stamina") <=20:
+                print("Stamina is 20. Sleeping for 5 minutes...")
                 time.sleep(300)
                 continue
         except Exception:
