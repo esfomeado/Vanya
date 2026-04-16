@@ -1,6 +1,6 @@
 beautifulsoup4==4.14.3
 curl-cffi==0.15.0
 httpx[http2]==0.28.1
-pydantic==2.13.0
+pydantic==2.13.1
 python-telegram-bot==22.7
 pyyaml==6.0.3
