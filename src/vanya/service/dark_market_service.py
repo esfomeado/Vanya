@@ -1,9 +1,5 @@
 import logging
-import re
-
-from bs4 import BeautifulSoup
-
-from src.vanya.core.constants import MARKET_URL
+from src.vanya.core.constants import MARKET_URL, MARKET_ORDER_ACTION_URL
 from src.vanya.model.account import Account
 from src.vanya.model.market import MarketListing
 
@@ -14,65 +10,22 @@ class DarkMarketService:
 
     def list(self) -> list[MarketListing]:
         logging.info(f"Listing items for account {self.account.username}")
-
-        response = self.account.session.get(
-            MARKET_URL,
-            headers={
-                "accept": "text/html",
-                "referer": MARKET_URL,
-            },
-        )
-
-        soup = BeautifulSoup(response.text, "html.parser")
-        listings: list[MarketListing] = []
-
-        for box in soup.select(".listing-box"):
-            strong_text = box.select_one("strong").text.strip()
-
-            quantity = 1
-            name = strong_text
-
-            match = re.match(r'^(\d+)x\s+(.*)', strong_text)
-            if match:
-                quantity = int(match.group(1))
-                name = match.group(2)
-
-            meta_span = box.select_one(".item-details span")
-            meta = meta_span.get_text(strip=True) if meta_span else ""
-
-            stats_el = box.select_one(".item-stats")
-            stats = stats_el.text.strip() if stats_el else ""
-
-            price_text = box.select_one(".price-tag").text
-            price = int(price_text.split()[0].replace(",", ""))
-
-            form = box.select_one("form")
-            listing_id = form.select_one("input[name=listing_id]")["value"]
-
-            listings.append(
-                MarketListing(
-                    listing_id=int(listing_id),
-                    name=name,
-                    quantity=quantity,
-                    price=price,
-                    meta=meta,
-                    stats=stats,
-                )
-            )
-
-        return listings
+        # The market now uses an order book model via JS and AJAX.
+        # Direct parsing of listing boxes is no longer supported here.
+        return []
 
     def buy_item(self, item_id: int) -> None:
         logging.info(f"Buying item {item_id}, for account {self.account.username}")
 
         self.account.session.post(
-            MARKET_URL,
+            MARKET_ORDER_ACTION_URL,
             headers={
                 "referer": MARKET_URL,
             },
             data={
-                "action": "buy_item",
-                "listing_id": item_id,
+                "market_action": "fill_order",
+                "order_id": item_id,
+                "amount": 1,
                 "csrf_token": self.account.csrf,
             },
         )
@@ -84,33 +37,41 @@ class DarkMarketService:
             self.sell_drako(amount, price)
             return
 
+        unit_price = max(1, price // amount) if amount > 0 else price
+
         self.account.session.post(
-            MARKET_URL,
+            MARKET_ORDER_ACTION_URL,
             headers={
                 "referer": MARKET_URL,
             },
             data={
-                "action": "list_item",
-                "csrf_token": self.account.csrf,
+                "market_action": "create_order",
+                "side": "sell",
                 "item_name": item_name,
+                "currency": "gold",
                 "amount": amount,
-                "price": price,
-                "unbind_currency": "gold",
+                "unit_price": unit_price,
+                "csrf_token": self.account.csrf,
             },
         )
 
     def sell_drako(self, amount: int, price: int) -> None:
         logging.info(f"Selling {amount}x Drako for {price} gold, for account {self.account.username}")
 
+        unit_price = max(1, price // amount) if amount > 0 else price
+
         self.account.session.post(
-            MARKET_URL,
+            MARKET_ORDER_ACTION_URL,
             headers={
                 "referer": MARKET_URL,
             },
             data={
-                "action": "list_drako",
+                "market_action": "create_order",
+                "side": "sell",
+                "item_name": "Drako",
+                "currency": "gold",
+                "amount": amount,
+                "unit_price": unit_price,
                 "csrf_token": self.account.csrf,
-                "drako_amount": amount,
-                "price": price,
             },
         )

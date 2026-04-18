@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 from src.vanya.core.constants import CLAIM_REWARD_URL
 from src.vanya.core.constants import DASHBOARD_URL, DEMON_PASS_URL, HUNTIARY_URL, UPDEX_URL, SEAL_ITEM_URL, BASE_URL, \
-    BOOKS_OF_SHADOWS_URL, QUEST_COMPLETE_URL, GUILDS_URL, GUILD_SHRINE_SPIN_URL
+    BOOKS_OF_SHADOWS_URL, QUEST_COMPLETE_URL, GUILDS_URL, GUILD_SHRINE_SPIN_URL, HOUSE_URL, HOUSEBOND_TASKS_ACTION_URL
 from src.vanya.model.account import Account
 
 
@@ -29,6 +29,7 @@ class DailyTasksService:
         self._claim_shadow_book()
         self._spin_guild_shrine()
         self._claim_eventide()
+        self._claim_housebond_tasks()
         self._daily_logion()
 
         self._last_run = now.date()
@@ -194,3 +195,49 @@ class DailyTasksService:
                 "streak_action": "claim",
             }
         )
+
+    def _claim_housebond_tasks(self) -> None:
+        logging.info(f"Fetching housebond tasks for {self.account.username}")
+
+        response = self.account.session.post(
+            HOUSEBOND_TASKS_ACTION_URL,
+            headers={
+                "referer": HOUSE_URL,
+                "x-csrf-token": self.account.csrf,
+            },
+            data={"action": "fetch"}
+        )
+
+        try:
+            data = response.json()
+        except ValueError:
+            logging.error(f"Failed to parse housebond tasks JSON for {self.account.username}.")
+            return
+
+        if data.get("status") != "ok":
+            logging.warning(f"Failed to fetch housebond tasks for {self.account.username}: {data.get('message')}")
+            return
+
+        tasks = data.get("tasks", [])
+        for task in tasks:
+            if task.get("completed") and not task.get("claimed"):
+                slot = task.get("slot_index")
+                logging.info(f"Claiming housebond task in slot {slot} for {self.account.username}")
+
+                claim_res = self.account.session.post(
+                    HOUSEBOND_TASKS_ACTION_URL,
+                    headers={
+                        "referer": HOUSE_URL,
+                        "x-csrf-token": self.account.csrf,
+                    },
+                    data={"action": "claim", "slot": slot}
+                )
+
+                try:
+                    claim_data = claim_res.json()
+                    if claim_data.get("status") == "ok":
+                        logging.info(f"Successfully claimed housebond task in slot {slot} for {self.account.username}.")
+                    else:
+                        logging.warning(f"Failed to claim housebond task in slot {slot} for {self.account.username}: {claim_data.get('message')}")
+                except ValueError:
+                    logging.error(f"Failed to parse claim response for slot {slot} for {self.account.username}.")
