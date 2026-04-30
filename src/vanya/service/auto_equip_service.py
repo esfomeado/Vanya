@@ -1,0 +1,131 @@
+import logging
+import re
+
+from bs4 import BeautifulSoup, Tag
+from bs4.element import AttributeValueList
+
+from src.vanya.core.constants import DASHBOARD_URL, EQUIP_URL, SHADOW_SCROLL_URL
+from src.vanya.model.account import Account
+
+
+class AutoEquipService:
+    def __init__(self, account: Account):
+        self.account: Account = account
+
+    def equip(self) -> None:
+        if not self.account.auto_equip:
+            return
+
+        logging.info(f"Auto-equipping items for {self.account.username}")
+
+        response = self.account.session.get(DASHBOARD_URL)
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        equipped = self._parse_equipped(soup)
+        inventory = self._parse_inventory(soup)
+
+        for slot, items in inventory.items():
+            best = max(items, key=lambda x: x["defense"])
+            current = equipped.get(slot)
+
+            if not current or best["defense"] > current["defense"]:
+                logging.info(f"Equipping {best['name']} (+{best['defense']} DEF) in {slot} on {self.account.username}")
+                self._equip_item(best["name"])
+
+    def _parse_equipped(self, soup: BeautifulSoup) -> dict[str, dict]:
+        equipped_stats = {}
+
+        for d in soup.select(".equipped-item-detail"):
+            name = d.select_one(".item-name-level").text.strip()
+            defense = self._extract_defense_from_equipped(d)
+            equipped_stats[name] = defense
+
+        slots = {}
+        for slot in soup.select(".equipment-slot.equipped"):
+            cls = slot.get("class", AttributeValueList())
+            slot_type = next(c.replace("slot-", "").upper() for c in cls if c.startswith("slot-"))
+            item = slot.get("title")
+
+            slots[slot_type] = {
+                "name": item,
+                "defense": equipped_stats.get(item, 0),
+            }
+
+        return slots
+
+    def _extract_defense_from_equipped(self, detail_el: Tag) -> int:
+        for bonus in detail_el.select(".item-bonus"):
+            if "Defense" in bonus.text:
+                m = re.search(r'\+(\d+)', bonus.text)
+                if m:
+                    return int(m.group(1))
+        return 0
+
+    def _parse_inventory(self, soup: BeautifulSoup) -> dict[str, list[dict]]:
+        inventory = {}
+
+        for item in soup.select(".inventory-item"):
+            slot = item.get("data-slot")
+            if not slot:
+                continue
+
+            stats_div = item.select_one(".item-stats")
+            stats_text = stats_div.text if stats_div else ""
+            defense = self._extract_defense_from_inventory(stats_text)
+
+            name_input = item.select_one("input[name=item_name]")
+            if not name_input:
+                continue
+
+            name = name_input.get("value")
+
+            if name == "Shadow Scroll":
+                logging.info(f"Using Shadow Scroll on {self.account.username}")
+                self.account.session.post(
+                    SHADOW_SCROLL_URL,
+                    data = {
+                        "item_name": name,
+                        "csrf_token": self.account.csrf,
+                    },
+                    headers = {
+                        "referer": DASHBOARD_URL
+                    },
+                )
+                continue
+
+            inventory.setdefault(slot, []).append({
+                "name": name,
+                "defense": defense,
+            })
+
+        return inventory
+
+    def _extract_defense_from_inventory(self, text: str) -> int:
+        if not text:
+            return 0
+
+        patterns = [
+            r'Defense:\s*\+(\d+)',
+            r'\+(\d+)\s*Defense',
+        ]
+
+        for p in patterns:
+            m = re.search(p, text, re.IGNORECASE)
+            if m:
+                return int(m.group(1))
+
+        return 0
+
+    def _equip_item(self, item_name: str) -> None:
+        self.account.session.post(
+            EQUIP_URL,
+            data={
+                "action": "equip",
+                "item_name": item_name,
+                "csrf_token": self.account.csrf,
+            },
+            headers={
+                "referer": DASHBOARD_URL
+            },
+        )

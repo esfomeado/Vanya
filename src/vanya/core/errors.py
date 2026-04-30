@@ -1,0 +1,2 @@
+class VanyaError(Exception):
+    pass

@@ -1,0 +1,9 @@
+accounts:
+  - username: your_username
+    password: your_password
+    proxy: "host:port:user:pass"
+
+telegram:
+  token: your_telegram_bot_token
+  allowed_users:
+    - 0000000000

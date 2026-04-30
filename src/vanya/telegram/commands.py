@@ -1,0 +1,1783 @@
+import asyncio
+from html import escape
+from io import BytesIO
+
+from telegram import Update
+from telegram.ext import ContextTypes
+
+from src.vanya.core.constants import DUNGEON_VIEW_URL
+from src.vanya.model.account import Account
+from src.vanya.model.mode import Mode
+from src.vanya.service.boss_service import BossService
+from src.vanya.service.chat_service import ChatService
+from src.vanya.service.coupon_service import CouponService
+from src.vanya.service.dark_market_service import DarkMarketService
+from src.vanya.service.deep_dragon_service import DeepDragonService
+from src.vanya.service.dual_hunt_service import DualHuntService
+from src.vanya.service.guild_service import GuildService
+from src.vanya.service.house_service import HouseService
+from src.vanya.service.inventory_service import InventoryService
+from src.vanya.service.lounge_service import LoungeService
+from src.vanya.service.phantom_halls_service import PhantomHallsService
+from src.vanya.service.pub_service import PubService
+from src.vanya.service.service_registry import service_registry
+from src.vanya.service.solo_hunt_service import SoloHuntService
+from src.vanya.service.training_service import TrainingService
+from src.vanya.service.vault_service import VaultService
+from src.vanya.service.visage_service import VisageService
+from src.vanya.telegram.acl import allowed
+
+
+def _find_account(accounts: list[Account], username: str) -> Account | None:
+    for account in accounts:
+        if account.username == username:
+            return account
+    return None
+
+
+async def accounts_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Lists all configured accounts and their current operation modes.
+    """
+    if not allowed(update):
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    lines = ["👥 Accounts"]
+    for account in accounts:
+        lines.append(f"- {account.username} ({account.mode.value})")
+
+    await update.message.reply_text("\n".join(lines))
+
+
+async def stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Displays detailed character statistics for a specific account.
+
+    Usage: /stats <account_username>
+
+    Shows level, gold, health, skill levels (Sword, Bow, Magic, etc.),
+    and current hunting area information if applicable.
+    """
+    if not allowed(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text("Usage: /stats <account>")
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+    name = context.args[0]
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    stats = account.stats
+    hunt = account.hunt
+
+    lines = [
+        f"👤 Account: {account.username}",
+        f"🧭 Mode: {account.mode.value}",
+        f"🏰 Guild: {account.guild}",
+        f"🔢 Hashed Accounts: {stats.hashed_accounts}",
+        "",
+        "📊 Stats",
+        f"Level: {stats.level}",
+        f"Gold: {stats.gold}",
+        f"Drako: {stats.drako}",
+        f"Health: {stats.health}/{stats.max_health}",
+        f"Stamina: {stats.stamina}",
+        "",
+        "⚔️ Skills",
+        f"Sword: {stats.sword}",
+        f"Bow: {stats.bow}",
+        f"Magic: {stats.magic}",
+        f"Defence: {stats.defence}",
+        f"Fishing: {stats.fishing}",
+    ]
+
+    if hunt:
+        lines.extend([
+            "",
+            "🗡️ Hunting",
+            f"Area: {hunt.name}",
+            f"Max hit: {hunt.max_hit}",
+        ])
+
+    await update.message.reply_text("\n".join(lines))
+
+
+async def solo_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/solo_hunt <account> start [area_id]\n"
+            "/solo_hunt <account> stop"
+        )
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+
+    name = context.args[0]
+    action = context.args[1]
+    area_id = context.args[2] if len(context.args) > 2 else None
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    if action == "stop":
+        if account.mode != Mode.SOLO_HUNT:
+            await update.message.reply_text(f"{name} is not solo hunting")
+            return
+
+        service_registry.get(SoloHuntService, account).stop_hunt()
+
+        await update.message.reply_text(f"{name} stopped solo hunting")
+        return
+
+    if action != "start":
+        await update.message.reply_text(
+            "Usage:\n"
+            "/solo_hunt <account> start [area_id]\n"
+            "/solo_hunt <account> stop"
+        )
+        return
+
+    if account.mode == Mode.SOLO_HUNT:
+        hunt = account.hunt
+        await update.message.reply_text(
+            f"{name} already hunting\n{hunt.name}"
+        )
+        return
+
+    if account.mode == Mode.PHANTOM_HALLS:
+        service_registry.get(PhantomHallsService, account).stop_hunt()
+
+    try:
+        service_registry.get(SoloHuntService, account).hunt(specific_area_id=area_id)
+        hunt = account.hunt
+
+        await update.message.reply_text(
+            f"🗡️ {name} started solo hunting\n\n"
+            f"Area: {hunt.name}\n"
+            f"Max hit: {hunt.max_hit}"
+        )
+
+    except Exception as e:
+        account.hunt = None
+        account.mode = Mode.IDLE
+        await update.message.reply_text(
+            f"Failed to start solo hunt for {name}:\n{e}"
+        )
+
+
+async def phantom_halls_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/phantom_halls <account> start [area_id]\n"
+            "/phantom_halls <account> stop"
+        )
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+
+    name = context.args[0]
+    action = context.args[1]
+    area_id = context.args[2] if len(context.args) > 2 else None
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    if action == "stop":
+        if account.mode != Mode.PHANTOM_HALLS:
+            await update.message.reply_text(f"{name} is not on phantom halls")
+            return
+
+        service_registry.get(PhantomHallsService, account).stop_hunt()
+
+        await update.message.reply_text(f"{name} stopped phantom halls")
+        return
+
+    if action != "start":
+        await update.message.reply_text(
+            "Usage:\n"
+            "/phantom_halls <account> start [area_id]\n"
+            "/phantom_halls <account> stop"
+        )
+        return
+
+    if account.mode == Mode.PHANTOM_HALLS:
+        hunt = account.hunt
+        await update.message.reply_text(
+            f"{name} already hunting\n{hunt.name}"
+        )
+        return
+
+    if account.mode == Mode.SOLO_HUNT:
+        service_registry.get(SoloHuntService, account).stop_hunt()
+
+    try:
+        service_registry.get(PhantomHallsService, account).hunt(specific_area_id=area_id)
+        hunt = account.hunt
+
+        await update.message.reply_text(
+            f"🗡️ {name} started Phantom Halls\n\n"
+            f"Area: {hunt.name}\n"
+            f"Max hit: {hunt.max_hit}"
+        )
+
+    except Exception as e:
+        account.hunt = None
+        account.mode = Mode.IDLE
+        await update.message.reply_text(
+            f"Failed to start phantom Halls for {name}:\n{e}"
+        )
+
+
+async def auto_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/auto_hunt start [area_id]\n"
+            "/auto_hunt stop"
+        )
+        return
+
+    action = context.args[0]
+    area_id = context.args[1] if len(context.args) > 1 else None
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    lines: list[str] = []
+
+    if action == "stop":
+        def stop_one(account: Account):
+            if account.mode == Mode.SOLO_HUNT:
+                service_registry.get(SoloHuntService, account).stop_hunt()
+                lines.append(f"⏹️ {account.username} stopped Solo Hunt")
+            elif account.mode == Mode.PHANTOM_HALLS:
+                service_registry.get(PhantomHallsService, account).stop_hunt()
+                lines.append(f"⏹️ {account.username} stopped Phantom Halls")
+            elif account.mode == Mode.DEEP_DRAGON:
+                service_registry.get(DeepDragonService, account).stop_hunt()
+                lines.append(f"⏹️ {account.username} stopped Deep Dragon")
+            else:
+                lines.append(f"⏭️ {account.username} not hunting")
+
+        await asyncio.gather(
+            *(asyncio.to_thread(stop_one, account) for account in accounts)
+        )
+
+        await update.message.reply_text(
+            "🛑 Auto Hunt Stop\n\n" + "\n".join(lines)
+        )
+        return
+
+    if action != "start":
+        await update.message.reply_text(
+            "Usage:\n"
+            "/auto_hunt start [area_id]\n"
+            "/auto_hunt stop"
+        )
+        return
+
+    def start_one(account: Account):
+        if account.mode in {Mode.SOLO_HUNT, Mode.PHANTOM_HALLS, Mode.DEEP_DRAGON}:
+            lines.append(
+                f"⏭️ {account.username} already hunting ({account.mode.value})"
+            )
+            return
+
+        try:
+            level = account.stats.level
+
+            if level < 300:
+                service_registry.get(SoloHuntService, account).hunt(area_id)
+                hunt = account.hunt
+                lines.append(
+                    f"🗡️ {account.username} → Solo Hunt "
+                    f"({hunt.name}, max hit {hunt.max_hit})"
+                )
+            else:
+                service_registry.get(PhantomHallsService, account).hunt(area_id)
+                hunt = account.hunt
+                lines.append(
+                    f"🌀 {account.username} → Phantom Halls "
+                    f"({hunt.name}, max hit {hunt.max_hit})"
+                )
+
+        except Exception as e:
+            account.hunt = None
+            account.mode = Mode.IDLE
+            lines.append(
+                f"❌ {account.username} auto_hunt failed: {e}"
+            )
+
+    await asyncio.gather(
+        *(asyncio.to_thread(start_one, account) for account in accounts)
+    )
+
+    await update.message.reply_text(
+        "🤖 Auto Hunt Start\n\n" + "\n".join(lines)
+    )
+
+
+async def say_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Sends a message to the chat.
+    """
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "Usage: /say <account> <message>"
+        )
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+
+    name = context.args[0]
+    message = " ".join(context.args[1:]).strip()
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    if not message:
+        await update.message.reply_text("Message cannot be empty")
+        return
+
+    try:
+        service_registry.get(ChatService, account).post_message(message)
+        await update.message.reply_text(
+            f"💬 Message sent as {name}"
+        )
+
+    except Exception as e:
+        await update.message.reply_text(
+            f"Failed to send message as {name}:\n{e}"
+        )
+
+
+async def train_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "Usage: /train <account> <skill>"
+        )
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+
+    name = context.args[0]
+    skill = context.args[1]
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    if account.mode not in {Mode.IDLE, Mode.TRAINING}:
+        await update.message.reply_text(
+            f"{name} cannot train while in mode {account.mode.value}"
+        )
+        return
+
+    try:
+        service_registry.get(TrainingService, account).train(skill=skill)
+
+        await update.message.reply_text(
+            f"🛡️ {name} started training {skill}"
+        )
+
+    except Exception as e:
+        await update.message.reply_text(
+            f"Failed to start training for {name}:\n{e}"
+        )
+
+
+async def boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Attacks or kills a boss with a specific account.
+    """
+
+    if not allowed(update):
+        return
+
+    if not context.args or len(context.args) < 2:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/boss <account> attack <boss_id>\n"
+            "/boss <account> kill <boss_id>\n"
+            "/boss <account> list"
+        )
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+
+    name = context.args[0]
+    action = context.args[1].lower()
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    boss_service = service_registry.get(BossService, account)
+
+    try:
+        # List available bosses
+        if action == "list":
+            bosses = boss_service.list_available_bosses()
+
+            if not bosses:
+                await update.message.reply_text(
+                    f"👹 No available bosses for {name}"
+                )
+                return
+
+            lines = [f"👹 Available bosses for {name}:"]
+            for boss in bosses:
+                lines.append(
+                    f"  Stage {boss.stage}: {boss.name}\n"
+                    f"  ID: {boss.boss_id}\n"
+                    f"  Life: {boss.life:,} | XP: {boss.xp:,}\n"
+                    f"  Required Level: {boss.required_level}"
+                )
+
+            await update.message.reply_text("\n\n".join(lines))
+            return
+
+        # Attack or kill boss
+        if action not in {"attack", "kill"}:
+            await update.message.reply_text(
+                f"Unknown action: {action}\n\n"
+                "Available actions:\n"
+                "- attack\n"
+                "- kill\n"
+                "- list"
+            )
+            return
+
+        if len(context.args) < 3:
+            await update.message.reply_text(
+                f"Usage: /boss <account> {action} <boss_id>"
+            )
+            return
+
+        try:
+            boss_id = int(context.args[2])
+        except ValueError:
+            await update.message.reply_text("boss_id must be an integer")
+            return
+
+        if action == "kill":
+            boss_service.kill_boss(boss_id)
+            await update.message.reply_text(
+                f"👹 {name} started killing boss {boss_id}"
+            )
+        else:  # attack
+            result = boss_service.attack_boss_once(boss_id)
+
+            if not result:
+                await update.message.reply_text(
+                    f"👹 Boss {boss_id} is already dead"
+                )
+                return
+
+            await update.message.reply_text(
+                f"👹 Boss attack for {name}\n\n"
+                f"Boss: {result.get('boss_name', 'Unknown')}\n"
+                f"Damage dealt: {result.get('player_damage', 0):.1f}\n"
+                f"Boss HP: {result.get('new_boss_life', 0):.0f}/{result.get('boss_max_life', 0):.0f}\n"
+                f"Your HP: {result.get('new_player_life', 0)}/{result.get('player_max_life', 0)}\n"
+                f"Stamina: {result.get('new_stamina', 0)}"
+            )
+
+    except Exception as e:
+        await update.message.reply_text(
+            f"Boss command failed for {name}:\n{e}"
+        )
+
+
+async def guild_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/guild <account> join <guild_id>"
+        )
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+
+    name = context.args[0]
+    action = context.args[1]
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    if action == "join":
+        if len(context.args) < 3:
+            await update.message.reply_text(
+                "Usage:\n"
+                "/guild <account> join <guild_id>"
+            )
+            return
+
+        try:
+            guild_id = int(context.args[2])
+        except ValueError:
+            await update.message.reply_text("guild_id must be an integer")
+            return
+
+        try:
+            service_registry.get(GuildService, account).join(guild_id)
+            await update.message.reply_text(
+                f"🏰 {name} applied to guild {guild_id}"
+            )
+        except Exception as e:
+            await update.message.reply_text(
+                f"Guild join failed for {name}:\n{e}"
+            )
+        return
+
+    await update.message.reply_text(
+        f"Unknown guild action: {action}\n\n"
+        "Available actions:\n"
+        "- join"
+    )
+
+
+async def auto_guild_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text("Usage: /auto_guild <join|leave> [guild_id]")
+        return
+
+    action = context.args[0].lower()
+    guild_id = int(context.args[1]) if len(context.args) > 1 else None
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    results = []
+
+    for account in accounts:
+        try:
+            if action == "join":
+                if not account.guild:
+                    if guild_id is not None:
+                        service_registry.get(GuildService, account).join(guild_id)
+                        results.append(f"{account.username} joined guild {guild_id}")
+                    else:
+                        results.append(f"{account.username} not in a guild, no guild_id provided")
+                else:
+                    results.append(f"{account.username} already in guild {account.guild}")
+            elif action == "leave":
+                if account.guild:
+                    service_registry.get(GuildService, account).leave(guild_id)
+                    results.append(f"{account.username} left guild {account.guild}")
+                else:
+                    results.append(f"{account.username} not in a guild")
+            else:
+                results.append(f"Invalid action {action}")
+        except Exception as e:
+            results.append(f"Error for {account.username}: {e}")
+
+    await update.message.reply_text("\n".join(results))
+
+
+async def auto_stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    lines = []
+
+    for account in accounts:
+        stats = account.stats
+        hunt = account.hunt
+        guild = account.guild or "None"
+
+        acc_lines = [
+            f"👤 {account.username} | Guild: {guild} | Mode: {account.mode.value} | Accounts: {account.stats.hashed_accounts}",
+            f"📊 Stats: Level {stats.level}, Gold {stats.gold}, Drako {stats.drako} Health {stats.health}/{stats.max_health}, Stamina {stats.stamina}",
+            f"⚔️ Skills: Sword {stats.sword}, Bow {stats.bow}, Magic {stats.magic}, Defence {stats.defence}, Fishing {stats.fishing}"
+        ]
+
+        if hunt:
+            acc_lines.append(f"🗡️ Hunting: {hunt.name}, Max hit {hunt.max_hit}")
+
+        lines.append("\n".join(acc_lines))
+
+    batch_size = 15
+    for i in range(0, len(lines), batch_size):
+        batch = lines[i:i + batch_size]
+        await update.message.reply_text("\n\n".join(batch))
+
+
+async def auto_boss_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Attacks or kills a specific boss for all configured accounts, or toggles boss farming.
+    """
+    if not allowed(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/auto_boss attack <boss_id>\n"
+            "/auto_boss kill <boss_id>\n"
+            "/auto_boss list\n"
+            "/auto_boss farm <on|off>"
+        )
+        return
+
+    action = context.args[0].lower()
+
+    if action not in {"attack", "kill", "list", "farm"}:
+        await update.message.reply_text(
+            f"Unknown action: {action}\n\n"
+            "Available actions:\n"
+            "- attack <boss_id>\n"
+            "- kill <boss_id>\n"
+            "- list\n"
+            "- farm <on|off>"
+        )
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    if action == "farm":
+        if len(context.args) < 2:
+            await update.message.reply_text("Usage: /auto_boss farm <on|off>")
+            return
+
+        state_arg = context.args[1].lower()
+        if state_arg in ["on", "true", "1"]:
+            new_state = True
+        elif state_arg in ["off", "false", "0"]:
+            new_state = False
+        else:
+            await update.message.reply_text("Invalid state. Use 'on' or 'off'.")
+            return
+
+        for account in accounts:
+            account.boss_farm = new_state
+
+        state_str = "enabled" if new_state else "disabled"
+        await update.message.reply_text(f"✅ Boss farm {state_str} for all accounts")
+        return
+
+    if action == "list":
+        results = []
+        for account in accounts:
+            boss_service: BossService = service_registry.get(BossService, account)
+            try:
+                bosses = boss_service.list_available_bosses()
+
+                if not bosses:
+                    results.append(f"⏭️ {account.username}: no available bosses")
+                    continue
+
+                lines = [f"👹 {account.username}:"]
+                for boss in bosses:
+                    lines.append(
+                        f"  Stage {boss.stage}: {boss.name} "
+                        f"(ID: {boss.boss_id}, HP: {boss.life:,}, XP: {boss.xp:,})"
+                    )
+                results.append("\n".join(lines))
+
+            except Exception as e:
+                results.append(f"❌ {account.username}: {e}")
+
+        if not results:
+            await update.message.reply_text("No results to display")
+            return
+
+        await update.message.reply_text("\n\n".join(results))
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            f"Usage: /auto_boss {action} <boss_id>"
+        )
+        return
+
+    try:
+        boss_id = int(context.args[1])
+    except ValueError:
+        await update.message.reply_text("boss_id must be an integer")
+        return
+
+    results = []
+
+    for account in accounts:
+        if account.mode == Mode.SOLO_HUNT:
+            service_registry.get(SoloHuntService, account).stop_hunt()
+        elif account.mode == Mode.PHANTOM_HALLS:
+            service_registry.get(PhantomHallsService, account).stop_hunt()
+        elif account.mode == Mode.DEEP_DRAGON:
+            service_registry.get(DeepDragonService, account).stop_hunt()
+
+        boss_service: BossService = service_registry.get(BossService, account)
+        try:
+            if action == "kill":
+                boss_service.kill_boss(boss_id)
+                results.append(f"☠️ {account.username} started killing boss {boss_id}")
+            else:  # attack
+                result = boss_service.attack_boss_once(boss_id)
+
+                if not result:
+                    results.append(f"💀 {account.username}: boss {boss_id} is already dead")
+                    continue
+
+                hp_percent = (result.get('new_boss_life', 0) / result.get('boss_max_life', 1)) * 100
+                results.append(
+                    f"🗡️ {account.username}: {result.get('boss_name', 'Unknown')}\n"
+                    f"   Damage: -{result.get('player_damage', 0):.0f} | "
+                    f"Boss HP: {result.get('new_boss_life', 0):,.0f}/{result.get('boss_max_life', 0):,.0f} ({hp_percent:.0f}%)\n"
+                    f"   Your HP: {result.get('new_player_life', 0)}/{result.get('player_max_life', 0)} | "
+                    f"Stamina: {result.get('new_stamina', 0)}"
+                )
+
+        except Exception as e:
+            results.append(f"❌ {account.username}: {e}")
+
+    if not results:
+        await update.message.reply_text("No results to display")
+        return
+
+    await update.message.reply_text("\n\n".join(results))
+
+
+async def auto_items_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+
+    sections: list[str] = []
+
+    for account in accounts:
+        service = service_registry.get(InventoryService, account)
+        try:
+            items = service.list_items()
+        except Exception as e:
+            sections.append(
+                f"<details open>"
+                f"<summary>❌ {escape(account.username)} – inventory fetch failed</summary>"
+                f"<pre>{escape(str(e))}</pre>"
+                f"</details>"
+            )
+            continue
+
+        if not items:
+            sections.append(
+                f"<details>"
+                f"<summary>📦 {escape(account.username)} – empty inventory</summary>"
+                f"</details>"
+            )
+            continue
+
+        body_lines = []
+        for item in items:
+            line = f"- {item.name}"
+            if item.quantity > 1:
+                line += f" x{item.quantity}"
+            if item.equipped:
+                line += " [E]"
+            body_lines.append(escape(line))
+
+        body = "\n".join(body_lines)
+
+        sections.append(
+            f"<details>"
+            f"<summary>📦 {escape(account.username)} ({len(items)} items)</summary>"
+            f"<pre>{body}</pre>"
+            f"</details>"
+        )
+
+    if not sections:
+        await update.message.reply_text("No accounts found")
+        return
+
+    html = (
+        "<!DOCTYPE html>"
+        "<html>"
+        "<head>"
+        "<meta charset='utf-8'>"
+        "<title>Inventory</title>"
+        "<style>"
+        "body{font-family:monospace;background:#fff;color:#000}"
+        "details{margin-bottom:12px}"
+        "summary{cursor:pointer;font-weight:bold}"
+        "pre{margin:6px 0 0 0;white-space:pre-wrap}"
+        "</style>"
+        "</head>"
+        "<body>"
+        + "".join(sections) +
+        "</body>"
+        "</html>"
+    )
+
+    buf = BytesIO(html.encode("utf-8"))
+    buf.name = "inventory.html"
+
+    await update.message.reply_document(
+        document=buf,
+        caption="Inventory items"
+    )
+
+
+async def market_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Buy or sell items on the market.
+
+    Usage:
+    /market buy <account> <item_name>
+    /market sell <account> <item_name> <amount> <price>
+    """
+    if not allowed(update):
+        return
+
+    if len(context.args) < 3:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/market <account> buy <item_id>\n"
+            "/market <account> sell <item_name> <amount> <price>"
+        )
+        return
+
+    account_name = context.args[0]
+    action = context.args[1].lower()
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+    account = _find_account(accounts, account_name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {account_name}")
+        return
+
+    market = service_registry.get(DarkMarketService, account)
+
+    try:
+        if action == "buy":
+            item_id = int(context.args[2])
+
+            market.buy_item(item_id)
+            await update.message.reply_text(f"✅ Bought {item_id}")
+
+        elif action == "sell":
+            if len(context.args) < 5:
+                await update.message.reply_text("Usage: /market <account> sell <item_name> <amount> <price>")
+                return
+
+            item_name = " ".join(context.args[2:-2])
+            amount = int(context.args[-2])
+            price = int(context.args[-1])
+            market.sell_item(item_name, amount, price)
+            await update.message.reply_text(f"✅ Listed {amount}x {item_name} for {price} GOLD each")
+
+        else:
+            await update.message.reply_text("Invalid action. Use buy or sell.")
+
+    except Exception as e:
+        await update.message.reply_text(f"❌ Market action failed: {str(e)}")
+
+
+async def auto_coupon_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+
+    results = []
+
+    for account in accounts:
+        service = service_registry.get(CouponService, account)
+        try:
+            coupon_code = context.args[0]
+            service.redeem(coupon_code)
+            results.append(f"✅ {account.username}: Coupon redeemed successfully")
+        except Exception as e:
+            results.append(f"❌ {account.username}: {str(e)}")
+
+    if results:
+        await update.message.reply_text("\n".join(results))
+
+
+async def auto_regenerate_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+
+    results = []
+
+    for account in accounts:
+        if account.mode in {Mode.SOLO_HUNT, Mode.PHANTOM_HALLS, Mode.DEEP_DRAGON}:
+            results.append(f"⏭️ {account.username}: currently hunting, skipped")
+            continue
+
+        service = service_registry.get(PubService, account)
+        try:
+            service.go_to_pub()
+            service.regenerate(sleep=False)
+            results.append(f"✅ {account.username}: regenerated successfully")
+        except Exception as e:
+            results.append(f"❌ {account.username}: {str(e)}")
+
+    if results:
+        await update.message.reply_text("\n".join(results))
+
+
+async def visage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if not context.args or len(context.args) < 2:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/visage <account> list\n"
+            "/visage <account> equip <filename>\n"
+            "/visage <account> spin"
+        )
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+    name = context.args[0]
+    action = context.args[1].lower()
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    visage_service = service_registry.get(VisageService, account)
+
+    try:
+        if action == "list":
+            visages = visage_service.list()
+            if not visages:
+                await update.message.reply_text(f"🖼️ {name} owns no visages.")
+                return
+
+            lines = [f"🖼️ Owned Visages for {name}:"]
+            for v in visages:
+                status = "✅" if v.is_equipped else "❌"
+                lines.append(f"{status} {v.name}\n   Bonus: {v.bonus}\n   File: {v.filename}")
+
+            await update.message.reply_text("\n\n".join(lines))
+
+        elif action == "equip":
+            if len(context.args) < 3:
+                await update.message.reply_text(f"Usage: /visage <account> equip <filename>")
+                return
+
+            filename = context.args[2]
+            visage_service.equip(filename)
+            await update.message.reply_text(f"✅ {name} equipped visage: {filename}")
+
+        elif action == "spin":
+            result = visage_service.spin()
+            if result.get("status") == "ok":
+                won = result.get("won")
+                rarity = result.get("rarity", "common").upper()
+                dup = " (DUPLICATE)" if result.get("duplicate") else " (NEW!)"
+
+                msg = (
+                    f"🎰 Spin Result for {name}:\n\n"
+                    f"Portrait: {won}{dup}\n"
+                    f"Rarity: {rarity}\n"
+                    f"Gold remaining: {result.get('gold', 0):,}"
+                )
+                await update.message.reply_text(msg)
+            else:
+                await update.message.reply_text(f"❌ Spin failed: {result.get('message', 'Unknown error')}")
+
+        else:
+            await update.message.reply_text("Invalid action. Use list, equip, or spin.")
+
+    except Exception as e:
+        await update.message.reply_text(f"❌ Visage command failed for {name}: {str(e)}")
+
+
+async def auto_visage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/auto_visage list\n"
+            "/auto_visage free_spin"
+        )
+        return
+
+    action = context.args[0].lower()
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    if action == "list":
+        sections = []
+        for account in accounts:
+            try:
+                service = service_registry.get(VisageService, account)
+                visages = service.list()
+
+                if not visages:
+                    sections.append(
+                        f"<details><summary>🖼️ {escape(account.username)} (0)</summary>"
+                        f"<p style='margin-left:1em'>No visages owned.</p></details>"
+                    )
+                    continue
+
+                rows = []
+                for v in visages:
+                    status = "<b>[EQUIPPED]</b> " if v.is_equipped else ""
+                    rows.append(
+                        f"<div>"
+                        f"{status}{escape(v.name)} <span style='color:#666'>({escape(v.bonus)})</span>"
+                        f"<br><small>{escape(v.filename)}</small>"
+                        f"</div>"
+                    )
+
+                body = "<div style='margin-left:1em; display:grid; gap:8px;'>" + "".join(rows) + "</div>"
+
+                sections.append(
+                    f"<details><summary>🖼️ {escape(account.username)} ({len(visages)})</summary>"
+                    f"{body}</details>"
+                )
+            except Exception as e:
+                sections.append(
+                    f"<details><summary>❌ {escape(account.username)} - Error</summary>"
+                    f"<pre>{escape(str(e))}</pre></details>"
+                )
+
+        html = (
+            "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+            "<style>body{font-family:sans-serif; background:#fff; color:#000}"
+            "details{margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:8px}"
+            "summary{cursor:pointer; font-weight:bold; margin-bottom:6px}"
+            "</style></head><body>"
+            + "".join(sections) +
+            "</body></html>"
+        )
+
+        buf = BytesIO(html.encode("utf-8"))
+        buf.name = "visages.html"
+        await update.message.reply_document(document=buf, caption="All Accounts Visages")
+
+    elif action == "free_spin":
+        results = []
+        for account in accounts:
+            try:
+                service = service_registry.get(VisageService, account)
+                service.free_spin()
+
+                results.append(f"✅ {account.username}: spun successfully")
+            except Exception as e:
+                results.append(f"❌ {account.username}: {str(e)}")
+
+        await update.message.reply_text("\n".join(results))
+
+    else:
+        await update.message.reply_text("Invalid action. Use list or free_spin.")
+
+
+async def deep_dragon_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Starts or stops the Deep Dragon hunt for a specific account.
+    Usage: /deep_dragon <account> <start|stop>
+    """
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/deep_dragon <account> start\n"
+            "/deep_dragon <account> stop"
+        )
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+    name = context.args[0]
+    action = context.args[1].lower()
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    service = service_registry.get(DeepDragonService, account)
+
+    try:
+        if action == "start":
+            if account.mode == Mode.DEEP_DRAGON:
+                await update.message.reply_text(f"🐉 {name} is already hunting Deep Dragon.")
+                return
+
+            if account.mode == Mode.SOLO_HUNT:
+                service_registry.get(SoloHuntService, account).stop_hunt()
+            elif account.mode == Mode.PHANTOM_HALLS:
+                service_registry.get(PhantomHallsService, account).stop_hunt()
+
+            service.hunt()
+            hunt = account.hunt
+            await update.message.reply_text(
+                f"🐉 {name} started Deep Dragon hunt.\n"
+                f"Max Hit: {hunt.max_hit}"
+            )
+
+        elif action == "stop":
+            if account.mode != Mode.DEEP_DRAGON:
+                await update.message.reply_text(f"{name} is not in Deep Dragon mode.")
+                return
+
+            service.stop_hunt()
+            await update.message.reply_text(f"🛑 {name} stopped Deep Dragon hunt.")
+
+        else:
+            await update.message.reply_text("Invalid action. Use 'start' or 'stop'.")
+
+    except Exception as e:
+        await update.message.reply_text(f"❌ Deep Dragon command failed for {name}:\n{e}")
+
+
+async def auto_lounge_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Mass like or dislike a post using all accounts.
+    Usage: /auto_lounge <like|dislike> <topic_id> <post_id>
+    """
+    if not allowed(update):
+        return
+
+    if len(context.args) < 3:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/auto_lounge like <topic_id> <post_id>\n"
+            "/auto_lounge dislike <topic_id> <post_id>"
+        )
+        return
+
+    action = context.args[0].lower()
+    topic_id = context.args[1]
+    post_id = context.args[2]
+
+    if not topic_id.isdigit() or not post_id.isdigit():
+        await update.message.reply_text("❌ Topic ID and Post ID must be numbers.")
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+    if not accounts:
+        await update.message.reply_text("No accounts configured.")
+        return
+
+    if action not in ["like", "dislike"]:
+        await update.message.reply_text("Invalid action. Use 'like' or 'dislike'.")
+        return
+
+    await update.message.reply_text(
+        f"🚀 Starting {action} for Topic {topic_id}, Post {post_id} on {len(accounts)} accounts...")
+
+    results = []
+    for account in accounts:
+        try:
+            service = service_registry.get(LoungeService, account)
+            if action == "like":
+                service.like(int(topic_id), int(post_id))
+                results.append(f"✅ {account.username}: Liked")
+            elif action == "dislike":
+                service.dislike(int(topic_id), int(post_id))
+                results.append(f"✅ {account.username}: Disliked")
+        except Exception as e:
+            results.append(f"❌ {account.username}: {str(e)}")
+
+    response_text = "\n".join(results)
+    if len(response_text) > 4000:
+        response_text = response_text[:4000] + "\n...(truncated)"
+
+    await update.message.reply_text(response_text)
+
+
+async def auto_pub_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+    results = []
+
+    for account in accounts:
+        service = service_registry.get(PubService, account)
+        try:
+            service.buy_accumulated_regen()
+            results.append(f"✅ {account.username}: Accumulated regen bought")
+        except Exception as e:
+            results.append(f"❌ {account.username}: {str(e)}")
+
+    if results:
+        await update.message.reply_text("\n".join(results))
+
+
+async def auto_sell_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Automatically lists all units of an item from inventory to the market.
+    Calculates total price based on price per item.
+
+    Usage: /auto_sell <item_name> <price_per_item>
+    Example: /auto_sell Iron Ore 500
+    """
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text("Usage: /auto_sell <item_name> <price_per_item>")
+        return
+
+    try:
+        price_per_item = int(context.args[-1])
+        item_name_input = " ".join(context.args[:-1]).lower()
+    except ValueError:
+        await update.message.reply_text("Price must be a number.")
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    results = []
+
+    for account in accounts:
+        try:
+            # 1. Fetch Inventory to find quantity
+            inv_service = service_registry.get(InventoryService, account)
+            items = inv_service.list_items()
+
+            quantity = 0
+            real_name = ""
+
+            for item in items:
+                if item.name.lower() == item_name_input:
+                    quantity += item.quantity
+                    real_name = item.name
+
+            if quantity == 0:
+                results.append(f"⏭️ {account.username}: Item '{item_name_input}' not found")
+                continue
+
+            total_price = quantity * price_per_item
+
+            market_service = service_registry.get(DarkMarketService, account)
+            market_service.sell_item(real_name, quantity, total_price)
+
+            results.append(
+                f"✅ {account.username}: Listed {quantity}x {real_name} "
+                f"for {total_price:,} ({price_per_item}/ea)"
+            )
+
+        except Exception as e:
+            results.append(f"❌ {account.username}: {str(e)}")
+
+    await update.message.reply_text("\n".join(results))
+
+
+async def auto_fill_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Fills a buy order on the market by selling all units of an item from inventory.
+
+    Usage: /auto_fill <item_name> <order_id>
+    Example: /auto_fill Silver Crown 520
+    """
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text("Usage: /auto_fill <item_name> <order_id>")
+        return
+
+    try:
+        order_id = int(context.args[-1])
+    except ValueError:
+        await update.message.reply_text("order_id must be an integer")
+        return
+
+    item_name = " ".join(context.args[:-1])
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    results = []
+
+    for account in accounts:
+        try:
+            market_service = service_registry.get(DarkMarketService, account)
+            quantity = market_service.auto_fill(item_name, order_id)
+
+            if quantity == 0:
+                results.append(f"⏭️ {account.username}: no '{item_name}' in inventory")
+            else:
+                results.append(
+                    f"✅ {account.username}: filled order {order_id} with {quantity}x {item_name}"
+                )
+
+        except Exception as e:
+            results.append(f"❌ {account.username}: {str(e)}")
+
+    await update.message.reply_text("\n".join(results))
+
+
+async def dual_hunt_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/dual_hunt <account> start [area_id]\n"
+            "/dual_hunt <account> stop"
+        )
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+
+    name = context.args[0]
+    action = context.args[1]
+    area_id = context.args[2] if len(context.args) > 2 else None
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    if action == "stop":
+        if account.mode != Mode.DUAL_HUNT:
+            await update.message.reply_text(f"{name} is not in dual hunt mode")
+            return
+
+        service_registry.get(DualHuntService, account).stop_hunt()
+
+        await update.message.reply_text(f"{name} stopped dual hunting")
+        return
+
+    if action != "start":
+        await update.message.reply_text(
+            "Usage:\n"
+            "/dual_hunt <account> start [area_id]\n"
+            "/dual_hunt <account> stop"
+        )
+        return
+
+    if account.mode == Mode.DUAL_HUNT:
+        hunt = account.hunt
+        await update.message.reply_text(
+            f"{name} already in dual hunt mode\n{hunt.name}"
+        )
+        return
+
+    if account.mode in {Mode.SOLO_HUNT, Mode.PHANTOM_HALLS, Mode.DEEP_DRAGON}:
+        # Stop any existing hunt mode before starting dual hunt
+        if account.mode == Mode.SOLO_HUNT:
+            service_registry.get(SoloHuntService, account).stop_hunt()
+        elif account.mode == Mode.PHANTOM_HALLS:
+            service_registry.get(PhantomHallsService, account).stop_hunt()
+        elif account.mode == Mode.DEEP_DRAGON:
+            service_registry.get(DeepDragonService, account).stop_hunt()
+
+    try:
+        service_registry.get(DualHuntService, account).hunt(specific_area_id=area_id)
+        hunt = account.hunt
+
+        await update.message.reply_text(
+            f"🗡️🐉 {name} started dual hunting\n\n"
+            f"Mode: {hunt.name}\n"
+            f"Max hit: {hunt.max_hit}"
+        )
+
+    except Exception as e:
+        account.hunt = None
+        account.mode = Mode.IDLE
+        await update.message.reply_text(
+            f"Failed to start dual hunt for {name}:\n{e}"
+        )
+
+
+async def ritual_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text("Usage: /ritual <account> <target_user_id>")
+        return
+
+    accounts: list[Account] = context.application.bot_data["accounts"]
+    name = context.args[0]
+    target_user_id = context.args[1]
+
+    account = _find_account(accounts, name)
+    if not account:
+        await update.message.reply_text(f"Unknown account: {name}")
+        return
+
+    try:
+        account.session.post(
+            DUNGEON_VIEW_URL,
+            data={
+                "ritual_dead": "1",
+                "area_id": "dead_inside",
+                "csrf_token": account.csrf,
+                "target_user_id": target_user_id,
+                "pay_currency": "auto"
+            },
+            headers={
+                "referer": DUNGEON_VIEW_URL
+            }
+        )
+        await update.message.reply_text(f"💀 {name} performed ritual on user {target_user_id}")
+    except Exception as e:
+        await update.message.reply_text(f"❌ Ritual failed for {name}:\n{e}")
+
+
+async def auto_vault_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text("Usage: /auto_vault open_box <season>")
+        return
+
+    action = context.args[0].lower()
+
+    if action == "open_box":
+        try:
+            season = int(context.args[1])
+        except ValueError:
+            await update.message.reply_text("Season must be an integer.")
+            return
+
+        accounts: list[Account] = context.application.bot_data.get("accounts", [])
+        if not accounts:
+            await update.message.reply_text("No accounts configured")
+            return
+
+        results = []
+        for account in accounts:
+            try:
+                service = service_registry.get(VaultService, account)
+                service.open_box(season)
+                results.append(f"✅ {account.username}: Box opened (Season {season})")
+            except Exception as e:
+                results.append(f"❌ {account.username}: {str(e)}")
+
+        await update.message.reply_text("\n".join(results))
+    else:
+        await update.message.reply_text("Unknown action. Usage: /auto_vault open_box <season>")
+
+
+async def auto_outfit_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/auto_outfit list\n"
+            "/auto_outfit random\n"
+            "/auto_outfit equip <filename>"
+        )
+        return
+
+    action = context.args[0].lower()
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    if action == "list":
+        sections = []
+        for account in accounts:
+            try:
+                service = service_registry.get(HouseService, account)
+                outfits = service.list_outfits()
+
+                if not outfits:
+                    sections.append(
+                        f"<details><summary>👕 {escape(account.username)} (0)</summary>"
+                        f"<p style='margin-left:1em'>No outfits found.</p></details>"
+                    )
+                    continue
+
+                rows = []
+                for outfit in outfits:
+                    rows.append(
+                        f"<div>"
+                        f"<b>{escape(outfit.name)}</b> <br>"
+                        f"<small>{escape(outfit.filename)}</small>"
+                        f"</div>"
+                    )
+
+                body = "<div style='margin-left:1em; display:grid; gap:8px;'>" + "".join(rows) + "</div>"
+
+                sections.append(
+                    f"<details><summary>👕 {escape(account.username)} ({len(outfits)})</summary>"
+                    f"{body}</details>"
+                )
+            except Exception as e:
+                sections.append(
+                    f"<details><summary>❌ {escape(account.username)} - Error</summary>"
+                    f"<pre>{escape(str(e))}</pre></details>"
+                )
+
+        html = (
+            "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+            "<style>body{font-family:sans-serif; background:#fff; color:#000}"
+            "details{margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:8px}"
+            "summary{cursor:pointer; font-weight:bold; margin-bottom:6px}"
+            "</style></head><body>"
+            + "".join(sections) +
+            "</body></html>"
+        )
+
+        buf = BytesIO(html.encode("utf-8"))
+        buf.name = "outfits.html"
+        await update.message.reply_document(document=buf, caption="All Accounts Outfits")
+
+    elif action == "random":
+        results = []
+        for account in accounts:
+            try:
+                service = service_registry.get(HouseService, account)
+                service.equip_random_outfit()
+                results.append(f"✅ {account.username}: Equipped random outfit")
+            except Exception as e:
+                results.append(f"❌ {account.username}: {str(e)}")
+
+        await update.message.reply_text("\n".join(results))
+
+    elif action == "equip":
+        if len(context.args) < 2:
+            await update.message.reply_text("Usage: /auto_outfit equip <filename>")
+            return
+
+        filename = context.args[1]
+        results = []
+        for account in accounts:
+            try:
+                service = service_registry.get(HouseService, account)
+                service.change_outfit(filename)
+                results.append(f"✅ {account.username}: Equipped {filename}")
+            except Exception as e:
+                results.append(f"❌ {account.username}: {str(e)}")
+
+        await update.message.reply_text("\n".join(results))
+
+    else:
+        await update.message.reply_text("Unknown action. Use list, random, or equip.")
+
+
+async def auto_gold_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    results = []
+
+    for account in accounts:
+        try:
+            service = service_registry.get(HouseService, account)
+            service.withdraw_all_gold()
+            results.append(f"✅ {account.username}: Bank withdrawal executed")
+        except Exception as e:
+            results.append(f"❌ {account.username}: {str(e)}")
+
+    await update.message.reply_text("\n".join(results))
+
+
+async def auto_flag_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not allowed(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text("Usage: /auto_flag <flag_code>")
+        return
+
+    flag = context.args[0].lower()
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    results = []
+    for account in accounts:
+        try:
+            service = service_registry.get(PubService, account)
+            service.change_flag(flag)
+            results.append(f"✅ {account.username}: Flag set to {flag}")
+        except Exception as e:
+            results.append(f"❌ {account.username}: {str(e)}")
+
+    await update.message.reply_text("\n".join(results))
+
+
+async def auto_house_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Manage house friend codes for all accounts.
+    Usage:
+    /auto_house generate
+    /auto_house join <friend_code>
+    """
+    if not allowed(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/auto_house generate\n"
+            "/auto_house join <friend_code>"
+        )
+        return
+
+    action = context.args[0].lower()
+    accounts: list[Account] = context.application.bot_data.get("accounts", [])
+
+    if not accounts:
+        await update.message.reply_text("No accounts configured")
+        return
+
+    results = []
+
+    if action == "generate":
+        for account in accounts:
+            try:
+                service = service_registry.get(HouseService, account)
+                code = service.generate_friend_code()
+                if code:
+                    results.append(f"✅ {account.username}: Code {code}")
+                else:
+                    results.append(f"❌ {account.username}: Failed to generate code")
+            except Exception as e:
+                results.append(f"❌ {account.username}: {str(e)}")
+
+        await update.message.reply_text("\n".join(results))
+
+    elif action == "join":
+        if len(context.args) < 2:
+            await update.message.reply_text("Usage: /auto_house join <friend_code>")
+            return
+
+        friend_code = context.args[1]
+        for account in accounts:
+            try:
+                service = service_registry.get(HouseService, account)
+                service.join_house(friend_code)
+                results.append(f"✅ {account.username}: Sent join request to {friend_code}")
+            except Exception as e:
+                results.append(f"❌ {account.username}: {str(e)}")
+
+        await update.message.reply_text("\n".join(results))
+
+    else:
+        await update.message.reply_text("Unknown action. Use 'generate' or 'join'.")
+
+
+HELP_TEXT = "\n".join([
+    "📖 Available commands",
+    "",
+    "/accounts — list all configured accounts and their current modes",
+    "/auto_boss <attack|kill|list> [args] — boss action across all accounts",
+    "/auto_coupon <code> — redeem a coupon code on all accounts",
+    "/auto_fill <item_name> <order_id> — fill a buy order from inventory across all accounts",
+    "/auto_flag <flag_code> — set the pub flag on all accounts",
+    "/auto_gold — withdraw all gold from the bank on all accounts",
+    "/auto_guild <join|leave> [guild_id] — bulk-join or bulk-leave a guild on all accounts",
+    "/auto_house <generate|join> [friend_code] — manage house friend codes across all accounts",
+    "/auto_hunt <start|stop> [area_id] — start/stop hunting on all accounts (auto-picks Solo Hunt vs Phantom Halls by level)",
+    "/auto_items — export inventory of all accounts as a collapsible HTML document",
+    "/auto_lounge <like|dislike> <topic_id> <post_id> — mass like/dislike a forum post with all accounts",
+    "/auto_outfit <list|random|equip> [filename] — manage outfits across all accounts",
+    "/auto_pub — buy accumulated pub regen on all accounts",
+    "/auto_regenerate (alias /auto_regen) — regenerate idle accounts at the pub",
+    "/auto_sell <item_name> <price_per_item> — list every unit of an item from inventory on the market across all accounts",
+    "/auto_stats — show stats summary for all accounts",
+    "/auto_vault open_box <season> — open a vault box on all accounts",
+    "/auto_visage <list|free_spin> — list visages or use free spin across all accounts",
+    "/boss <account> <attack|kill|list> [boss_id] — boss action for a single account",
+    "/deep_dragon <account> <start|stop> — start/stop the Deep Dragon hunt for one account",
+    "/dual_hunt <account> <start|stop> [area_id] — start/stop dual hunt mode for one account",
+    "/guild <account> join <guild_id> — join a guild with one account",
+    "/help — show this list of commands",
+    "/market <account> <buy|sell> [args] — buy or sell items on the market for one account",
+    "/phantom_halls <account> <start|stop> [area_id] — start/stop Phantom Halls for one account",
+    "/ritual <account> <target_user_id> — perform the dead-inside ritual on a user",
+    "/say <account> <message> — post a chat message as one account",
+    "/solo_hunt <account> <start|stop> [area_id] — start/stop Solo Hunt for one account",
+    "/stats <account> — show detailed stats for one account",
+    "/train <account> <skill> — start training a skill on one account",
+    "/visage <account> <list|equip|spin> [filename] — manage visages for one account",
+])
+
+
+async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Lists all available commands with a short description of each.
+    """
+    if not allowed(update):
+        return
+
+    await update.message.reply_text(HELP_TEXT)
