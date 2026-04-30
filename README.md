@@ -1,6 +1,6 @@
 # Vanya
 
-Multi-account automation framework for a browser-based RPG, controlled through a Telegram bot.
+Multi-account automation framework for [Vanya Online](https://vanyaonline.com), a browser-based RPG, controlled through a Telegram bot.
 
 Each configured account runs in its own thread under a central scheduler, with services for hunting, training, bosses, market, guilds, inventory, and more. All control is exposed via Telegram commands so you can manage many accounts from your phone.
 
@@ -117,4 +117,4 @@ accounts.yaml   # account credentials and bot config (gitignored in your fork)
 
 ## Disclaimer
 
-This project is provided for educational purposes. Automating accounts may violate the terms of service of the target game. You are solely responsible for how you use this software.
+This project is provided for educational purposes. Automating accounts may violate the [Vanya Online](https://vanyaonline.com) terms of service. You are solely responsible for how you use this software.
